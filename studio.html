@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>스튜디오 — Regina Pilates Cheongdam</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@100;200;300;400&family=Nanum+Gothic:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+:root{--bg:#FAFAF7;--paper:#F4F2EC;--tint:#EAE6DC;--accent:#8E8276;--accentL:#C4B89A;--accentD:#5C5246;--ink:#1C1916;--ink2:#7A736A;--line:#E0DAD0;--line2:#D5CCBF;--white:#FFFFFF;--en:'Outfit',sans-serif;--ko:'Nanum Gothic',sans-serif;}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:var(--ko);background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+img{display:block}a{text-decoration:none}
+#nav{position:fixed;top:0;left:0;right:0;z-index:200;background:rgba(250,250,247,.97);backdrop-filter:blur(16px);border-bottom:1px solid var(--line);padding:0 56px;height:86px;display:flex;align-items:center;justify-content:space-between;}
+.nav-logo img{height:62px;width:auto;object-fit:contain}
+.nav-right{display:flex;align-items:center;gap:40px}
+.nav-links{display:flex;gap:36px;list-style:none}
+.nav-links a{font-family:var(--en);font-size:.75rem;letter-spacing:.18em;text-transform:uppercase;color:var(--ink2);transition:.2s;}
+.nav-links a:hover,.nav-links a.active{color:var(--accent)}
+.nav-cta{font-family:var(--en);font-size:.75rem;letter-spacing:.2em;text-transform:uppercase;padding:11px 28px;background:var(--accent);color:var(--white);transition:.2s;}
+.nav-cta:hover{background:var(--accentD)}
+
+.page-hero{padding-top:86px;background:var(--ink);min-height:440px;display:flex;align-items:flex-end;position:relative;overflow:hidden;}
+.page-hero-bg{position:absolute;inset:0;background:linear-gradient(to right,rgba(28,25,22,.8) 45%,rgba(28,25,22,.2));z-index:1;}
+.page-hero-img{position:absolute;inset:0;object-fit:cover;width:100%;height:100%;object-position:center 30%;}
+.page-hero-text{position:relative;z-index:2;padding:72px 60px;}
+.page-hero-en{font-family:var(--en);font-size:.65rem;letter-spacing:.36em;text-transform:uppercase;color:var(--accentL);margin-bottom:14px;}
+.page-hero-title{font-family:var(--en);font-weight:200;font-size:clamp(2.8rem,5vw,4.8rem);letter-spacing:.2em;text-transform:uppercase;color:#fff;line-height:1;}
+.page-hero-ko{font-family:var(--ko);font-size:1rem;color:rgba(255,255,255,.5);margin-top:14px;}
+
+/* FULLBLEED */
+.fullbleed{height:500px;overflow:hidden;position:relative;}
+.fullbleed img{width:100%;height:100%;object-fit:cover;object-position:center 40%;}
+.fullbleed-overlay{position:absolute;inset:0;background:rgba(28,25,22,.35);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;}
+.fullbleed-title{font-family:var(--en);font-weight:100;font-size:clamp(2.4rem,6vw,5rem);letter-spacing:.28em;text-transform:uppercase;color:#fff;}
+.fullbleed-sub{font-family:var(--en);font-size:.72rem;letter-spacing:.3em;text-transform:uppercase;color:rgba(255,255,255,.5);}
+
+/* SPLIT */
+.split{display:grid;grid-template-columns:50% 50%;min-height:480px;}
+.split.reverse{direction:rtl;}
+.split.reverse>*{direction:ltr;}
+.split-photo{overflow:hidden;}
+.split-photo img{width:100%;height:100%;object-fit:cover;}
+.split-text{padding:72px 60px;display:flex;flex-direction:column;justify-content:center;background:var(--white);}
+.split-text.tint{background:var(--tint);}
+.split-text.paper{background:var(--paper);}
+.split-text.dark{background:var(--ink);}
+.sec-eyebrow{font-family:var(--en);font-size:.6rem;letter-spacing:.36em;text-transform:uppercase;color:var(--accentL);margin-bottom:14px;display:flex;align-items:center;gap:12px;}
+.sec-eyebrow::before{content:'';width:24px;height:1px;background:var(--accentL);}
+.sec-title{font-family:var(--en);font-weight:200;font-size:clamp(1.8rem,3vw,2.6rem);letter-spacing:.12em;text-transform:uppercase;color:var(--ink);line-height:1.1;margin-bottom:22px;}
+.sec-title.light{color:#fff;}
+.sec-desc{font-family:var(--ko);font-size:1rem;color:var(--ink2);line-height:2.2;}
+.sec-desc.light{color:rgba(255,255,255,.55);}
+.sec-tag{display:inline-block;margin-top:22px;font-family:var(--en);font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);border:1px solid var(--line2);padding:8px 20px;background:var(--white);}
+
+/* FACILITY GRID */
+.facility-section{padding:80px 60px;background:var(--tint);}
+.facility-label{font-family:var(--en);font-size:.6rem;letter-spacing:.36em;text-transform:uppercase;color:var(--accentL);margin-bottom:14px;display:flex;align-items:center;gap:12px;}
+.facility-label::before{content:'';width:24px;height:1px;background:var(--accentL);}
+.facility-h{font-family:var(--en);font-weight:200;font-size:2rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ink);margin-bottom:48px;}
+.facility-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;background:var(--line);}
+.facility-item{background:var(--white);overflow:hidden;}
+.facility-item-photo{height:240px;overflow:hidden;}
+.facility-item-photo img{width:100%;height:100%;object-fit:cover;transition:.4s;}
+.facility-item:hover .facility-item-photo img{transform:scale(1.04);}
+.facility-item-text{padding:28px 28px 32px;}
+.facility-item-name{font-family:var(--en);font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin-bottom:8px;}
+.facility-item-desc{font-family:var(--ko);font-size:.92rem;color:var(--ink2);line-height:1.9;}
+
+/* MAP */
+.map-section{display:grid;grid-template-columns:50% 50%;}
+.map-photo{overflow:hidden;}
+.map-photo img{width:100%;height:100%;object-fit:contain;background:var(--white);padding:40px;}
+.map-text{padding:72px 60px;background:var(--ink);display:flex;flex-direction:column;justify-content:center;}
+.map-title{font-family:var(--en);font-weight:200;font-size:2rem;letter-spacing:.12em;text-transform:uppercase;color:#fff;margin-bottom:32px;}
+.map-item{margin-bottom:20px;}
+.map-item-label{font-family:var(--en);font-size:.6rem;letter-spacing:.24em;text-transform:uppercase;color:var(--accentL);margin-bottom:6px;}
+.map-item-val{font-family:var(--ko);font-size:1rem;color:rgba(255,255,255,.65);line-height:1.7;}
+.map-btn{display:inline-block;margin-top:28px;font-family:var(--en);font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;padding:12px 28px;border:1px solid rgba(255,255,255,.3);color:#fff;transition:.25s;}
+.map-btn:hover{background:#fff;color:var(--ink);}
+
+#footer{background:var(--ink);padding:60px 60px 40px;}
+.foot-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:36px;padding-bottom:40px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:24px;}
+.foot-logo{margin-bottom:16px;}.foot-logo img{height:53px;width:auto;opacity:.75}
+.foot-addr{font-family:var(--ko);font-size:.9rem;color:rgba(255,255,255,.35);line-height:1.85;margin-top:10px;}
+.foot-brand-desc{font-family:var(--ko);font-size:.9rem;color:rgba(255,255,255,.28);line-height:1.95;max-width:280px;margin-top:10px;}
+footer h5{font-family:var(--en);font-size:.6rem;letter-spacing:.24em;text-transform:uppercase;color:var(--accentL);margin-bottom:14px;}
+footer ul{list-style:none;display:flex;flex-direction:column;gap:8px;}
+footer li a{font-family:var(--ko);font-size:.9rem;color:rgba(255,255,255,.3);transition:.2s;}
+footer li a:hover{color:rgba(255,255,255,.6);}
+.foot-bot{display:flex;justify-content:space-between;}
+.foot-copy{font-family:var(--en);font-size:.58rem;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.16);}
+
+.reveal{opacity:0;transform:translateY(24px);transition:opacity .7s ease,transform .7s ease}
+.reveal.in{opacity:1;transform:translateY(0)}
+
+@media(max-width:960px){
+  #nav{padding:0 20px}.nav-links{display:none}
+  .page-hero-text{padding:48px 22px}
+  .split,.map-section{grid-template-columns:1fr}
+  .split-photo,.map-photo{height:55vw}
+  .split-text,.map-text{padding:44px 22px}
+  .facility-section{padding:60px 22px}
+  .facility-grid{grid-template-columns:1fr 1fr}
+  #footer{padding:52px 22px 32px}
+  .foot-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<nav id="nav">
+  <a class="nav-logo" href="index.html"><img src="images/logo_dark.png" alt="Regina Pilates"/></a>
+  <div class="nav-right">
+    <ul class="nav-links">
+      <li><a href="director.html">원장 소개</a></li>
+      <li><a href="studio.html" class="active">스튜디오</a></li>
+      <li><a href="programs.html">프로그램</a></li>
+      <li><a href="index.html#trial">체험 레슨</a></li>
+    </ul>
+    <a class="nav-cta" href="index.html#cta">상담 문의</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="page-hero">
+  <img class="page-hero-img" src="images/studio_01.jpg" alt="레지나 필라테스 스튜디오"/>
+  <div class="page-hero-bg"></div>
+  <div class="page-hero-text">
+    <div class="page-hero-en">Private Studio · Cheongdam</div>
+    <div class="page-hero-title">Studio</div>
+    <div class="page-hero-ko">청담역 8번 출구 도보 5분 · 서울특별시 강남구 학동로77길 10, 3층</div>
+  </div>
+</div>
+
+<!-- GRATZ 어패러터스 -->
+<div class="fullbleed reveal">
+  <img src="images/studio_06.jpg" alt="Gratz Apparatus"/>
+  <div class="fullbleed-overlay">
+    <div class="fullbleed-title">Gratz Apparatus</div>
+    <div class="fullbleed-sub">Gold Standard · Original Equipment by Joseph H. Pilates · Since 1923</div>
+  </div>
+</div>
+
+<div class="split reveal">
+  <div class="split-photo"><img src="images/studio_07.jpg" alt="Gratz 기구"/></div>
+  <div class="split-text tint">
+    <div class="sec-eyebrow">Equipment</div>
+    <div class="sec-title">Gratz Industries<br/>Original Apparatus</div>
+    <p class="sec-desc">
+      레지나 필라테스 청담은 Joseph H. Pilates가 직접 설계하고 Gratz Industries에서 제작한 오리지널 어패러터스를 사용합니다.<br/><br/>
+      전 세계 클래식 필라테스 스튜디오의 Gold Standard로 인정받는 장비로, 1923년부터 100년간 단 하나도 변형되지 않은 원래 설계 그대로입니다.<br/><br/>
+      기구 자체가 올바른 움직임을 가르칩니다. 몸의 정렬을 자연스럽게 유도하는 Gratz 기구의 설계 원리가 그 증거입니다.
+    </p>
+    <span class="sec-tag">Made in U.S.A. · Philadelphia</span>
+  </div>
+</div>
+
+<div class="split reverse reveal">
+  <div class="split-photo"><img src="images/studio_08.jpg" alt="Gratz Chair"/></div>
+  <div class="split-text paper">
+    <div class="sec-eyebrow">Apparatus Line-up</div>
+    <div class="sec-title">Complete<br/>Classic Line</div>
+    <p class="sec-desc">
+      Reformer, Cadillac / Trapeze Table, Chair (Wunda / Electric Chair), Spine Corrector, Ladder Barrel, Pedi-Pole 등 클래식 필라테스의 전 기구 라인업을 완비하고 있습니다.<br/><br/>
+      각 기구는 몸의 다른 측면을 개발하고 강화하도록 Joseph Pilates가 설계했습니다. 전체 기구를 통한 완전한 클래식 필라테스 경험을 제공합니다.
+    </p>
+  </div>
+</div>
+
+<!-- FACILITY -->
+<section class="facility-section reveal">
+  <div class="facility-label">Private Facilities</div>
+  <div class="facility-h">1인 전용 프라이빗 시설</div>
+  <div class="facility-grid">
+    <div class="facility-item reveal">
+      <div class="facility-item-photo"><img src="images/studio_09.jpg" alt="탈의실"/></div>
+      <div class="facility-item-text">
+        <div class="facility-item-name">Private Locker Room</div>
+        <div class="facility-item-desc">1인 전용 탈의실. 수업 전후 편안하게 이용하실 수 있는 개인 공간입니다. 모든 수납공간이 개별 잠금장치로 완비되어 있습니다.</div>
+      </div>
+    </div>
+    <div class="facility-item reveal">
+      <div class="facility-item-photo"><img src="images/studio_05.jpg" alt="샤워실"/></div>
+      <div class="facility-item-text">
+        <div class="facility-item-name">Private Shower Room</div>
+        <div class="facility-item-desc">1인 전용 샤워 시설. 수업 후 바로 일상으로 복귀하실 수 있도록 완비된 개인 샤워룸입니다. 기본 어메니티가 제공됩니다.</div>
+      </div>
+    </div>
+    <div class="facility-item reveal">
+      <div class="facility-item-photo"><img src="images/studio_04.jpg" alt="상담 공간"/></div>
+      <div class="facility-item-text">
+        <div class="facility-item-name">Consultation Space</div>
+        <div class="facility-item-desc">수업 전 바디 리딩 세션이 진행되는 프라이빗 상담 공간. 편안한 분위기에서 몸 상태를 깊이 있게 나눌 수 있습니다.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MAP -->
+<section class="map-section reveal">
+  <div class="map-photo"><img src="images/map.jpg" alt="레지나 필라테스 약도"/></div>
+  <div class="map-text">
+    <div class="map-title">Location</div>
+    <div class="map-item">
+      <div class="map-item-label">Address</div>
+      <div class="map-item-val">서울특별시 강남구 학동로77길 10, 3층</div>
+    </div>
+    <div class="map-item">
+      <div class="map-item-label">Subway</div>
+      <div class="map-item-val">7호선 청담역 8번 출구 도보 5분</div>
+    </div>
+    <div class="map-item">
+      <div class="map-item-label">Parking</div>
+      <div class="map-item-val">건물 내 발렛 주차 가능</div>
+    </div>
+    <div class="map-item">
+      <div class="map-item-label">Hours</div>
+      <div class="map-item-val">예약제 운영 (사전 예약 필수)</div>
+    </div>
+    <a class="map-btn" href="https://naver.me/reginapilates" target="_blank">네이버 지도로 보기 →</a>
+  </div>
+</section>
+
+<footer id="footer">
+  <div class="foot-grid">
+    <div>
+      <div class="foot-logo"><img src="images/logo_light.png" alt="Regina Pilates"/></div>
+      <p class="foot-addr">서울특별시 강남구 학동로77길 10, 3층<br/>청담역 8번 출구 도보 5분</p>
+      <p class="foot-brand-desc">Joseph H. Pilates의 오리지널 리퍼토리를 그대로 전수하는 클래식 필라테스 프라이빗 스튜디오.</p>
+    </div>
+    <div>
+      <h5>Pages</h5>
+      <ul>
+        <li><a href="director.html">원장 소개</a></li>
+        <li><a href="studio.html">스튜디오</a></li>
+        <li><a href="programs.html">프로그램</a></li>
+        <li><a href="index.html#trial">체험 레슨</a></li>
+      </ul>
+    </div>
+    <div>
+      <h5>Contact</h5>
+      <ul>
+        <li><a href="#">KakaoTalk 채널</a></li>
+        <li><a href="#">Instagram</a></li>
+        <li><a href="#">Naver 예약</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="foot-bot"><span class="foot-copy">© 2026 Regina Pilates · All rights reserved</span></div>
+</footer>
+
+<script>
+const obs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');obs.unobserve(e.target);}});},{threshold:0.1});
+document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+</script>
+</body>
+</html>
