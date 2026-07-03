@@ -25,26 +25,27 @@ a{text-decoration:none}
   position:fixed;top:0;left:0;right:0;z-index:200;
   background:rgba(250,250,247,.97);backdrop-filter:blur(16px);
   border-bottom:1px solid var(--line);
-  padding:0 56px;height:76px;
+  padding:0 56px;height:86px;
   display:flex;align-items:center;justify-content:space-between;
 }
-.nav-logo img{height:52px;width:auto;object-fit:contain}
+.nav-right{display:flex;align-items:center;gap:40px}
+.nav-logo img{height:62px;width:auto;object-fit:contain}
 .nav-links{display:flex;gap:36px;list-style:none}
 .nav-links a{
-  font-family:var(--en);font-size:.62rem;
+  font-family:var(--en);font-size:.75rem;
   letter-spacing:.18em;text-transform:uppercase;
   color:var(--ink2);transition:.2s;
 }
 .nav-links a:hover{color:var(--accent)}
 .nav-cta{
-  font-family:var(--en);font-size:.62rem;
+  font-family:var(--en);font-size:.75rem;
   letter-spacing:.2em;text-transform:uppercase;
-  padding:10px 26px;background:var(--accent);color:var(--white);transition:.2s;
+  padding:11px 28px;background:var(--accent);color:var(--white);transition:.2s;
 }
 .nav-cta:hover{background:var(--accentD)}
 
 /* ── HERO ── */
-#hero{display:grid;grid-template-columns:44% 56%;min-height:100vh;padding-top:76px}
+#hero{display:grid;grid-template-columns:44% 56%;min-height:100vh;padding-top:86px}
 .hero-text{
   background:var(--bg);padding:80px 56px 80px 60px;
   display:flex;flex-direction:column;justify-content:space-between;
@@ -62,7 +63,7 @@ a{text-decoration:none}
   padding:14px 20px;border-left:2px solid var(--accent);
 }
 .badge-en{font-family:var(--en);font-size:.56rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin-bottom:4px}
-.badge-ko{font-family:var(--ko);font-size:.8rem;font-weight:700;color:var(--ink)}
+.badge-ko{font-family:var(--ko);font-size:.96rem;font-weight:700;color:var(--ink)}
 .hero-main{flex:1;display:flex;flex-direction:column;justify-content:center;padding:40px 0}
 .hero-eyebrow{
   font-family:var(--en);font-size:.6rem;letter-spacing:.36em;text-transform:uppercase;
@@ -76,7 +77,7 @@ a{text-decoration:none}
   color:var(--ink);text-transform:uppercase;padding-left:.22em;
 }
 .hero-title em{display:block;font-style:normal}
-.hero-ko{font-family:var(--ko);font-size:.86rem;color:var(--ink2);line-height:2.1;margin-top:22px;max-width:300px}
+.hero-ko{font-family:var(--ko);font-size:1.03rem;color:var(--ink2);line-height:2.1;margin-top:22px;max-width:300px}
 .hero-actions{display:flex;flex-direction:column;gap:10px;margin-top:34px;width:fit-content}
 .btn-fill{
   font-family:var(--en);font-size:.62rem;letter-spacing:.22em;text-transform:uppercase;
@@ -108,7 +109,7 @@ a{text-decoration:none}
 .str-item:last-child{border-right:none}
 .str-no{font-family:var(--en);font-size:.56rem;letter-spacing:.24em;text-transform:uppercase;color:var(--accentL);margin-bottom:16px}
 .str-title{font-family:var(--en);font-weight:200;font-size:1.15rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink);line-height:1.25;margin-bottom:12px}
-.str-desc{font-family:var(--ko);font-size:.82rem;color:var(--ink2);line-height:2.05}
+.str-desc{font-family:var(--ko);font-size:.98rem;color:var(--ink2);line-height:2.05}
 .str-tag{display:inline-block;margin-top:14px;font-family:var(--en);font-size:.55rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);border:1px solid var(--line2);padding:4px 12px}
 
 /* ── STUDIO BAND ── */
@@ -133,8 +134,8 @@ a{text-decoration:none}
 .prog-item:nth-child(4),.prog-item:nth-child(5){border-bottom:none}
 .prog-num{font-family:var(--en);font-size:.54rem;letter-spacing:.28em;text-transform:uppercase;color:var(--accentL);margin-bottom:18px}
 .prog-title{font-family:var(--en);font-weight:200;font-size:1.08rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink);margin-bottom:10px}
-.prog-ko{font-family:var(--ko);font-size:.8rem;color:var(--accent);font-weight:700;margin-bottom:10px}
-.prog-desc{font-family:var(--ko);font-size:.8rem;color:var(--ink2);line-height:2}
+.prog-ko{font-family:var(--ko);font-size:.96rem;color:var(--accent);font-weight:700;margin-bottom:10px}
+.prog-desc{font-family:var(--ko);font-size:.96rem;color:var(--ink2);line-height:2}
 .prog-arrow{margin-top:20px;font-family:var(--en);font-size:.58rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);display:flex;align-items:center;gap:8px}
 .prog-arrow::after{content:'→';font-size:.9rem;transition:.2s}
 .prog-item:hover .prog-arrow::after{transform:translateX(4px)}
@@ -158,7 +159,7 @@ a{text-decoration:none}
   font-size:clamp(2rem,4vw,3rem);letter-spacing:.12em;text-transform:uppercase;
   color:#fff;line-height:1.1;margin-bottom:18px;
 }
-.trial-desc{font-family:var(--ko);font-size:.84rem;color:rgba(255,255,255,.5);line-height:2.15;margin-bottom:28px}
+.trial-desc{font-family:var(--ko);font-size:1rem;color:rgba(255,255,255,.5);line-height:2.15;margin-bottom:28px}
 .trial-type-label{
   font-family:var(--en);font-size:.58rem;letter-spacing:.22em;text-transform:uppercase;
   color:var(--accentL);margin-bottom:22px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,.1);
@@ -175,7 +176,7 @@ a{text-decoration:none}
   font-family:var(--en);font-size:.52rem;letter-spacing:.14em;text-transform:uppercase;
   background:var(--accent);color:#fff;padding:4px 10px;
 }
-.trial-card-desc{font-family:var(--ko);font-size:.8rem;color:rgba(255,255,255,.42);line-height:1.85;margin-bottom:16px}
+.trial-card-desc{font-family:var(--ko);font-size:.96rem;color:rgba(255,255,255,.42);line-height:1.85;margin-bottom:16px}
 .trial-booking-btn{
   display:inline-block;font-family:var(--en);font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;
   padding:10px 24px;border:1px solid rgba(255,255,255,.35);color:#fff;transition:.25s;
@@ -186,7 +187,7 @@ a{text-decoration:none}
   background:rgba(255,255,255,.04);border-left:2px solid var(--accentL);
 }
 .trial-notice-t{font-family:var(--en);font-size:.55rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accentL);margin-bottom:6px}
-.trial-notice-d{font-family:var(--ko);font-size:.78rem;color:rgba(255,255,255,.38);line-height:1.8}
+.trial-notice-d{font-family:var(--ko);font-size:.94rem;color:rgba(255,255,255,.38);line-height:1.8}
 
 /* ── DIRECTOR ── */
 #director{display:grid;grid-template-columns:45% 55%;background:var(--paper)}
@@ -202,10 +203,10 @@ a{text-decoration:none}
 .dir-divider{height:1px;background:var(--ink);margin-bottom:24px}
 .dir-name{font-family:var(--en);font-weight:200;font-size:2.6rem;letter-spacing:.28em;text-transform:uppercase;color:var(--ink);padding-left:.28em;margin-bottom:6px}
 .dir-role{font-family:var(--en);font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin-bottom:22px}
-.dir-desc{font-family:var(--ko);font-size:.84rem;color:var(--ink2);line-height:2.15;margin-bottom:20px}
+.dir-desc{font-family:var(--ko);font-size:1rem;color:var(--ink2);line-height:2.15;margin-bottom:20px}
 .dir-lineage{background:var(--tint);border-left:2px solid var(--accent);padding:14px 18px;margin-bottom:20px}
 .dir-lineage-lbl{font-family:var(--en);font-size:.55rem;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
-.dir-lineage-flow{font-family:var(--ko);font-size:.8rem;color:var(--ink2);line-height:1.9}
+.dir-lineage-flow{font-family:var(--ko);font-size:.96rem;color:var(--ink2);line-height:1.9}
 .cert-list{border-top:1px solid var(--line)}
 .cert-item{
   padding:12px 0;border-bottom:1px solid var(--line);
@@ -213,8 +214,8 @@ a{text-decoration:none}
 }
 .cert-dot{width:4px;height:4px;background:var(--accent);border-radius:50%;flex-shrink:0;margin-top:9px}
 .cert-content{}
-.cert-title{font-family:var(--en);font-size:.72rem;letter-spacing:.06em;color:var(--ink);font-weight:400;margin-bottom:4px}
-.cert-desc{font-family:var(--ko);font-size:.77rem;color:var(--ink2);line-height:1.8}
+.cert-title{font-family:var(--en);font-size:.86rem;letter-spacing:.06em;color:var(--ink);font-weight:400;margin-bottom:4px}
+.cert-desc{font-family:var(--ko);font-size:.92rem;color:var(--ink2);line-height:1.8}
 
 /* ── APPARATUS ── */
 #apparatus{display:grid;grid-template-columns:55% 45%;background:var(--white)}
@@ -223,14 +224,14 @@ a{text-decoration:none}
 .app-text{padding:88px 60px;display:flex;flex-direction:column;justify-content:center;background:var(--tint)}
 .app-eyebrow{font-family:var(--en);font-size:.58rem;letter-spacing:.3em;text-transform:uppercase;color:var(--accentL);margin-bottom:14px}
 .app-title{font-family:var(--en);font-weight:200;font-size:clamp(1.8rem,3.5vw,2.6rem);letter-spacing:.14em;text-transform:uppercase;color:var(--ink);line-height:1.1;margin-bottom:22px}
-.app-desc{font-family:var(--ko);font-size:.84rem;color:var(--ink2);line-height:2.2}
+.app-desc{font-family:var(--ko);font-size:1rem;color:var(--ink2);line-height:2.2}
 .app-tag{display:inline-block;margin-top:22px;font-family:var(--en);font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);border:1px solid var(--line2);padding:8px 20px;background:var(--white)}
 
 /* ── CTA ── */
 #cta{background:var(--accent);padding:110px 60px;display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center}
 .cta-eyebrow{font-family:var(--en);font-size:.58rem;letter-spacing:.34em;text-transform:uppercase;color:rgba(255,255,255,.55);margin-bottom:14px}
 .cta-title{font-family:var(--en);font-weight:200;font-size:clamp(2.2rem,4.5vw,3.4rem);letter-spacing:.1em;text-transform:uppercase;color:#fff;line-height:1.1}
-.cta-desc{font-family:var(--ko);font-size:.86rem;color:rgba(255,255,255,.6);line-height:2.1;margin-bottom:18px}
+.cta-desc{font-family:var(--ko);font-size:1.03rem;color:rgba(255,255,255,.6);line-height:2.1;margin-bottom:18px}
 .btn-white{
   display:inline-block;font-family:var(--en);font-size:.62rem;letter-spacing:.24em;text-transform:uppercase;
   padding:14px 40px;background:#fff;color:var(--accent);transition:.25s;
@@ -240,16 +241,16 @@ a{text-decoration:none}
 /* ── FOOTER ── */
 #footer{background:var(--ink);padding:72px 60px 44px}
 .foot-logo{margin-bottom:22px}
-.foot-logo img{height:44px;width:auto;opacity:.75}
+.foot-logo img{height:53px;width:auto;opacity:.75}
 .foot-grid{
-  display:grid;grid-template-columns:2fr 1fr 1fr;gap:52px;
+  display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:36px;
   padding-bottom:44px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:28px;
 }
-.foot-brand-desc{font-family:var(--ko);font-size:.78rem;color:rgba(255,255,255,.28);line-height:1.95;max-width:280px;margin-top:10px}
-.foot-addr{font-family:var(--ko);font-size:.78rem;color:rgba(255,255,255,.35);line-height:1.85;margin-top:10px}
+.foot-brand-desc{font-family:var(--ko);font-size:.94rem;color:rgba(255,255,255,.28);line-height:1.95;max-width:280px;margin-top:10px}
+.foot-addr{font-family:var(--ko);font-size:.94rem;color:rgba(255,255,255,.35);line-height:1.85;margin-top:10px}
 footer h5{font-family:var(--en);font-size:.56rem;letter-spacing:.24em;text-transform:uppercase;color:var(--accentL);margin-bottom:14px}
 footer ul{list-style:none;display:flex;flex-direction:column;gap:8px}
-footer li a,footer li span{font-family:var(--ko);font-size:.78rem;color:rgba(255,255,255,.3);transition:.2s}
+footer li a,footer li span{font-family:var(--ko);font-size:.94rem;color:rgba(255,255,255,.3);transition:.2s}
 footer li a:hover{color:rgba(255,255,255,.6)}
 .foot-bot{display:flex;justify-content:space-between;align-items:center}
 .foot-copy{font-family:var(--en);font-size:.56rem;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.16)}
@@ -291,13 +292,15 @@ footer li a:hover{color:rgba(255,255,255,.6)}
   <a class="nav-logo" href="#">
     <img src="images/logo_dark.png" alt="Regina Pilates"/>
   </a>
-  <ul class="nav-links">
-    <li><a href="#programs">프로그램</a></li>
-    <li><a href="#trial">체험 레슨</a></li>
-    <li><a href="#director">원장 소개</a></li>
-    <li><a href="#apparatus">스튜디오</a></li>
-  </ul>
-  <a class="nav-cta" href="#cta">상담 문의</a>
+  <div class="nav-right">
+    <ul class="nav-links">
+      <li><a href="#programs">프로그램</a></li>
+      <li><a href="#trial">체험 레슨</a></li>
+      <li><a href="#director">원장 소개</a></li>
+      <li><a href="#apparatus">스튜디오</a></li>
+    </ul>
+    <a class="nav-cta" href="#cta">상담 문의</a>
+  </div>
 </nav>
 
 <!-- HERO -->
@@ -548,6 +551,7 @@ footer li a:hover{color:rgba(255,255,255,.6)}
   <div class="foot-grid">
     <div>
       <div class="foot-logo"><img src="images/logo_light.png" alt="Regina Pilates"/></div>
+      <p class="foot-addr">서울특별시 강남구 학동로77길 10, 3층<br/>청담역 8번 출구 도보 5분</p>
       <p class="foot-brand-desc">Joseph H. Pilates의 오리지널 리퍼토리를 그대로 전수하는 클래식 필라테스 프라이빗 스튜디오.</p>
     </div>
     <div>
