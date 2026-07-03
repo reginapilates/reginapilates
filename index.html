@@ -28,7 +28,7 @@ a{text-decoration:none}
   padding:0 56px;height:76px;
   display:flex;align-items:center;justify-content:space-between;
 }
-.nav-logo img{height:40px;width:auto;object-fit:contain}
+.nav-logo img{height:52px;width:auto;object-fit:contain}
 .nav-links{display:flex;gap:36px;list-style:none}
 .nav-links a{
   font-family:var(--en);font-size:.62rem;
@@ -63,7 +63,6 @@ a{text-decoration:none}
 }
 .badge-en{font-family:var(--en);font-size:.56rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin-bottom:4px}
 .badge-ko{font-family:var(--ko);font-size:.8rem;font-weight:700;color:var(--ink)}
-.hero-logo-top img{height:36px;width:auto;margin-bottom:0}
 .hero-main{flex:1;display:flex;flex-direction:column;justify-content:center;padding:40px 0}
 .hero-eyebrow{
   font-family:var(--en);font-size:.6rem;letter-spacing:.36em;text-transform:uppercase;
@@ -97,11 +96,11 @@ a{text-decoration:none}
 
 /* ── SEC LABEL ── */
 .sec-label{
-  padding:16px 60px;background:var(--white);border-bottom:1px solid var(--line);
-  display:flex;justify-content:space-between;align-items:center;
+  padding:32px 60px 24px;background:var(--white);
+  border-top:3px solid var(--accent);border-bottom:1px solid var(--line);
 }
-.sec-label-n{font-family:var(--en);font-size:.56rem;letter-spacing:.3em;text-transform:uppercase;color:var(--accentL)}
-.sec-label-t{font-family:var(--en);font-weight:200;font-size:1.5rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink)}
+.sec-label-n{font-family:var(--en);font-size:.6rem;letter-spacing:.36em;text-transform:uppercase;color:var(--accentL);display:block;margin-bottom:8px}
+.sec-label-t{display:none}
 
 /* ── STRENGTHS ── */
 #strengths{display:grid;grid-template-columns:repeat(3,1fr);background:var(--tint)}
@@ -241,9 +240,9 @@ a{text-decoration:none}
 /* ── FOOTER ── */
 #footer{background:var(--ink);padding:72px 60px 44px}
 .foot-logo{margin-bottom:22px}
-.foot-logo img{height:34px;width:auto;opacity:.75}
+.foot-logo img{height:44px;width:auto;opacity:.75}
 .foot-grid{
-  display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:52px;
+  display:grid;grid-template-columns:2fr 1fr 1fr;gap:52px;
   padding-bottom:44px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:28px;
 }
 .foot-brand-desc{font-family:var(--ko);font-size:.78rem;color:rgba(255,255,255,.28);line-height:1.95;max-width:280px;margin-top:10px}
@@ -281,7 +280,7 @@ footer li a:hover{color:rgba(255,255,255,.6)}
   #cta{grid-template-columns:1fr;padding:72px 22px}
   #footer{padding:52px 22px 32px}
   .foot-grid{grid-template-columns:1fr 1fr;gap:32px}
-  .sec-label{padding:14px 22px}
+  .sec-label{padding:24px 22px 18px}
 }
 </style>
 </head>
@@ -304,13 +303,10 @@ footer li a:hover{color:rgba(255,255,255,.6)}
 <!-- HERO -->
 <section id="hero">
   <div class="hero-text">
-    <div class="hero-logo-top">
-      <img src="images/logo_dark.png" alt="Regina Pilates" style="height:32px;opacity:.65"/>
-    </div>
     <div class="hero-main">
       <div class="hero-eyebrow">Classical Pilates Studio</div>
       <h1 class="hero-title">Regina<em>Pilates</em></h1>
-      <p class="hero-ko">Joseph H. Pilates의 오리지널 리퍼토리 그대로.<br/>청담 유일의 클래식 필라테스 프라이빗 스튜디오.</p>
+      <p class="hero-ko">Joseph H. Pilates의 오리지널 리퍼토리 그대로.<br/>클래식 필라테스 프라이빗 스튜디오.</p>
       <div class="hero-actions">
         <a class="btn-fill" href="#cta">상담 문의</a>
         <a class="btn-line" href="#programs">프로그램 보기</a>
@@ -552,8 +548,7 @@ footer li a:hover{color:rgba(255,255,255,.6)}
   <div class="foot-grid">
     <div>
       <div class="foot-logo"><img src="images/logo_light.png" alt="Regina Pilates"/></div>
-      <p class="foot-brand-desc">Joseph H. Pilates의 오리지널 리퍼토리를 그대로 전수하는 청담 유일의 클래식 필라테스 프라이빗 스튜디오.</p>
-      <p class="foot-addr">서울특별시 강남구 학동로77길 10, 3층<br/>청담역 8번 출구 도보 5분</p>
+      <p class="foot-brand-desc">Joseph H. Pilates의 오리지널 리퍼토리를 그대로 전수하는 클래식 필라테스 프라이빗 스튜디오.</p>
     </div>
     <div>
       <h5>Programs</h5>
@@ -566,19 +561,8 @@ footer li a:hover{color:rgba(255,255,255,.6)}
       </ul>
     </div>
     <div>
-      <h5>Lesson</h5>
-      <ul>
-        <li><a href="https://booking.naver.com/booking/13/bizes/866976/items/5155413" target="_blank">1:1 트라이얼 예약</a></li>
-        <li><a href="https://booking.naver.com/booking/13/bizes/866976/items/7824671" target="_blank">1:2 트라이얼 예약</a></li>
-        <li><a href="#">1:1 프라이빗 레슨</a></li>
-        <li><a href="#">1:2 듀엣 레슨</a></li>
-      </ul>
-    </div>
-    <div>
       <h5>Contact</h5>
       <ul>
-        <li><span>서울 강남구 학동로77길 10, 3층</span></li>
-        <li><span>청담역 8번 출구 도보 5분</span></li>
         <li><a href="#">KakaoTalk 채널</a></li>
         <li><a href="#">Instagram</a></li>
         <li><a href="#">Naver 예약</a></li>
