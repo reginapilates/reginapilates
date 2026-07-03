@@ -59,14 +59,27 @@ img{display:block}a{text-decoration:none}
 .facility-label{font-family:var(--en);font-size:.6rem;letter-spacing:.36em;text-transform:uppercase;color:var(--accentL);margin-bottom:14px;display:flex;align-items:center;gap:12px;}
 .facility-label::before{content:'';width:24px;height:1px;background:var(--accentL);}
 .facility-h{font-family:var(--en);font-weight:200;font-size:2rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ink);margin-bottom:48px;}
-.facility-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;background:var(--line);}
+
+/* 상단: 2열 대형 카드 */
+.facility-grid-top{display:grid;grid-template-columns:1fr 1fr;gap:3px;background:var(--line);margin-bottom:3px;}
+/* 하단: 1열 와이드 카드 */
+.facility-grid-bottom{background:var(--line);}
+
 .facility-item{background:var(--white);overflow:hidden;}
-.facility-item-photo{height:240px;overflow:hidden;}
-.facility-item-photo img{width:100%;height:100%;object-fit:cover;transition:.4s;}
+.facility-item-photo{overflow:hidden;position:relative;}
+.facility-item-photo img{width:100%;height:100%;object-fit:cover;transition:.5s;}
 .facility-item:hover .facility-item-photo img{transform:scale(1.04);}
-.facility-item-text{padding:28px 28px 32px;}
-.facility-item-name{font-family:var(--en);font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin-bottom:8px;}
-.facility-item-desc{font-family:var(--ko);font-size:.92rem;color:var(--ink2);line-height:1.9;}
+
+/* 탈의실 & 샤워실: 세로로 크게 */
+.facility-item.tall .facility-item-photo{height:440px;}
+/* 상담공간: 가로로 넓게 (좌우 분할) */
+.facility-item.wide{display:grid;grid-template-columns:60% 40%;}
+.facility-item.wide .facility-item-photo{height:380px;}
+.facility-item.wide .facility-item-text{display:flex;flex-direction:column;justify-content:center;padding:48px 52px;}
+
+.facility-item-text{padding:32px 36px 40px;}
+.facility-item-name{font-family:var(--en);font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin-bottom:10px;}
+.facility-item-desc{font-family:var(--ko);font-size:.95rem;color:var(--ink2);line-height:2.1;}
 
 /* MAP */
 .map-section{display:grid;grid-template-columns:50% 50%;}
@@ -102,7 +115,10 @@ footer li a:hover{color:rgba(255,255,255,.6);}
   .split-photo,.map-photo{height:55vw}
   .split-text,.map-text{padding:44px 22px}
   .facility-section{padding:60px 22px}
-  .facility-grid{grid-template-columns:1fr 1fr}
+  .facility-grid-top{grid-template-columns:1fr}
+  .facility-item.wide{grid-template-columns:1fr}
+  .facility-item.tall .facility-item-photo{height:280px;}
+  .facility-item.wide .facility-item-photo{height:260px;}
   #footer{padding:52px 22px 32px}
   .foot-grid{grid-template-columns:1fr}
 }
@@ -173,26 +189,32 @@ footer li a:hover{color:rgba(255,255,255,.6);}
 <section class="facility-section reveal">
   <div class="facility-label">Private Facilities</div>
   <div class="facility-h">1인 전용 프라이빗 시설</div>
-  <div class="facility-grid">
-    <div class="facility-item reveal">
-      <div class="facility-item-photo"><img src="images/studio_09.jpg" alt="탈의실"/></div>
+
+  <!-- 상단: 탈의실 + 샤워실 (2열 대형) -->
+  <div class="facility-grid-top">
+    <div class="facility-item tall reveal">
+      <div class="facility-item-photo"><img src="images/studio_07.jpg" alt="탈의실"/></div>
       <div class="facility-item-text">
         <div class="facility-item-name">Private Locker Room</div>
-        <div class="facility-item-desc">1인 전용 탈의실. 수업 전후 편안하게 이용하실 수 있는 개인 공간입니다. 모든 수납공간이 개별 잠금장치로 완비되어 있습니다.</div>
+        <div class="facility-item-desc">1인 전용 탈의실. 수업 전후 편안하게 이용하실 수 있는 완전한 개인 공간입니다. 모든 수납공간이 개별 잠금장치로 완비되어 있습니다.</div>
       </div>
     </div>
-    <div class="facility-item reveal">
-      <div class="facility-item-photo"><img src="images/studio_05.jpg" alt="샤워실"/></div>
+    <div class="facility-item tall reveal">
+      <div class="facility-item-photo"><img src="images/shower.jpg" alt="샤워실"/></div>
       <div class="facility-item-text">
         <div class="facility-item-name">Private Shower Room</div>
-        <div class="facility-item-desc">1인 전용 샤워 시설. 수업 후 바로 일상으로 복귀하실 수 있도록 완비된 개인 샤워룸입니다. 기본 어메니티가 제공됩니다.</div>
+        <div class="facility-item-desc">1인 전용 샤워 시설. 수업 후 바로 일상으로 복귀하실 수 있도록 완비된 개인 샤워룸입니다. Aesop 어메니티가 기본 제공됩니다.</div>
       </div>
     </div>
-    <div class="facility-item reveal">
+  </div>
+
+  <!-- 하단: 상담공간 (가로 와이드) -->
+  <div class="facility-grid-bottom">
+    <div class="facility-item wide reveal">
       <div class="facility-item-photo"><img src="images/studio_04.jpg" alt="상담 공간"/></div>
       <div class="facility-item-text">
         <div class="facility-item-name">Consultation Space</div>
-        <div class="facility-item-desc">수업 전 바디 리딩 세션이 진행되는 프라이빗 상담 공간. 편안한 분위기에서 몸 상태를 깊이 있게 나눌 수 있습니다.</div>
+        <div class="facility-item-desc">수업 전 바디 리딩 세션이 진행되는 프라이빗 상담 공간입니다.<br/><br/>몸의 상태를 깊이 있게 살피고, 말하기 어려웠던 고민도 편안하게 나눌 수 있는 단둘만의 공간입니다.</div>
       </div>
     </div>
   </div>
