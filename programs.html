@@ -4,91 +4,82 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>프로그램 — Regina Pilates Cheongdam</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@100;200;300;400&family=Nanum+Gothic:wght@400;700&display=swap" rel="stylesheet"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@100;200;300;400&family=Nanum+Gothic:wght@400;700&display=swap" rel="stylesheet"/>
 <style>
-:root{--bg:#FAFAF7;--paper:#F4F2EC;--tint:#EAE6DC;--accent:#8E8276;--accentL:#C4B89A;--accentD:#5C5246;--ink:#1C1916;--ink2:#7A736A;--line:#E0DAD0;--line2:#D5CCBF;--white:#FFFFFF;--en:'Outfit',sans-serif;--ko:'Nanum Gothic',sans-serif;}
+:root{
+  --bg:#FAFAF7;--paper:#F4F2EC;--tint:#EAE6DC;
+  --accent:#8E8276;--accentL:#C4B89A;--accentD:#5C5246;
+  --ink:#1C1916;--ink2:#7A736A;
+  --line:#E0DAD0;--line2:#D5CCBF;--white:#FFFFFF;
+  --en:'Outfit',sans-serif;--ko:'Nanum Gothic',sans-serif;
+}
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 html{scroll-behavior:smooth}
 body{font-family:var(--ko);background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;overflow-x:hidden}
-img{display:block}a{text-decoration:none}
-#nav{position:fixed;top:0;left:0;right:0;z-index:200;background:rgba(250,250,247,.97);backdrop-filter:blur(16px);border-bottom:1px solid var(--line);height:86px;display:flex;align-items:center;justify-content:center;}
-.nav-inner{max-width:1280px;width:100%;padding:0 56px;display:flex;align-items:center;justify-content:space-between;}
-.nav-logo img{height:62px;width:auto;object-fit:contain}
-.nav-right{display:flex;align-items:center;gap:40px}
-.nav-links{display:flex;gap:36px;list-style:none}
+img{display:block}
+a{text-decoration:none}
+
+/* ── 핵심: 모든 콘텐츠 max-width 1280px ── */
+.w{max-width:1280px;margin:0 auto;padding:0 60px;}
+
+/* ── NAV ── */
+#nav{position:fixed;top:0;left:0;right:0;z-index:200;background:rgba(250,250,247,.97);backdrop-filter:blur(16px);border-bottom:1px solid var(--line);height:86px;display:flex;align-items:center;}
+.nav-inner{max-width:1280px;width:100%;margin:0 auto;padding:0 60px;display:flex;align-items:center;justify-content:space-between;}
+.nav-logo img{height:62px;width:auto;}
+.nav-right{display:flex;align-items:center;gap:36px;}
+.nav-links{display:flex;gap:36px;list-style:none;}
 .nav-links a{font-family:var(--en);font-size:.75rem;letter-spacing:.18em;text-transform:uppercase;color:var(--ink2);transition:.2s;}
-.nav-links a:hover,.nav-links a.active{color:var(--accent)}
+.nav-links a:hover,.nav-links a.active{color:var(--accent);}
 .nav-cta{font-family:var(--en);font-size:.75rem;letter-spacing:.2em;text-transform:uppercase;padding:11px 28px;background:var(--accent);color:var(--white);transition:.2s;}
-.nav-cta:hover{background:var(--accentD)}
+.nav-cta:hover{background:var(--accentD);}
 
-/* HERO */
-.page-hero{padding-top:86px;min-height:500px;position:relative;overflow:hidden;display:flex;align-items:flex-end;}
-.page-hero-bg-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 30%;}
-.page-hero-overlay{position:absolute;inset:0;background:linear-gradient(135deg,rgba(28,25,22,.85) 0%,rgba(28,25,22,.4) 65%,rgba(28,25,22,.1) 100%);}
-.page-hero-content{position:relative;z-index:2;padding:80px 60px;max-width:700px;}
-.page-hero-eyebrow{font-family:var(--en);font-size:.62rem;letter-spacing:.38em;text-transform:uppercase;color:var(--accentL);margin-bottom:16px;display:flex;align-items:center;gap:14px;}
-.page-hero-eyebrow::before{content:'';width:28px;height:1px;background:var(--accentL);}
-.page-hero-title{font-family:var(--en);font-weight:200;font-size:clamp(3.2rem,6vw,5.5rem);letter-spacing:.22em;text-transform:uppercase;color:#fff;line-height:.95;padding-left:.22em;}
-.page-hero-sub{font-family:var(--ko);font-size:1rem;color:rgba(255,255,255,.55);margin-top:18px;line-height:2.1;}
+/* ── PAGE HERO ── */
+.page-hero{padding-top:86px;min-height:480px;position:relative;overflow:hidden;display:flex;align-items:flex-end;}
+.page-hero img.bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 25%;}
+.page-hero .overlay{position:absolute;inset:0;background:linear-gradient(135deg,rgba(28,25,22,.88) 0%,rgba(28,25,22,.4) 60%,rgba(28,25,22,.1) 100%);}
+.page-hero .hero-content{position:relative;z-index:2;padding:80px 60px;max-width:720px;}
+.hero-eyebrow{font-family:var(--en);font-size:.62rem;letter-spacing:.38em;text-transform:uppercase;color:var(--accentL);margin-bottom:16px;display:flex;align-items:center;gap:14px;}
+.hero-eyebrow::before{content:'';width:28px;height:1px;background:var(--accentL);}
+.hero-title{font-family:var(--en);font-weight:200;font-size:clamp(3rem,5.5vw,5.2rem);letter-spacing:.22em;text-transform:uppercase;color:#fff;line-height:.95;padding-left:.22em;}
+.hero-sub{font-family:var(--ko);font-size:1rem;color:rgba(255,255,255,.55);margin-top:18px;line-height:2.1;}
 
-/* CLASSICAL INTRO */
-.classical-intro{background:var(--white);}
-.classical-intro-inner{max-width:1280px;margin:0 auto;padding:80px 60px;}
-.ci-inner{max-width:860px;margin:0 auto;}
-.ci-eyebrow{font-family:var(--en);font-size:.62rem;letter-spacing:.38em;text-transform:uppercase;color:var(--accentL);margin-bottom:16px;display:flex;align-items:center;gap:14px;}
-.ci-eyebrow::before{content:'';width:28px;height:1px;background:var(--accentL);}
-.ci-title{font-family:var(--en);font-weight:200;font-size:clamp(2rem,3.5vw,3rem);letter-spacing:.12em;text-transform:uppercase;color:var(--ink);margin-bottom:32px;}
-.ci-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px;background:var(--line);margin-top:44px;}
-.ci-item{background:var(--bg);padding:36px 32px;}
-.ci-item-icon{font-family:var(--en);font-size:.58rem;letter-spacing:.24em;text-transform:uppercase;color:var(--accentL);margin-bottom:12px;}
-.ci-item-title{font-family:var(--ko);font-size:1.05rem;color:var(--ink);font-weight:700;margin-bottom:10px;}
-.ci-item-desc{font-family:var(--ko);font-size:.95rem;color:var(--ink2);line-height:2.1;}
+/* ── SPLIT ── */
+.split{display:grid;grid-template-columns:50% 50%;min-height:520px;max-width:1280px;margin:0 auto;}
+.split.rev{direction:rtl;}.split.rev>*{direction:ltr;}
+.split-photo{overflow:hidden;}
+.split-photo img{width:100%;height:100%;object-fit:cover;transition:.5s;}
+.split-text{padding:72px 60px;display:flex;flex-direction:column;justify-content:center;}
+.bg-white{background:var(--white);}
+.bg-paper{background:var(--paper);}
+.bg-tint{background:var(--tint);}
+.bg-dark{background:var(--ink);}
+.s-ey{font-family:var(--en);font-size:.6rem;letter-spacing:.32em;text-transform:uppercase;color:var(--accentL);margin-bottom:12px;}
+.s-title{font-family:var(--en);font-weight:200;font-size:clamp(1.6rem,2.8vw,2.3rem);letter-spacing:.1em;text-transform:uppercase;color:var(--ink);line-height:1.1;margin-bottom:18px;}
+.s-title.lt{color:#fff;}
+.s-ko{font-family:var(--ko);font-size:1.05rem;color:var(--accent);font-weight:700;margin-bottom:18px;}
+.s-desc{font-family:var(--ko);font-size:1rem;color:var(--ink2);line-height:2.2;}
+.s-desc.lt{color:rgba(255,255,255,.5);}
+.s-ul{list-style:none;margin-top:16px;display:flex;flex-direction:column;gap:11px;}
+.s-ul li{font-family:var(--ko);font-size:.95rem;color:var(--ink2);padding-left:18px;position:relative;line-height:1.75;}
+.s-ul li::before{content:'—';position:absolute;left:0;color:var(--accent);}
+.s-ul li strong{color:var(--ink);}
+.s-tag{display:inline-block;margin-top:20px;font-family:var(--en);font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);border:1px solid var(--line2);padding:8px 20px;}
 
-/* DARK BAND */
+/* ── DARK BAND ── */
 .dark-band{background:var(--ink);}
-.dark-band-inner{max-width:1280px;margin:0 auto;padding:72px 60px;}
-.dark-eyebrow{font-family:var(--en);font-size:.62rem;letter-spacing:.36em;text-transform:uppercase;color:var(--accentL);margin-bottom:16px;display:flex;align-items:center;gap:14px;}
-.dark-eyebrow::before{content:'';width:28px;height:1px;background:var(--accentL);}
-.dark-title{font-family:var(--en);font-weight:200;font-size:clamp(1.8rem,3vw,2.6rem);letter-spacing:.12em;text-transform:uppercase;color:#fff;line-height:1.1;margin-bottom:20px;}
-.dark-desc{font-family:var(--ko);font-size:1rem;color:rgba(255,255,255,.5);line-height:2.3;max-width:760px;}
+.dark-band .w{padding-top:72px;padding-bottom:72px;}
+.db-ey{font-family:var(--en);font-size:.62rem;letter-spacing:.36em;text-transform:uppercase;color:var(--accentL);margin-bottom:16px;display:flex;align-items:center;gap:14px;}
+.db-ey::before{content:'';width:28px;height:1px;background:var(--accentL);}
+.db-title{font-family:var(--en);font-weight:200;font-size:clamp(1.8rem,3vw,2.8rem);letter-spacing:.12em;text-transform:uppercase;color:#fff;line-height:1.1;margin-bottom:20px;}
+.db-desc{font-family:var(--ko);font-size:1rem;color:rgba(255,255,255,.5);line-height:2.3;max-width:760px;}
 
-/* PROGRAM SECTION */
-.prog-sec{display:grid;grid-template-columns:50% 50%;height:560px;max-width:1280px;margin:0 auto;}
-.prog-sec.rev{direction:rtl;}.prog-sec.rev>*{direction:ltr;}
-.prog-photo{overflow:hidden;height:560px;}
-.prog-photo img{width:100%;height:100%;object-fit:cover;object-position:center 25%;transition:.5s;}
-.prog-text{padding:52px 60px;display:flex;flex-direction:column;justify-content:center;overflow:hidden;}
-.prog-text.bg-white{background:var(--white);}
-.prog-text.bg-paper{background:var(--paper);}
-.prog-text.bg-tint{background:var(--tint);}
-.prog-num{font-family:var(--en);font-size:.58rem;letter-spacing:.3em;text-transform:uppercase;color:var(--accentL);margin-bottom:12px;}
-.prog-en{font-family:var(--en);font-weight:200;font-size:clamp(1.5rem,2.5vw,2.1rem);letter-spacing:.1em;text-transform:uppercase;color:var(--ink);margin-bottom:6px;}
-.prog-ko{font-family:var(--ko);font-size:1.1rem;color:var(--accent);font-weight:700;margin-bottom:6px;}
-.prog-headline{font-family:var(--ko);font-size:1rem;color:var(--ink);font-weight:700;margin-bottom:16px;line-height:1.6;border-left:3px solid var(--accent);padding-left:14px;}
-.prog-desc{font-family:var(--ko);font-size:.95rem;color:var(--ink2);line-height:2.1;margin-bottom:18px;}
-.prog-bullets{list-style:none;display:flex;flex-direction:column;gap:10px;}
-.prog-bullets li{font-family:var(--ko);font-size:.93rem;color:var(--ink2);padding-left:18px;position:relative;line-height:1.75;}
-.prog-bullets li::before{content:'—';position:absolute;left:0;color:var(--accent);}
-.prog-bullets li strong{color:var(--ink);font-weight:700;}
-.prog-tags{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:16px;}
-.prog-tag{font-family:var(--en);font-size:.54rem;letter-spacing:.12em;text-transform:uppercase;border:1px solid var(--line2);color:var(--ink2);padding:4px 10px;}
-
-/* CTA */
-.cta-band{background:var(--accent);}
-.cta-band-inner{max-width:1280px;margin:0 auto;padding:100px 60px;display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;}
-.cta-eyebrow{font-family:var(--en);font-size:.6rem;letter-spacing:.36em;text-transform:uppercase;color:rgba(255,255,255,.55);margin-bottom:14px;}
-.cta-title{font-family:var(--en);font-weight:200;font-size:clamp(2rem,4vw,3rem);letter-spacing:.1em;text-transform:uppercase;color:#fff;line-height:1.1;}
-.cta-desc{font-family:var(--ko);font-size:1rem;color:rgba(255,255,255,.6);line-height:2.1;margin-bottom:20px;}
-.btn-white{display:inline-block;font-family:var(--en);font-size:.65rem;letter-spacing:.24em;text-transform:uppercase;padding:14px 40px;background:#fff;color:var(--accent);transition:.25s;}
-.btn-white:hover{background:var(--ink);color:#fff;}
-
+/* ── FOOTER ── */
 #footer{background:var(--ink);}
-.foot-inner{max-width:1280px;margin:0 auto;padding:64px 60px 44px;}
-.foot-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:36px;padding-bottom:44px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:28px;}
-.foot-logo{margin-bottom:14px;}.foot-logo img{height:53px;width:auto;opacity:.75}
+#footer .w{padding-top:64px;padding-bottom:44px;}
+.foot-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:36px;padding-bottom:40px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:24px;}
+.foot-logo{margin-bottom:14px;}.foot-logo img{height:53px;width:auto;opacity:.75;}
 .foot-addr{font-family:var(--ko);font-size:.9rem;color:rgba(255,255,255,.35);line-height:1.85;margin-top:10px;}
-.foot-brand-desc{font-family:var(--ko);font-size:.88rem;color:rgba(255,255,255,.25);line-height:1.95;max-width:280px;margin-top:10px;}
+.foot-desc{font-family:var(--ko);font-size:.88rem;color:rgba(255,255,255,.22);line-height:1.9;margin-top:8px;}
 footer h5{font-family:var(--en);font-size:.6rem;letter-spacing:.24em;text-transform:uppercase;color:var(--accentL);margin-bottom:14px;}
 footer ul{list-style:none;display:flex;flex-direction:column;gap:9px;}
 footer li a{font-family:var(--ko);font-size:.9rem;color:rgba(255,255,255,.3);transition:.2s;}
@@ -96,260 +87,246 @@ footer li a:hover{color:rgba(255,255,255,.65);}
 .foot-bot{display:flex;justify-content:space-between;}
 .foot-copy{font-family:var(--en);font-size:.58rem;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.16);}
 
-.reveal{opacity:0;transform:translateY(24px);transition:opacity .7s ease,transform .7s ease}
-.reveal.in{opacity:1;transform:translateY(0)}
+/* ── REVEAL ── */
+.reveal{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s ease;}
+.reveal.in{opacity:1;transform:translateY(0);}
 
+/* ── RESPONSIVE ── */
+@media(max-width:960px){
+  .w{padding:0 22px;}
+  #nav,.nav-inner{padding:0 22px;}
+  .nav-links{display:none;}
+  .page-hero .hero-content{padding:52px 22px;}
+  .split,.split.rev{grid-template-columns:1fr;direction:ltr;}
+  .split-photo{height:56vw;}
+  .split-text{padding:44px 22px;}
+  .dark-band .w{padding-top:52px;padding-bottom:52px;}
+  .foot-grid{grid-template-columns:1fr;}
+  #footer .w{padding-top:52px;padding-bottom:32px;}
+}
 
+.ci-sec{background:var(--white);}
+.ci-sec .w{padding-top:80px;padding-bottom:80px;}
+.ci-ey{font-family:var(--en);font-size:.62rem;letter-spacing:.38em;text-transform:uppercase;color:var(--accentL);margin-bottom:16px;display:flex;align-items:center;gap:14px;}
+.ci-ey::before{content:'';width:28px;height:1px;background:var(--accentL);}
+.ci-title{font-family:var(--en);font-weight:200;font-size:clamp(2rem,3.5vw,3rem);letter-spacing:.12em;text-transform:uppercase;color:var(--ink);margin-bottom:24px;}
+.ci-desc{font-family:var(--ko);font-size:1rem;color:var(--ink2);line-height:2.3;max-width:760px;margin-bottom:44px;}
+.ci-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px;background:var(--line);}
+.ci-item{background:var(--bg);padding:36px 32px;}
+.ci-icon{font-family:var(--en);font-size:.58rem;letter-spacing:.24em;text-transform:uppercase;color:var(--accentL);margin-bottom:12px;}
+.ci-item-title{font-family:var(--ko);font-size:1.05rem;color:var(--ink);font-weight:700;margin-bottom:10px;}
+.ci-item-desc{font-family:var(--ko);font-size:.95rem;color:var(--ink2);line-height:2.1;}
 
-/* SITE MAX WIDTH */
-.site-body{max-width:1280px;margin:0 auto;position:relative;}
-#footer .foot-inner,
-.page-hero-content,
-.studio-intro,.classical-intro,.ci-inner,
-.dir-intro-text,.dir-intro,.certs-section,
-.dark-band,.dark-band-inner{max-width:1280px;}
+/* PROGRAM SECTIONS */
+.prog-sec{display:grid;grid-template-columns:50% 50%;height:560px;max-width:1280px;margin:0 auto;}
+.prog-sec.rev{direction:rtl;}.prog-sec.rev>*{direction:ltr;}
+.prog-photo{overflow:hidden;}
+.prog-photo img{width:100%;height:100%;object-fit:cover;object-position:center 25%;transition:.5s;}
+.prog-text{padding:52px 60px;display:flex;flex-direction:column;justify-content:center;overflow:hidden;}
+.prog-en{font-family:var(--en);font-weight:200;font-size:clamp(1.5rem,2.5vw,2.1rem);letter-spacing:.1em;text-transform:uppercase;color:var(--ink);margin-bottom:6px;}
+.prog-ko{font-family:var(--ko);font-size:1.1rem;color:var(--accent);font-weight:700;margin-bottom:6px;}
+.prog-tags{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px;}
+.prog-tag{font-family:var(--en);font-size:.54rem;letter-spacing:.12em;text-transform:uppercase;border:1px solid var(--line2);color:var(--ink2);padding:4px 10px;}
+.prog-hl{font-family:var(--ko);font-size:1rem;color:var(--ink);font-weight:700;margin-bottom:14px;line-height:1.6;border-left:3px solid var(--accent);padding-left:14px;}
+.prog-desc{font-family:var(--ko);font-size:.95rem;color:var(--ink2);line-height:2.1;margin-bottom:16px;}
+.prog-ul{list-style:none;display:flex;flex-direction:column;gap:9px;}
+.prog-ul li{font-family:var(--ko);font-size:.92rem;color:var(--ink2);padding-left:18px;position:relative;line-height:1.7;}
+.prog-ul li::before{content:'—';position:absolute;left:0;color:var(--accent);}
+.prog-ul li strong{color:var(--ink);}
+
+.cta-sec{background:var(--accent);}
+.cta-sec .w{padding-top:100px;padding-bottom:100px;display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;}
+.cta-ey{font-family:var(--en);font-size:.6rem;letter-spacing:.36em;text-transform:uppercase;color:rgba(255,255,255,.55);margin-bottom:14px;}
+.cta-title{font-family:var(--en);font-weight:200;font-size:clamp(2rem,4vw,3rem);letter-spacing:.1em;text-transform:uppercase;color:#fff;line-height:1.1;}
+.cta-desc{font-family:var(--ko);font-size:1rem;color:rgba(255,255,255,.6);line-height:2.1;margin-bottom:18px;}
+.btn-wh{display:inline-block;font-family:var(--en);font-size:.65rem;letter-spacing:.24em;text-transform:uppercase;padding:14px 40px;background:#fff;color:var(--accent);transition:.25s;}
+.btn-wh:hover{background:var(--ink);color:#fff;}
 
 @media(max-width:960px){
-  #nav{padding:0 20px}.nav-links{display:none}
-  .page-hero-content{padding:52px 22px}
-  .classical-intro{padding:52px 22px}
-  .ci-grid{grid-template-columns:1fr}
-  .dark-band{padding:52px 22px}
-  .prog-sec,.prog-sec.rev{grid-template-columns:1fr;direction:ltr}
-  .prog-photo{height:56vw}
-  .prog-text{padding:44px 22px}
-  .cta-band{grid-template-columns:1fr;padding:72px 22px}
-  #footer{padding:52px 22px 32px}
-  .foot-grid{grid-template-columns:1fr}
+  .ci-sec .w{padding-top:52px;padding-bottom:52px;}
+  .ci-grid{grid-template-columns:1fr;}
+  .prog-sec,.prog-sec.rev{grid-template-columns:1fr;direction:ltr;height:auto;}
+  .prog-photo{height:56vw;}
+  .prog-text{padding:40px 22px;}
+  .cta-sec .w{grid-template-columns:1fr;padding-top:72px;padding-bottom:72px;}
 }
 </style>
 </head>
 <body>
-
 <nav id="nav">
   <div class="nav-inner">
-  <a class="nav-logo" href="index.html"><img src="images/logo_dark.png" alt="Regina Pilates"/></a>
-  <div class="nav-right">
-    <ul class="nav-links">
-      <li><a href="director.html">원장 소개</a></li>
-      <li><a href="studio.html">스튜디오</a></li>
-      <li><a href="programs.html" class="active">프로그램</a></li>
-    </ul>
-    <a class="nav-cta" href="https://booking.naver.com/booking/13/bizes/866976" target="_blank">상담 예약</a>
-  </div>
+    <a class="nav-logo" href="index.html">
+      <img src="images/logo_dark.png" alt="Regina Pilates"/>
+    </a>
+    <div class="nav-right">
+      <ul class="nav-links">
+        <li><a href="director.html" class="">원장 소개</a></li>
+        <li><a href="studio.html" class="">스튜디오</a></li>
+        <li><a href="programs.html" class="">프로그램</a></li>
+      </ul>
+      <a class="nav-cta" href="https://booking.naver.com/booking/13/bizes/866976" target="_blank">상담 예약</a>
+    </div>
   </div>
 </nav>
 
-<!-- HERO -->
 <div class="page-hero">
-  <img class="page-hero-bg-img" src="images/studio_01.jpg" alt="레지나 필라테스 프로그램"/>
-  <div class="page-hero-overlay"></div>
-  <div class="page-hero-content">
-    <div class="page-hero-eyebrow">Classical Pilates · 1:1 Private Program</div>
-    <div class="page-hero-title">Programs</div>
-    <div class="page-hero-sub">Joseph H. Pilates의 오리지널 리퍼토리 그대로.<br/>당신의 몸에 맞게 설계된 1:1 프라이빗 레슨.</div>
+  <img class="bg" src="images/studio_01.jpg" alt="프로그램"/>
+  <div class="overlay"></div>
+  <div class="hero-content">
+    <div class="hero-eyebrow">Classical Pilates · 1:1 Private Program</div>
+    <div class="hero-title">Programs</div>
+    <div class="hero-sub">Joseph H. Pilates의 오리지널 리퍼토리 그대로.<br/>당신의 몸에 맞게 설계된 1:1 프라이빗 레슨.</div>
   </div>
 </div>
 
-<!-- CLASSICAL INTRO -->
-<section class="classical-intro reveal">
-<div class="classical-intro-inner">
-  <div class="ci-inner">
-    <div class="ci-eyebrow">Why Classical Pilates</div>
-    <div class="ci-title">클래식 필라테스는<br/>왜 다른가</div>
-    <p style="font-family:var(--ko);font-size:1rem;color:var(--ink2);line-height:2.3;">
-      클래식 필라테스는 단순한 운동이 아닙니다. Joseph H. Pilates가 100년 전 설계한 정확한 순서와 원칙이 있습니다. 몸의 중심인 <strong>Power House(복부·등·골반저근)</strong>를 먼저 깨우고, 그 힘으로 전신의 정렬을 회복하는 방식입니다. 유행에 맞춰 변형된 모던 필라테스와 근본적으로 다릅니다.
-    </p>
+<section class="ci-sec reveal">
+  <div class="w">
+    <div class="ci-ey">Why Classical Pilates</div>
+    <div class="ci-title">클래식 필라테스는 왜 다른가</div>
+    <p class="ci-desc">몸의 중심인 <strong>Power House(복부·등·골반저근)</strong>를 먼저 깨우고, 그 힘으로 전신의 정렬을 회복합니다. 유행에 맞춰 변형된 모던 필라테스와 근본적으로 다릅니다.</p>
     <div class="ci-grid">
-      <div class="ci-item">
-        <div class="ci-item-icon">01 · Power House</div>
-        <div class="ci-item-title">모든 움직임의 시작은 중심</div>
-        <div class="ci-item-desc">복부·등·골반저근을 먼저 활성화합니다. 표면 근육이 아닌 척추와 가장 가까운 심부 근육부터 훈련합니다. 그래서 강한 운동 없이도 체형이 바뀝니다.</div>
-      </div>
-      <div class="ci-item">
-        <div class="ci-item-icon">02 · Original Repertoire</div>
-        <div class="ci-item-title">100년간 검증된 동작 순서</div>
-        <div class="ci-item-desc">동작의 순서와 연결이 중요합니다. Joseph Pilates는 각 동작이 다음 동작을 준비하도록 설계했습니다. 이 순서를 바꾸면 효과가 달라집니다.</div>
-      </div>
-      <div class="ci-item">
-        <div class="ci-item-icon">03 · Full Body Integration</div>
-        <div class="ci-item-title">부위별 운동이 아닌 전신 통합</div>
-        <div class="ci-item-desc">허리, 어깨, 골반을 따로 보지 않습니다. 몸은 하나의 연결된 시스템입니다. 클래식 필라테스는 이 전체 연결성을 회복하는 운동입니다.</div>
-      </div>
-      <div class="ci-item">
-        <div class="ci-item-icon">04 · Breath & Alignment</div>
-        <div class="ci-item-title">호흡이 동작을 이끈다</div>
-        <div class="ci-item-desc">클래식 필라테스의 호흡법은 단순히 숨을 쉬는 것이 아닙니다. 정확한 호흡이 심부 근육을 활성화하고 척추를 보호하며 동작의 효율을 극대화합니다.</div>
-      </div>
+      <div class="ci-item"><div class="ci-icon">01 · Power House</div><div class="ci-item-title">모든 움직임의 시작은 중심</div><div class="ci-item-desc">복부·등·골반저근을 먼저 활성화합니다. 표면 근육이 아닌 심부 근육부터 훈련합니다. 그래서 강한 운동 없이도 체형이 바뀝니다.</div></div>
+      <div class="ci-item"><div class="ci-icon">02 · Original Repertoire</div><div class="ci-item-title">100년간 검증된 동작 순서</div><div class="ci-item-desc">동작의 순서와 연결이 중요합니다. Joseph Pilates는 각 동작이 다음 동작을 준비하도록 설계했습니다. 이 순서를 바꾸면 효과가 달라집니다.</div></div>
+      <div class="ci-item"><div class="ci-icon">03 · Full Body Integration</div><div class="ci-item-title">부위별 운동이 아닌 전신 통합</div><div class="ci-item-desc">허리, 어깨, 골반을 따로 보지 않습니다. 몸은 하나의 연결된 시스템입니다. 클래식 필라테스는 이 전체 연결성을 회복하는 운동입니다.</div></div>
+      <div class="ci-item"><div class="ci-icon">04 · Breath & Alignment</div><div class="ci-item-title">호흡이 동작을 이끈다</div><div class="ci-item-desc">정확한 호흡이 심부 근육을 활성화하고 척추를 보호하며 동작의 효율을 극대화합니다. 단순히 숨을 쉬는 것이 아닙니다.</div></div>
     </div>
   </div>
-</div>
 </section>
 
-<!-- DARK BAND -->
 <section class="dark-band reveal">
-<div class="dark-band-inner">
-  <div class="dark-eyebrow">Classical vs Modern</div>
-  <div class="dark-title">많은 필라테스 중<br/>클래식이어야 하는 이유</div>
-  <p class="dark-desc">모던 필라테스는 대중에 맞게 동작을 쉽게 변형했습니다. 반면 클래식 필라테스는 100년 동안 아무것도 바꾸지 않았습니다. 어렵기 때문이 아니라, 그 정밀함이 효과의 핵심이기 때문입니다. 레지나 필라테스는 그 원형 그대로 지도합니다.</p>
+  <div class="w">
+    <div class="db-ey">Classical vs Modern</div>
+    <div class="db-title">많은 필라테스 중 클래식이어야 하는 이유</div>
+    <p class="db-desc">모던 필라테스는 대중에 맞게 동작을 쉽게 변형했습니다. 반면 클래식 필라테스는 100년 동안 아무것도 바꾸지 않았습니다. 어렵기 때문이 아니라, 그 정밀함이 효과의 핵심이기 때문입니다. 레지나 필라테스는 그 원형 그대로 지도합니다.</p>
+  </div>
 </section>
 
-<!-- PROGRAM 01 -->
-  <div style="font-family:var(--en);font-weight:200;font-size:clamp(1.6rem,2.5vw,2.2rem);letter-spacing:.14em;text-transform:uppercase;color:var(--ink);">Posture Correction</div>
-</div>
 <section class="prog-sec reveal" id="posture">
-  <div class="prog-photo"><img src="images/studio_03.jpg" alt="자세교정 필라테스"/></div>
+  <div class="prog-photo"><img src="images/studio_03.jpg" alt="자세교정"/></div>
   <div class="prog-text bg-paper">
+    <div class="prog-en">Posture Correction</div>
     <div class="prog-ko">자세 교정 프로그램</div>
-    <div class="prog-tags">
-      <span class="prog-tag">허리디스크</span><span class="prog-tag">거북목</span>
-      <span class="prog-tag">라운드숄더</span><span class="prog-tag">척추측만</span>
-    </div>
-    <div class="prog-headline">스트레칭으로는 안 됩니다. 심부 근육부터 바꿔야 합니다.</div>
+    <div class="prog-tags"><span class="prog-tag">허리디스크</span><span class="prog-tag">거북목</span><span class="prog-tag">라운드숄더</span><span class="prog-tag">척추측만</span></div>
+    <div class="prog-hl">스트레칭으로는 안 됩니다. 심부 근육부터 바꿔야 합니다.</div>
     <p class="prog-desc">오랜 시간 굳어진 자세 습관은 표면 근육만 강화해서는 바뀌지 않습니다. 척추를 지지하는 심부 근육을 직접 훈련해야 몸의 정렬이 근본적으로 달라집니다.</p>
-    <ul class="prog-bullets">
+    <ul class="prog-ul">
       <li><strong>심부 근육 직접 훈련</strong> — 허리·목·어깨 통증의 근본 원인인 심부 근육 약화를 해결합니다.</li>
       <li><strong>Gratz 기구가 정렬을 가르친다</strong> — 기구의 저항이 몸을 올바른 위치로 자연스럽게 유도합니다.</li>
       <li><strong>일상이 바뀐다</strong> — 앉고 서고 걷는 모든 동작에서 자연스럽게 바른 자세가 유지됩니다.</li>
-      <li><strong>강한 운동 없이도 변화</strong> — 근력 운동이나 스트레칭과 달리, 몸의 패턴 자체를 바꿉니다.</li>
     </ul>
   </div>
 </section>
 
-<!-- PROGRAM 02 -->
-  <div style="font-family:var(--en);font-weight:200;font-size:clamp(1.6rem,2.5vw,2.2rem);letter-spacing:.14em;text-transform:uppercase;color:var(--ink);">Menopause Pilates</div>
-</div>
 <section class="prog-sec rev reveal" id="menopause">
-  <div class="prog-photo"><img src="images/studio_02.jpg" alt="갱년기 여성 필라테스"/></div>
+  <div class="prog-photo"><img src="images/studio_02.jpg" alt="갱년기 여성"/></div>
   <div class="prog-text bg-tint">
+    <div class="prog-en">Menopause Pilates</div>
     <div class="prog-ko">갱년기 여성을 위한 프로그램</div>
-    <div class="prog-tags">
-      <span class="prog-tag">골반저근 강화</span><span class="prog-tag">근감소증</span>
-      <span class="prog-tag">골밀도 유지</span><span class="prog-tag">호르몬 균형</span>
-    </div>
-    <div class="prog-headline">이 시기일수록 정확한 움직임이 필요합니다.</div>
+    <div class="prog-tags"><span class="prog-tag">골반저근 강화</span><span class="prog-tag">근감소증</span><span class="prog-tag">골밀도 유지</span><span class="prog-tag">호르몬 균형</span></div>
+    <div class="prog-hl">이 시기일수록 정확한 움직임이 필요합니다.</div>
     <p class="prog-desc">호르몬 변화로 근력이 줄고 체형이 달라집니다. 격한 운동은 오히려 관절에 부담을 줍니다. 클래식 필라테스는 이 시기 여성의 몸에 가장 안전하고 효과적인 방법입니다.</p>
-    <ul class="prog-bullets">
+    <ul class="prog-ul">
       <li><strong>골반저근 강화</strong> — 여성 고유의 신체 기능을 되살려 활력과 자신감을 회복합니다.</li>
       <li><strong>근감소증 예방</strong> — 무리 없이 근력을 키워 호르몬 변화로 집중되는 복부 체형 변화를 관리합니다.</li>
       <li><strong>골밀도 유지</strong> — 정밀한 체중 부하 움직임으로 골밀도를 유지합니다. 충격 없이 안전하게.</li>
-      <li><strong>완전 프라이빗</strong> — 말하기 어려운 고민도 단둘이 편안하게 나눌 수 있습니다.</li>
     </ul>
   </div>
 </section>
 
-<!-- PROGRAM 03 -->
-  <div style="font-family:var(--en);font-weight:200;font-size:clamp(1.6rem,2.5vw,2.2rem);letter-spacing:.14em;text-transform:uppercase;color:var(--ink);">Pre / Post Natal</div>
-</div>
 <section class="prog-sec reveal" id="prenatal">
-  <div class="prog-photo"><img src="images/studio_06.jpg" alt="산전산후 필라테스"/></div>
+  <div class="prog-photo"><img src="images/studio_06.jpg" alt="산전산후"/></div>
   <div class="prog-text bg-white">
+    <div class="prog-en">Pre / Post Natal</div>
     <div class="prog-ko">산전 · 산후 임산부 프로그램</div>
-    <div class="prog-tags">
-      <span class="prog-tag">임산부 필라테스</span><span class="prog-tag">산후 골반 관리</span>
-      <span class="prog-tag">골반저근 회복</span><span class="prog-tag">코어 회복</span>
-    </div>
-    <div class="prog-headline">임신 중부터 출산 후까지. 단계별로 안전하게.</div>
-    <p class="prog-desc">임신과 출산은 몸의 중심을 완전히 바꿉니다. 잘못된 움직임은 오히려 회복을 늦춥니다. Pre/Post Natal 전문 자격을 보유한 전문가가 임신 단계에 맞게 설계합니다.</p>
-    <ul class="prog-bullets">
+    <div class="prog-tags"><span class="prog-tag">임산부 필라테스</span><span class="prog-tag">산후 골반 관리</span><span class="prog-tag">골반저근 회복</span></div>
+    <div class="prog-hl">임신 중부터 출산 후까지. 단계별로 안전하게.</div>
+    <p class="prog-desc">임신과 출산은 몸의 중심을 완전히 바꿉니다. Pre/Post Natal 전문 자격을 보유한 전문가가 임신 단계에 맞게 설계합니다.</p>
+    <ul class="prog-ul">
       <li><strong>임신 초·중·후기 맞춤 설계</strong> — 각 분기별 신체 변화를 고려한 안전한 프로그램입니다.</li>
       <li><strong>골반저근 · 코어 회복</strong> — 출산 후 약해진 골반저근과 복부를 단계적으로 회복시킵니다.</li>
-      <li><strong>허리 부담 감소</strong> — 임신 중 증가하는 허리 부담을 줄이고 골반 안정성을 높입니다.</li>
       <li><strong>1인 전용 시설</strong> — 탈의실, 샤워실 모두 1인 전용. 임산부가 편안하게 이용할 수 있습니다.</li>
     </ul>
   </div>
 </section>
 
-<!-- PROGRAM 04 -->
-  <div style="font-family:var(--en);font-weight:200;font-size:clamp(1.6rem,2.5vw,2.2rem);letter-spacing:.14em;text-transform:uppercase;color:var(--ink);">Golf Performance</div>
-</div>
 <section class="prog-sec rev reveal" id="golf">
   <div class="prog-photo"><img src="images/studio_04.jpg" alt="골프 필라테스"/></div>
   <div class="prog-text bg-paper">
+    <div class="prog-en">Golf Performance</div>
     <div class="prog-ko">골프 퍼포먼스 향상 프로그램</div>
-    <div class="prog-tags">
-      <span class="prog-tag">비거리 향상</span><span class="prog-tag">척추 회전력</span>
-      <span class="prog-tag">부상 예방</span><span class="prog-tag">체형 균형</span>
-    </div>
-    <div class="prog-headline">몸이 바뀌면 스윙이 바뀝니다.</div>
-    <p class="prog-desc">좋은 스윙의 핵심은 장비가 아닙니다. 코어 안정성, 척추 회전력, 좌우 균형. 이 세 가지가 스윙의 질을 결정합니다. 클래식 필라테스가 이 세 가지를 동시에 훈련합니다.</p>
-    <ul class="prog-bullets">
+    <div class="prog-tags"><span class="prog-tag">비거리 향상</span><span class="prog-tag">척추 회전력</span><span class="prog-tag">부상 예방</span></div>
+    <div class="prog-hl">몸이 바뀌면 스윙이 바뀝니다.</div>
+    <p class="prog-desc">좋은 스윙의 핵심은 장비가 아닙니다. 코어 안정성, 척추 회전력, 좌우 균형. 이 세 가지가 스윙의 질을 결정합니다.</p>
+    <ul class="prog-ul">
       <li><strong>척추 회전 유연성</strong> — 흉추 회전 범위를 늘려 더 자연스럽고 강력한 스윙을 만듭니다.</li>
-      <li><strong>코어 안정성 = 비거리</strong> — Power House를 강화하면 스윙 시 에너지 손실이 줄고 임팩트 효율이 높아집니다.</li>
+      <li><strong>코어 안정성 = 비거리</strong> — Power House 강화로 스윙 시 에너지 손실을 최소화합니다.</li>
       <li><strong>좌우 불균형 해소</strong> — 한 방향 반복 동작인 스윙이 만드는 체형 비대칭을 교정합니다.</li>
-      <li><strong>부상 없이 오래</strong> — 허리·어깨·무릎 부상의 근본 원인을 해결합니다.</li>
     </ul>
   </div>
 </section>
 
-<!-- PROGRAM 05 -->
-  <div style="font-family:var(--en);font-weight:200;font-size:clamp(1.6rem,2.5vw,2.2rem);letter-spacing:.14em;text-transform:uppercase;color:var(--ink);">Kids &amp; Teen</div>
-</div>
 <section class="prog-sec reveal" id="kids">
-  <div class="prog-photo"><img src="images/studio_07.jpg" alt="키즈 청소년 필라테스"/></div>
+  <div class="prog-photo"><img src="images/studio_07.jpg" alt="키즈 청소년"/></div>
   <div class="prog-text bg-tint">
+    <div class="prog-en">Kids &amp; Teen</div>
     <div class="prog-ko">어린이 · 청소년 키즈 프로그램</div>
-    <div class="prog-tags">
-      <span class="prog-tag">자세 교정</span><span class="prog-tag">키 성장</span>
-      <span class="prog-tag">거북목 예방</span><span class="prog-tag">집중력 향상</span>
-    </div>
-    <div class="prog-headline">바른 자세가 성장의 시작입니다.</div>
-    <p class="prog-desc">스마트폰과 책상이 아이의 척추를 망가뜨립니다. 무너진 체형은 키 성장을 직접 방해합니다. 성장기에 바른 체형 습관을 만들면 평생이 달라집니다.</p>
-    <ul class="prog-bullets">
+    <div class="prog-tags"><span class="prog-tag">자세 교정</span><span class="prog-tag">키 성장</span><span class="prog-tag">거북목 예방</span></div>
+    <div class="prog-hl">바른 자세가 성장의 시작입니다.</div>
+    <p class="prog-desc">스마트폰과 책상이 아이의 척추를 망가뜨립니다. 성장기에 바른 체형 습관을 만들면 평생이 달라집니다.</p>
+    <ul class="prog-ul">
       <li><strong>키 성장 최적화</strong> — 성장판 주변 근육을 활성화하고 척추 정렬을 바로잡아 키 성장 환경을 만듭니다.</li>
       <li><strong>거북목 · 척추측만 조기 관리</strong> — 굳어지기 전에 잡아야 합니다. 성장기가 골든타임입니다.</li>
-      <li><strong>집중력 향상</strong> — 바른 자세는 뇌로 가는 산소와 혈류를 개선합니다. 공부에도 도움이 됩니다.</li>
-      <li><strong>또래 없는 1:1 프라이빗</strong> — 눈치 보지 않고 아이가 온전히 집중할 수 있는 공간입니다.</li>
+      <li><strong>또래 없는 1:1 프라이빗</strong> — 아이가 온전히 집중할 수 있는 독립 공간에서 진행됩니다.</li>
     </ul>
   </div>
 </section>
 
-<!-- CTA -->
-<section class="cta-band reveal">
-<div class="cta-band-inner">
-  <div>
-    <div class="cta-eyebrow">Start Your Journey</div>
-    <div class="cta-title">나에게 맞는<br/>프로그램으로 시작하세요</div>
+<section class="cta-sec reveal">
+  <div class="w">
+    <div>
+      <div class="cta-ey">Start Your Journey</div>
+      <div class="cta-title">나에게 맞는<br/>프로그램으로 시작하세요</div>
+    </div>
+    <div>
+      <p class="cta-desc">처음엔 바디 리딩 세션으로 시작합니다.<br/>몸 상태를 정확히 파악하고, 그에 맞는 프로그램을 설계합니다.<br/>처음 한 번에 한해 Special 레슨비가 적용됩니다.</p>
+      <a class="btn-wh" href="https://booking.naver.com/booking/13/bizes/866976" target="_blank">상담 예약하기</a>
+    </div>
   </div>
-  <div>
-    <p class="cta-desc">처음엔 바디 리딩 세션으로 시작합니다.<br/>몸 상태를 정확히 파악하고, 그에 맞는 프로그램을 설계합니다.<br/>처음 한 번에 한해 Special 레슨비가 적용됩니다.</p>
-    <a class="btn-white" href="https://booking.naver.com/booking/13/bizes/866976" target="_blank">상담 예약하기</a>
-  </div>
-</div>
 </section>
 
 <footer id="footer">
-  <div style="max-width:1280px;margin:0 auto;">
-  <div class="foot-grid">
-    <div>
-      <div class="foot-logo"><img src="images/logo_light.png" alt="Regina Pilates"/></div>
-      <p class="foot-addr">서울특별시 강남구 학동로77길 10, 3층<br/>청담역 8번 출구 도보 5분</p>
-      <p class="foot-brand-desc">Joseph H. Pilates의 오리지널 리퍼토리를 그대로 전수하는 클래식 필라테스 프라이빗 스튜디오.</p>
+  <div class="w">
+    <div class="foot-grid">
+      <div>
+        <div class="foot-logo"><img src="images/logo_light.png" alt="Regina Pilates"/></div>
+        <p class="foot-addr">서울특별시 강남구 학동로77길 10, 3층<br/>청담역 8번 출구 도보 5분</p>
+        <p class="foot-desc">Joseph H. Pilates의 오리지널 리퍼토리를 그대로 전수하는 클래식 필라테스 프라이빗 스튜디오.</p>
+      </div>
+      <div>
+        <h5>Pages</h5>
+        <ul>
+          <li><a href="director.html">원장 소개</a></li>
+          <li><a href="studio.html">스튜디오</a></li>
+          <li><a href="programs.html">프로그램</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Contact</h5>
+        <ul>
+          <li><a href="https://booking.naver.com/booking/13/bizes/866976" target="_blank">상담 예약</a></li>
+          <li><a href="#">KakaoTalk</a></li>
+          <li><a href="#">Instagram</a></li>
+        </ul>
+      </div>
     </div>
-    <div>
-      <h5>Pages</h5>
-      <ul>
-        <li><a href="director.html">원장 소개</a></li>
-        <li><a href="studio.html">스튜디오</a></li>
-        <li><a href="programs.html">프로그램</a></li>
-      </ul>
+    <div class="foot-bot">
+      <span class="foot-copy">© 2026 Regina Pilates · All rights reserved</span>
     </div>
-    <div>
-      <h5>Contact</h5>
-      <ul>
-        <li><a href="https://booking.naver.com/booking/13/bizes/866976" target="_blank">상담 예약</a></li>
-        <li><a href="#">KakaoTalk 채널</a></li>
-        <li><a href="#">Instagram</a></li>
-      </ul>
-    </div>
-  </div>
-  <div class="foot-bot"><span class="foot-copy">© 2026 Regina Pilates · All rights reserved</span></div>
   </div>
 </footer>
 <script>
 const obs=new IntersectionObserver(e=>{e.forEach(x=>{if(x.isIntersecting){x.target.classList.add('in');obs.unobserve(x.target);}});},{threshold:0.08});
 document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
 </script>
-
 </body>
 </html>

@@ -4,15 +4,14 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>레지나 필라테스 청담 — Classical Pilates Private Studio</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@100;200;300;400&family=Nanum+Gothic:wght@400;700&display=swap" rel="stylesheet"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@100;200;300;400&family=Nanum+Gothic:wght@400;700&display=swap" rel="stylesheet"/>
 <style>
 :root{
-  --bg:#FAFAF7; --paper:#F4F2EC; --tint:#EAE6DC;
-  --accent:#8E8276; --accentL:#C4B89A; --accentD:#5C5246;
-  --ink:#1C1916; --ink2:#7A736A;
-  --line:#E0DAD0; --line2:#D5CCBF; --white:#FFFFFF;
-  --en:'Outfit',sans-serif; --ko:'Nanum Gothic',sans-serif;
+  --bg:#FAFAF7;--paper:#F4F2EC;--tint:#EAE6DC;
+  --accent:#8E8276;--accentL:#C4B89A;--accentD:#5C5246;
+  --ink:#1C1916;--ink2:#7A736A;
+  --line:#E0DAD0;--line2:#D5CCBF;--white:#FFFFFF;
+  --en:'Outfit',sans-serif;--ko:'Nanum Gothic',sans-serif;
 }
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 html{scroll-behavior:smooth}
@@ -20,291 +19,239 @@ body{font-family:var(--ko);background:var(--bg);color:var(--ink);-webkit-font-sm
 img{display:block}
 a{text-decoration:none}
 
+/* ── 핵심: 모든 콘텐츠 max-width 1280px ── */
+.w{max-width:1280px;margin:0 auto;padding:0 60px;}
+
 /* ── NAV ── */
-#nav{
-  position:fixed;top:0;left:0;right:0;z-index:200;
-  background:rgba(250,250,247,.97);backdrop-filter:blur(16px);
-  border-bottom:1px solid var(--line);
-  height:86px;
-  display:flex;align-items:center;justify-content:center;
-}
-.nav-inner{
-  max-width:1280px;width:100%;padding:0 60px;
-  display:flex;align-items:center;justify-content:space-between;
-}
-.nav-right{display:flex;align-items:center;gap:36px}
-.nav-logo img{height:62px;width:auto;object-fit:contain}
-.nav-links{display:flex;gap:36px;list-style:none}
-.nav-links a{
-  font-family:var(--en);font-size:.75rem;
-  letter-spacing:.18em;text-transform:uppercase;
-  color:var(--ink2);transition:.2s;
-}
-.nav-links a:hover{color:var(--accent)}
-.nav-cta{
-  font-family:var(--en);font-size:.75rem;
-  letter-spacing:.2em;text-transform:uppercase;
-  padding:11px 28px;background:var(--accent);color:var(--white);transition:.2s;
-}
-.nav-cta:hover{background:var(--accentD)}
+#nav{position:fixed;top:0;left:0;right:0;z-index:200;background:rgba(250,250,247,.97);backdrop-filter:blur(16px);border-bottom:1px solid var(--line);height:86px;display:flex;align-items:center;}
+.nav-inner{max-width:1280px;width:100%;margin:0 auto;padding:0 60px;display:flex;align-items:center;justify-content:space-between;}
+.nav-logo img{height:62px;width:auto;}
+.nav-right{display:flex;align-items:center;gap:36px;}
+.nav-links{display:flex;gap:36px;list-style:none;}
+.nav-links a{font-family:var(--en);font-size:.75rem;letter-spacing:.18em;text-transform:uppercase;color:var(--ink2);transition:.2s;}
+.nav-links a:hover,.nav-links a.active{color:var(--accent);}
+.nav-cta{font-family:var(--en);font-size:.75rem;letter-spacing:.2em;text-transform:uppercase;padding:11px 28px;background:var(--accent);color:var(--white);transition:.2s;}
+.nav-cta:hover{background:var(--accentD);}
 
-/* ── HERO ── */
-#hero-wrap{max-width:1280px;margin:0 auto;}
-#hero{display:grid;grid-template-columns:44% 56%;min-height:100vh;padding-top:86px;}
-.hero-text{
-  background:var(--bg);padding:80px 60px 60px 60px;
-  display:flex;flex-direction:column;justify-content:space-between;
-  position:relative;
-}
-.hero-text::after{
-  content:'';position:absolute;right:0;top:10%;bottom:10%;
-  width:1px;background:var(--line);
-}
-.hero-photo{position:relative;overflow:hidden}
-.hero-photo img{width:100%;height:100%;object-fit:cover;object-position:center 20%}
-.hero-badge{
-  position:absolute;bottom:32px;right:32px;
-  background:rgba(250,250,247,.93);backdrop-filter:blur(10px);
-  padding:14px 20px;border-left:2px solid var(--accent);
-}
-.badge-en{font-family:var(--en);font-size:.56rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin-bottom:4px}
-.badge-ko{font-family:var(--ko);font-size:.96rem;font-weight:700;color:var(--ink)}
-.hero-main{flex:1;display:flex;flex-direction:column;justify-content:center;padding:40px 0}
-.hero-eyebrow{
-  font-family:var(--en);font-size:.6rem;letter-spacing:.36em;text-transform:uppercase;
-  color:var(--accentL);display:flex;align-items:center;gap:12px;margin-bottom:26px;
-}
-.hero-eyebrow::before{content:'';width:20px;height:1px;background:var(--accentL)}
-.hero-title{
-  font-family:var(--en);font-weight:200;
-  font-size:clamp(3.2rem,6vw,5.6rem);
-  letter-spacing:.22em;line-height:.93;
-  color:var(--ink);text-transform:uppercase;padding-left:.22em;
-}
-.hero-title em{display:block;font-style:normal}
-.hero-ko{font-family:var(--ko);font-size:1.03rem;color:var(--ink2);line-height:2.1;margin-top:22px;}
-.hero-actions{display:flex;flex-direction:row;gap:14px;margin-top:34px;flex-wrap:wrap;}
-.btn-fill{
-  font-family:var(--en);font-size:.68rem;letter-spacing:.2em;text-transform:uppercase;
-  padding:14px 40px;background:var(--accent);color:var(--white);
-  border:none;cursor:pointer;transition:.25s;text-align:center;display:inline-block;
-}
-.btn-fill:hover{background:var(--accentD)}
-.btn-line{
-  font-family:var(--en);font-size:.68rem;letter-spacing:.2em;text-transform:uppercase;
-  padding:13px 40px;border:1px solid var(--accent);color:var(--accent);
-  background:transparent;cursor:pointer;transition:.25s;text-align:center;display:inline-block;
-}
-.btn-line:hover{background:var(--accent);color:var(--white)}
-.hero-bottom{border-top:1px solid var(--line);padding-top:22px;display:flex;gap:36px}
-.hero-stat-n{font-family:var(--en);font-weight:200;font-size:1.6rem;letter-spacing:.06em;color:var(--ink)}
-.hero-stat-l{font-family:var(--en);font-size:.54rem;letter-spacing:.18em;text-transform:uppercase;color:var(--accentL);margin-top:3px}
+/* ── PAGE HERO ── */
+.page-hero{padding-top:86px;min-height:480px;position:relative;overflow:hidden;display:flex;align-items:flex-end;}
+.page-hero img.bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 25%;}
+.page-hero .overlay{position:absolute;inset:0;background:linear-gradient(135deg,rgba(28,25,22,.88) 0%,rgba(28,25,22,.4) 60%,rgba(28,25,22,.1) 100%);}
+.page-hero .hero-content{position:relative;z-index:2;padding:80px 60px;max-width:720px;}
+.hero-eyebrow{font-family:var(--en);font-size:.62rem;letter-spacing:.38em;text-transform:uppercase;color:var(--accentL);margin-bottom:16px;display:flex;align-items:center;gap:14px;}
+.hero-eyebrow::before{content:'';width:28px;height:1px;background:var(--accentL);}
+.hero-title{font-family:var(--en);font-weight:200;font-size:clamp(3rem,5.5vw,5.2rem);letter-spacing:.22em;text-transform:uppercase;color:#fff;line-height:.95;padding-left:.22em;}
+.hero-sub{font-family:var(--ko);font-size:1rem;color:rgba(255,255,255,.55);margin-top:18px;line-height:2.1;}
 
-/* ── SEC LABEL ── */
-.sec-label{
-  background:var(--white);
-  border-top:3px solid var(--accent);border-bottom:1px solid var(--line);
-}
-.sec-label-inner{
-  max-width:1280px;margin:0 auto;padding:32px 60px 24px;
-}
-.sec-label-n{font-family:var(--en);font-size:.6rem;letter-spacing:.36em;text-transform:uppercase;color:var(--accentL);display:block;margin-bottom:8px}
-.sec-label-t{display:none}
+/* ── SPLIT ── */
+.split{display:grid;grid-template-columns:50% 50%;min-height:520px;max-width:1280px;margin:0 auto;}
+.split.rev{direction:rtl;}.split.rev>*{direction:ltr;}
+.split-photo{overflow:hidden;}
+.split-photo img{width:100%;height:100%;object-fit:cover;transition:.5s;}
+.split-text{padding:72px 60px;display:flex;flex-direction:column;justify-content:center;}
+.bg-white{background:var(--white);}
+.bg-paper{background:var(--paper);}
+.bg-tint{background:var(--tint);}
+.bg-dark{background:var(--ink);}
+.s-ey{font-family:var(--en);font-size:.6rem;letter-spacing:.32em;text-transform:uppercase;color:var(--accentL);margin-bottom:12px;}
+.s-title{font-family:var(--en);font-weight:200;font-size:clamp(1.6rem,2.8vw,2.3rem);letter-spacing:.1em;text-transform:uppercase;color:var(--ink);line-height:1.1;margin-bottom:18px;}
+.s-title.lt{color:#fff;}
+.s-ko{font-family:var(--ko);font-size:1.05rem;color:var(--accent);font-weight:700;margin-bottom:18px;}
+.s-desc{font-family:var(--ko);font-size:1rem;color:var(--ink2);line-height:2.2;}
+.s-desc.lt{color:rgba(255,255,255,.5);}
+.s-ul{list-style:none;margin-top:16px;display:flex;flex-direction:column;gap:11px;}
+.s-ul li{font-family:var(--ko);font-size:.95rem;color:var(--ink2);padding-left:18px;position:relative;line-height:1.75;}
+.s-ul li::before{content:'—';position:absolute;left:0;color:var(--accent);}
+.s-ul li strong{color:var(--ink);}
+.s-tag{display:inline-block;margin-top:20px;font-family:var(--en);font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);border:1px solid var(--line2);padding:8px 20px;}
 
-/* ── STRENGTHS ── */
-#strengths{background:var(--tint)}
-#strengths .str-inner{display:grid;grid-template-columns:repeat(3,1fr);max-width:1280px;margin:0 auto;}
-.str-item{padding:52px 48px;border-right:1px solid var(--line2)}
-.str-item:last-child{border-right:none}
-.str-no{font-family:var(--en);font-size:.56rem;letter-spacing:.24em;text-transform:uppercase;color:var(--accentL);margin-bottom:16px}
-.str-title{font-family:var(--en);font-weight:200;font-size:1.15rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink);line-height:1.25;margin-bottom:12px}
-.str-desc{font-family:var(--ko);font-size:.98rem;color:var(--ink2);line-height:2.05}
-.str-tag{display:inline-block;margin-top:14px;font-family:var(--en);font-size:.55rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);border:1px solid var(--line2);padding:4px 12px}
-
-/* ── STUDIO BAND ── */
-#studio-band{height:480px;position:relative;overflow:hidden;}
-#studio-band img{width:100%;height:100%;object-fit:cover;object-position:center 45%}
-.studio-overlay{
-  position:absolute;inset:0;background:rgba(28,25,22,.38);
-  display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;
-}
-.studio-overlay-t{font-family:var(--en);font-weight:100;font-size:clamp(2.4rem,6vw,5rem);letter-spacing:.28em;text-transform:uppercase;color:#fff;text-align:center}
-.studio-overlay-s{font-family:var(--en);font-size:.72rem;letter-spacing:.3em;text-transform:uppercase;color:rgba(255,255,255,.5)}
-
-/* ── PROGRAMS ── */
-#programs{background:var(--white)}
-.programs-grid{display:grid;grid-template-columns:repeat(3,1fr);max-width:1280px;margin:0 auto;}
-.prog-item{
-  padding:52px 44px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);
-  position:relative;transition:.3s;
-}
-.prog-item:hover{background:var(--paper)}
-.prog-item:nth-child(3n){border-right:none}
-.prog-item:nth-child(4),.prog-item:nth-child(5){border-bottom:none}
-.prog-num{font-family:var(--en);font-size:.54rem;letter-spacing:.28em;text-transform:uppercase;color:var(--accentL);margin-bottom:18px}
-.prog-title{font-family:var(--en);font-weight:200;font-size:1.08rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink);margin-bottom:10px}
-.prog-ko{font-family:var(--ko);font-size:.96rem;color:var(--accent);font-weight:700;margin-bottom:10px}
-.prog-desc{font-family:var(--ko);font-size:.96rem;color:var(--ink2);line-height:2}
-.prog-arrow{margin-top:20px;font-family:var(--en);font-size:.58rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);display:flex;align-items:center;gap:8px}
-.prog-arrow::after{content:'→';font-size:.9rem;transition:.2s}
-.prog-item:hover .prog-arrow::after{transform:translateX(4px)}
-
-/* ── TRIAL LESSON ── */
-#trial{background:var(--ink);padding:0}
-.trial-inner{
-  display:grid;grid-template-columns:1fr 1fr;
-  max-width:1280px;margin:0 auto;
-}
-.trial-left{
-  padding:88px 64px;border-right:1px solid rgba(255,255,255,.08);
-}
-.trial-right{padding:88px 64px}
-.trial-eyebrow{
-  font-family:var(--en);font-size:.6rem;letter-spacing:.36em;text-transform:uppercase;
-  color:var(--accentL);margin-bottom:14px;display:flex;align-items:center;gap:12px;
-}
-.trial-eyebrow::before{content:'';width:20px;height:1px;background:var(--accentL)}
-.trial-title{
-  font-family:var(--en);font-weight:200;
-  font-size:clamp(2rem,4vw,3rem);letter-spacing:.12em;text-transform:uppercase;
-  color:#fff;line-height:1.1;margin-bottom:18px;
-}
-.trial-desc{font-family:var(--ko);font-size:1rem;color:rgba(255,255,255,.5);line-height:2.15;margin-bottom:28px}
-.trial-type-label{
-  font-family:var(--en);font-size:.58rem;letter-spacing:.22em;text-transform:uppercase;
-  color:var(--accentL);margin-bottom:22px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,.1);
-}
-.trial-card{
-  padding:22px 24px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);
-  margin-bottom:14px;transition:.2s;
-}
-.trial-card:last-child{margin-bottom:0}
-.trial-card:hover{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.22)}
-.trial-card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
-.trial-card-title{font-family:var(--en);font-weight:200;font-size:1.05rem;letter-spacing:.1em;text-transform:uppercase;color:#fff}
-.trial-card-badge{
-  font-family:var(--en);font-size:.52rem;letter-spacing:.14em;text-transform:uppercase;
-  background:var(--accent);color:#fff;padding:4px 10px;
-}
-.trial-card-desc{font-family:var(--ko);font-size:.96rem;color:rgba(255,255,255,.42);line-height:1.85;margin-bottom:16px}
-.trial-booking-btn{
-  display:inline-block;font-family:var(--en);font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;
-  padding:10px 24px;border:1px solid rgba(255,255,255,.35);color:#fff;transition:.25s;
-}
-.trial-booking-btn:hover{background:#fff;color:var(--ink)}
-.trial-notice{
-  margin-top:18px;padding:14px 18px;
-  background:rgba(255,255,255,.04);border-left:2px solid var(--accentL);
-}
-.trial-notice-t{font-family:var(--en);font-size:.55rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accentL);margin-bottom:6px}
-.trial-notice-d{font-family:var(--ko);font-size:.94rem;color:rgba(255,255,255,.38);line-height:1.8}
-
-/* ── DIRECTOR ── */
-#director{background:var(--paper)}
-#director .dir-inner{display:grid;grid-template-columns:45% 55%;max-width:1280px;margin:0 auto;}
-.dir-photo{position:relative;overflow:hidden;min-height:580px}
-.dir-photo img{width:100%;height:100%;object-fit:cover;object-position:center 10%}
-.dir-photo-label{
-  position:absolute;bottom:28px;left:28px;
-  background:rgba(250,250,247,.92);backdrop-filter:blur(8px);
-  padding:13px 18px;border-left:2px solid var(--accent);
-}
-.dir-text{padding:88px 64px 80px;display:flex;flex-direction:column;justify-content:center}
-.dir-eyebrow{font-family:var(--en);font-size:.58rem;letter-spacing:.3em;text-transform:uppercase;color:var(--accentL);margin-bottom:14px}
-.dir-divider{height:1px;background:var(--ink);margin-bottom:24px}
-.dir-name{font-family:var(--en);font-weight:200;font-size:2.6rem;letter-spacing:.28em;text-transform:uppercase;color:var(--ink);padding-left:.28em;margin-bottom:6px}
-.dir-role{font-family:var(--en);font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin-bottom:22px}
-.dir-desc{font-family:var(--ko);font-size:1rem;color:var(--ink2);line-height:2.15;margin-bottom:20px}
-.dir-lineage{background:var(--tint);border-left:2px solid var(--accent);padding:14px 18px;margin-bottom:20px}
-.dir-lineage-lbl{font-family:var(--en);font-size:.55rem;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
-.dir-lineage-flow{font-family:var(--ko);font-size:.96rem;color:var(--ink2);line-height:1.9}
-.cert-list{border-top:1px solid var(--line)}
-.cert-item{
-  padding:12px 0;border-bottom:1px solid var(--line);
-  display:flex;gap:12px;align-items:flex-start;
-}
-.cert-dot{width:4px;height:4px;background:var(--accent);border-radius:50%;flex-shrink:0;margin-top:9px}
-.cert-content{}
-.cert-title{font-family:var(--en);font-size:.86rem;letter-spacing:.06em;color:var(--ink);font-weight:400;margin-bottom:4px}
-.cert-desc{font-family:var(--ko);font-size:.92rem;color:var(--ink2);line-height:1.8}
-
-/* ── APPARATUS ── */
-#apparatus{background:var(--white)}
-#apparatus .app-inner{display:grid;grid-template-columns:55% 45%;max-width:1280px;margin:0 auto;}
-.app-photo{position:relative;overflow:hidden;min-height:500px}
-.app-photo img{width:100%;height:100%;object-fit:cover;object-position:center 40%}
-.app-text{padding:88px 60px;display:flex;flex-direction:column;justify-content:center;background:var(--tint)}
-.app-eyebrow{font-family:var(--en);font-size:.58rem;letter-spacing:.3em;text-transform:uppercase;color:var(--accentL);margin-bottom:14px}
-.app-title{font-family:var(--en);font-weight:200;font-size:clamp(1.8rem,3.5vw,2.6rem);letter-spacing:.14em;text-transform:uppercase;color:var(--ink);line-height:1.1;margin-bottom:22px}
-.app-desc{font-family:var(--ko);font-size:1rem;color:var(--ink2);line-height:2.2}
-.app-tag{display:inline-block;margin-top:22px;font-family:var(--en);font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);border:1px solid var(--line2);padding:8px 20px;background:var(--white)}
-
-/* ── CTA ── */
-#cta{background:var(--accent);padding:110px 0;}
-.cta-inner{max-width:1280px;margin:0 auto;padding:0 60px;display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;}
-.cta-eyebrow{font-family:var(--en);font-size:.58rem;letter-spacing:.34em;text-transform:uppercase;color:rgba(255,255,255,.55);margin-bottom:14px}
-.cta-title{font-family:var(--en);font-weight:200;font-size:clamp(2.2rem,4.5vw,3.4rem);letter-spacing:.1em;text-transform:uppercase;color:#fff;line-height:1.1}
-.cta-desc{font-family:var(--ko);font-size:1.03rem;color:rgba(255,255,255,.6);line-height:2.1;margin-bottom:18px}
-.btn-white{
-  display:inline-block;font-family:var(--en);font-size:.62rem;letter-spacing:.24em;text-transform:uppercase;
-  padding:14px 40px;background:#fff;color:var(--accent);transition:.25s;
-}
-.btn-white:hover{background:var(--ink);color:#fff}
+/* ── DARK BAND ── */
+.dark-band{background:var(--ink);}
+.dark-band .w{padding-top:72px;padding-bottom:72px;}
+.db-ey{font-family:var(--en);font-size:.62rem;letter-spacing:.36em;text-transform:uppercase;color:var(--accentL);margin-bottom:16px;display:flex;align-items:center;gap:14px;}
+.db-ey::before{content:'';width:28px;height:1px;background:var(--accentL);}
+.db-title{font-family:var(--en);font-weight:200;font-size:clamp(1.8rem,3vw,2.8rem);letter-spacing:.12em;text-transform:uppercase;color:#fff;line-height:1.1;margin-bottom:20px;}
+.db-desc{font-family:var(--ko);font-size:1rem;color:rgba(255,255,255,.5);line-height:2.3;max-width:760px;}
 
 /* ── FOOTER ── */
-#footer{background:var(--ink);padding:72px 0 44px;}
-.foot-inner{max-width:1280px;margin:0 auto;padding:0 60px;}
-.foot-logo{margin-bottom:22px}
-.foot-logo img{height:53px;width:auto;opacity:.75}
-.foot-grid{
-  display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:36px;
-  padding-bottom:44px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:28px;
-}
-.foot-brand-desc{font-family:var(--ko);font-size:.94rem;color:rgba(255,255,255,.28);line-height:1.95;max-width:280px;margin-top:10px}
-.foot-addr{font-family:var(--ko);font-size:.94rem;color:rgba(255,255,255,.35);line-height:1.85;margin-top:10px}
-footer h5{font-family:var(--en);font-size:.56rem;letter-spacing:.24em;text-transform:uppercase;color:var(--accentL);margin-bottom:14px}
-footer ul{list-style:none;display:flex;flex-direction:column;gap:8px}
-footer li a,footer li span{font-family:var(--ko);font-size:.94rem;color:rgba(255,255,255,.3);transition:.2s}
-footer li a:hover{color:rgba(255,255,255,.6)}
-.foot-bot{display:flex;justify-content:space-between;align-items:center}
-.foot-copy{font-family:var(--en);font-size:.56rem;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.16)}
-.foot-sns{display:flex;gap:20px}
-.foot-sns a{font-family:var(--en);font-size:.56rem;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.22);transition:.2s}
-.foot-sns a:hover{color:rgba(255,255,255,.55)}
+#footer{background:var(--ink);}
+#footer .w{padding-top:64px;padding-bottom:44px;}
+.foot-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:36px;padding-bottom:40px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:24px;}
+.foot-logo{margin-bottom:14px;}.foot-logo img{height:53px;width:auto;opacity:.75;}
+.foot-addr{font-family:var(--ko);font-size:.9rem;color:rgba(255,255,255,.35);line-height:1.85;margin-top:10px;}
+.foot-desc{font-family:var(--ko);font-size:.88rem;color:rgba(255,255,255,.22);line-height:1.9;margin-top:8px;}
+footer h5{font-family:var(--en);font-size:.6rem;letter-spacing:.24em;text-transform:uppercase;color:var(--accentL);margin-bottom:14px;}
+footer ul{list-style:none;display:flex;flex-direction:column;gap:9px;}
+footer li a{font-family:var(--ko);font-size:.9rem;color:rgba(255,255,255,.3);transition:.2s;}
+footer li a:hover{color:rgba(255,255,255,.65);}
+.foot-bot{display:flex;justify-content:space-between;}
+.foot-copy{font-family:var(--en);font-size:.58rem;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.16);}
 
 /* ── REVEAL ── */
-.reveal{opacity:0;transform:translateY(28px);transition:opacity .7s ease,transform .7s ease}
-.reveal.in{opacity:1;transform:translateY(0)}
+.reveal{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s ease;}
+.reveal.in{opacity:1;transform:translateY(0);}
+
+/* ── RESPONSIVE ── */
+@media(max-width:960px){
+  .w{padding:0 22px;}
+  #nav,.nav-inner{padding:0 22px;}
+  .nav-links{display:none;}
+  .page-hero .hero-content{padding:52px 22px;}
+  .split,.split.rev{grid-template-columns:1fr;direction:ltr;}
+  .split-photo{height:56vw;}
+  .split-text{padding:44px 22px;}
+  .dark-band .w{padding-top:52px;padding-bottom:52px;}
+  .foot-grid{grid-template-columns:1fr;}
+  #footer .w{padding-top:52px;padding-bottom:32px;}
+}
+
+/* HERO */
+#hero{display:grid;grid-template-columns:44% 56%;min-height:100vh;padding-top:86px;max-width:1280px;margin:0 auto;}
+.hero-text{background:var(--bg);padding:80px 60px 60px;display:flex;flex-direction:column;justify-content:space-between;position:relative;}
+.hero-text::after{content:'';position:absolute;right:0;top:10%;bottom:10%;width:1px;background:var(--line);}
+.hero-photo{position:relative;overflow:hidden;}
+.hero-photo img{width:100%;height:100%;object-fit:cover;object-position:center 20%;}
+.hero-badge{position:absolute;bottom:32px;right:32px;background:rgba(250,250,247,.93);backdrop-filter:blur(10px);padding:14px 20px;border-left:2px solid var(--accent);}
+.badge-en{font-family:var(--en);font-size:.56rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin-bottom:4px;}
+.badge-ko{font-family:var(--ko);font-size:.96rem;font-weight:700;color:var(--ink);}
+.hero-main{flex:1;display:flex;flex-direction:column;justify-content:center;padding:40px 0;}
+.hero-ey{font-family:var(--en);font-size:.6rem;letter-spacing:.36em;text-transform:uppercase;color:var(--accentL);display:flex;align-items:center;gap:12px;margin-bottom:26px;}
+.hero-ey::before{content:'';width:20px;height:1px;background:var(--accentL);}
+.hero-title{font-family:var(--en);font-weight:200;font-size:clamp(3.2rem,6vw,5.6rem);letter-spacing:.22em;line-height:.93;color:var(--ink);text-transform:uppercase;padding-left:.22em;}
+.hero-title em{display:block;font-style:normal;}
+.hero-ko{font-family:var(--ko);font-size:1.03rem;color:var(--ink2);line-height:2.1;margin-top:22px;}
+.hero-actions{display:flex;gap:14px;margin-top:32px;flex-wrap:wrap;}
+.btn-fill{font-family:var(--en);font-size:.68rem;letter-spacing:.2em;text-transform:uppercase;padding:14px 40px;background:var(--accent);color:var(--white);border:none;cursor:pointer;transition:.25s;display:inline-block;}
+.btn-fill:hover{background:var(--accentD);}
+.btn-line{font-family:var(--en);font-size:.68rem;letter-spacing:.2em;text-transform:uppercase;padding:13px 40px;border:1px solid var(--accent);color:var(--accent);background:transparent;cursor:pointer;transition:.25s;display:inline-block;}
+.btn-line:hover{background:var(--accent);color:var(--white);}
+.hero-bottom{border-top:1px solid var(--line);padding-top:22px;display:flex;gap:36px;}
+.hero-stat-n{font-family:var(--en);font-weight:200;font-size:1.6rem;letter-spacing:.06em;color:var(--ink);}
+.hero-stat-l{font-family:var(--en);font-size:.54rem;letter-spacing:.18em;text-transform:uppercase;color:var(--accentL);margin-top:3px;}
+
+/* STRENGTHS */
+.sec-lbl{border-top:3px solid var(--accent);background:var(--white);}
+.sec-lbl .w{padding-top:32px;padding-bottom:24px;}
+.sec-lbl-n{font-family:var(--en);font-size:.62rem;letter-spacing:.36em;text-transform:uppercase;color:var(--accentL);display:block;}
+
+#strengths{background:var(--tint);}
+#strengths .w{display:grid;grid-template-columns:repeat(3,1fr);padding-top:0;padding-bottom:0;}
+.str-item{padding:52px 48px;border-right:1px solid var(--line2);}
+.str-item:last-child{border-right:none;}
+.str-no{font-family:var(--en);font-size:.56rem;letter-spacing:.24em;text-transform:uppercase;color:var(--accentL);margin-bottom:16px;}
+.str-title{font-family:var(--en);font-weight:200;font-size:1.15rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink);line-height:1.25;margin-bottom:12px;}
+.str-desc{font-family:var(--ko);font-size:.98rem;color:var(--ink2);line-height:2.05;}
+.str-tag{display:inline-block;margin-top:14px;font-family:var(--en);font-size:.55rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);border:1px solid var(--line2);padding:4px 12px;}
+
+/* STUDIO BAND */
+#studio-band{height:480px;position:relative;overflow:hidden;max-width:1280px;margin:0 auto;}
+#studio-band img{width:100%;height:100%;object-fit:cover;object-position:center 45%;}
+.studio-overlay{position:absolute;inset:0;background:rgba(28,25,22,.38);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;}
+.studio-overlay-t{font-family:var(--en);font-weight:100;font-size:clamp(2.4rem,6vw,5rem);letter-spacing:.28em;text-transform:uppercase;color:#fff;text-align:center;}
+.studio-overlay-s{font-family:var(--en);font-size:.72rem;letter-spacing:.3em;text-transform:uppercase;color:rgba(255,255,255,.5);}
+
+/* PROGRAMS */
+#programs{background:var(--white);}
+.programs-grid{display:grid;grid-template-columns:repeat(3,1fr);max-width:1280px;margin:0 auto;}
+.prog-item{padding:52px 44px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);position:relative;transition:.3s;}
+.prog-item:hover{background:var(--paper);}
+.prog-item:nth-child(3n){border-right:none;}
+.prog-item:nth-child(4),.prog-item:nth-child(5){border-bottom:none;}
+.prog-num{font-family:var(--en);font-size:.54rem;letter-spacing:.28em;text-transform:uppercase;color:var(--accentL);margin-bottom:18px;}
+.prog-title{font-family:var(--en);font-weight:200;font-size:1.08rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink);margin-bottom:10px;}
+.prog-ko{font-family:var(--ko);font-size:.96rem;color:var(--accent);font-weight:700;margin-bottom:10px;}
+.prog-desc{font-family:var(--ko);font-size:.96rem;color:var(--ink2);line-height:2;}
+.prog-arrow{margin-top:20px;font-family:var(--en);font-size:.58rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);display:flex;align-items:center;gap:8px;}
+.prog-arrow::after{content:'→';transition:.2s;}
+.prog-item:hover .prog-arrow::after{transform:translateX(4px);}
+
+/* TRIAL */
+#trial{background:var(--ink);}
+.trial-inner{display:grid;grid-template-columns:1fr 1fr;max-width:1280px;margin:0 auto;}
+.trial-left{padding:88px 64px;border-right:1px solid rgba(255,255,255,.08);}
+.trial-right{padding:88px 64px;}
+.trial-ey{font-family:var(--en);font-size:.6rem;letter-spacing:.36em;text-transform:uppercase;color:var(--accentL);margin-bottom:14px;display:flex;align-items:center;gap:12px;}
+.trial-ey::before{content:'';width:20px;height:1px;background:var(--accentL);}
+.trial-title{font-family:var(--en);font-weight:200;font-size:clamp(2rem,4vw,3rem);letter-spacing:.12em;text-transform:uppercase;color:#fff;line-height:1.1;margin-bottom:18px;}
+.trial-desc{font-family:var(--ko);font-size:1rem;color:rgba(255,255,255,.5);line-height:2.15;margin-bottom:28px;}
+.trial-type-lbl{font-family:var(--en);font-size:.58rem;letter-spacing:.22em;text-transform:uppercase;color:var(--accentL);margin-bottom:22px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,.1);}
+.trial-card{padding:22px 24px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);margin-bottom:14px;transition:.2s;}
+.trial-card:hover{background:rgba(255,255,255,.08);}
+.trial-card-hd{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
+.trial-card-title{font-family:var(--en);font-weight:200;font-size:1.05rem;letter-spacing:.1em;text-transform:uppercase;color:#fff;}
+.trial-card-badge{font-family:var(--en);font-size:.52rem;letter-spacing:.14em;text-transform:uppercase;background:var(--accent);color:#fff;padding:4px 10px;}
+.trial-card-desc{font-family:var(--ko);font-size:.96rem;color:rgba(255,255,255,.42);line-height:1.85;margin-bottom:16px;}
+.trial-btn{display:inline-block;font-family:var(--en);font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;padding:10px 24px;border:1px solid rgba(255,255,255,.35);color:#fff;transition:.25s;}
+.trial-btn:hover{background:#fff;color:var(--ink);}
+.trial-notice{margin-top:18px;padding:14px 18px;background:rgba(255,255,255,.04);border-left:2px solid var(--accentL);}
+.trial-notice-t{font-family:var(--en);font-size:.55rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accentL);margin-bottom:6px;}
+.trial-notice-d{font-family:var(--ko);font-size:.94rem;color:rgba(255,255,255,.38);line-height:1.8;}
+
+/* DIRECTOR */
+#director{background:var(--paper);}
+.dir-inner{display:grid;grid-template-columns:45% 55%;max-width:1280px;margin:0 auto;}
+.dir-photo{position:relative;overflow:hidden;min-height:580px;}
+.dir-photo img{width:100%;height:100%;object-fit:cover;object-position:center 10%;}
+.dir-photo-lbl{position:absolute;bottom:28px;left:28px;background:rgba(250,250,247,.92);backdrop-filter:blur(8px);padding:13px 18px;border-left:2px solid var(--accent);}
+.dir-text{padding:88px 64px 80px;display:flex;flex-direction:column;justify-content:center;}
+.dir-ey{font-family:var(--en);font-size:.58rem;letter-spacing:.3em;text-transform:uppercase;color:var(--accentL);margin-bottom:14px;}
+.dir-div{height:1px;background:var(--ink);margin-bottom:24px;}
+.dir-name{font-family:var(--en);font-weight:200;font-size:2.6rem;letter-spacing:.28em;text-transform:uppercase;color:var(--ink);padding-left:.28em;margin-bottom:6px;}
+.dir-role{font-family:var(--en);font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin-bottom:22px;}
+.dir-desc{font-family:var(--ko);font-size:1rem;color:var(--ink2);line-height:2.15;margin-bottom:20px;}
+.dir-lineage{background:var(--tint);border-left:2px solid var(--accent);padding:14px 18px;margin-bottom:20px;}
+.dir-lineage-lbl{font-family:var(--en);font-size:.55rem;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);margin-bottom:8px;}
+.dir-lineage-flow{font-family:var(--ko);font-size:.96rem;color:var(--ink2);line-height:1.9;}
+.cert-list{border-top:1px solid var(--line);}
+.cert-item{padding:12px 0;border-bottom:1px solid var(--line);display:flex;gap:12px;align-items:flex-start;}
+.cert-dot{width:4px;height:4px;background:var(--accent);border-radius:50%;flex-shrink:0;margin-top:9px;}
+.cert-title-t{font-family:var(--en);font-size:.86rem;letter-spacing:.06em;color:var(--ink);font-weight:400;margin-bottom:4px;}
+.cert-desc-t{font-family:var(--ko);font-size:.92rem;color:var(--ink2);line-height:1.8;}
+
+/* APPARATUS */
+#apparatus{background:var(--white);}
+.app-inner{display:grid;grid-template-columns:55% 45%;max-width:1280px;margin:0 auto;}
+.app-photo{position:relative;overflow:hidden;min-height:500px;}
+.app-photo img{width:100%;height:100%;object-fit:cover;object-position:center 40%;}
+.app-text{padding:88px 60px;display:flex;flex-direction:column;justify-content:center;background:var(--tint);}
+.app-ey{font-family:var(--en);font-size:.58rem;letter-spacing:.3em;text-transform:uppercase;color:var(--accentL);margin-bottom:14px;}
+.app-title{font-family:var(--en);font-weight:200;font-size:clamp(1.8rem,3.5vw,2.6rem);letter-spacing:.14em;text-transform:uppercase;color:var(--ink);line-height:1.1;margin-bottom:22px;}
+.app-desc{font-family:var(--ko);font-size:1rem;color:var(--ink2);line-height:2.2;}
+.app-tag{display:inline-block;margin-top:22px;font-family:var(--en);font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);border:1px solid var(--line2);padding:8px 20px;background:var(--white);}
+
+/* CTA */
+#cta{background:var(--accent);}
+.cta-inner{max-width:1280px;margin:0 auto;padding:110px 60px;display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;}
+.cta-ey{font-family:var(--en);font-size:.58rem;letter-spacing:.34em;text-transform:uppercase;color:rgba(255,255,255,.55);margin-bottom:14px;}
+.cta-title{font-family:var(--en);font-weight:200;font-size:clamp(2.2rem,4.5vw,3.4rem);letter-spacing:.1em;text-transform:uppercase;color:#fff;line-height:1.1;}
+.cta-desc{font-family:var(--ko);font-size:1.03rem;color:rgba(255,255,255,.6);line-height:2.1;margin-bottom:18px;}
+.btn-white{display:inline-block;font-family:var(--en);font-size:.62rem;letter-spacing:.24em;text-transform:uppercase;padding:14px 40px;background:#fff;color:var(--accent);transition:.25s;}
+.btn-white:hover{background:var(--ink);color:#fff;}
 
 @media(max-width:960px){
-  #nav{padding:0 20px}
-  .nav-links{display:none}
-  #hero{grid-template-columns:1fr}
-  .hero-photo{height:55vw}
-  .hero-text{padding:48px 22px 40px}
-  .hero-text::after{display:none}
-  #strengths,.programs-grid{grid-template-columns:1fr}
-  .str-item{border-right:none;border-bottom:1px solid var(--line2)}
-  .prog-item{border-right:none}
-  #director,#apparatus{grid-template-columns:1fr}
-  .dir-photo,.app-photo{height:55vw;min-height:auto}
-  .dir-text{padding:44px 22px}
-  .app-text{padding:44px 22px}
-  .trial-inner{grid-template-columns:1fr}
-  .trial-left,.trial-right{padding:52px 22px}
-  #cta{grid-template-columns:1fr;padding:72px 22px}
-  #footer{padding:52px 22px 32px}
-  .foot-grid{grid-template-columns:1fr 1fr;gap:32px}
-  .sec-label{padding:24px 22px 18px}
+  #nav,.nav-inner{padding:0 22px;}
+  .nav-links{display:none;}
+  #hero{grid-template-columns:1fr;}
+  .hero-photo{height:55vw;}
+  .hero-text{padding:48px 22px 40px;}
+  .hero-text::after{display:none;}
+  #strengths .w{grid-template-columns:1fr;}
+  .str-item{border-right:none;border-bottom:1px solid var(--line2);}
+  .programs-grid{grid-template-columns:1fr;}
+  .prog-item{border-right:none;}
+  .trial-inner{grid-template-columns:1fr;}
+  .trial-left,.trial-right{padding:52px 22px;}
+  .dir-inner,.app-inner{grid-template-columns:1fr;}
+  .dir-photo,.app-photo{height:55vw;min-height:auto;}
+  .dir-text,.app-text{padding:44px 22px;}
+  .cta-inner{grid-template-columns:1fr;padding:72px 22px;}
 }
 </style>
 </head>
 <body>
-
-<!-- NAV -->
 <nav id="nav">
   <div class="nav-inner">
-    <a class="nav-logo" href="#">
+    <a class="nav-logo" href="index.html">
       <img src="images/logo_dark.png" alt="Regina Pilates"/>
     </a>
     <div class="nav-right">
@@ -318,17 +265,15 @@ footer li a:hover{color:rgba(255,255,255,.6)}
   </div>
 </nav>
 
-<!-- HERO -->
-<div id="hero-wrap">
 <section id="hero">
   <div class="hero-text">
     <div class="hero-main">
-      <div class="hero-eyebrow">Classical Pilates Studio</div>
+      <div class="hero-ey">Classical Pilates Studio</div>
       <h1 class="hero-title">Regina<em>Pilates</em></h1>
       <p class="hero-ko">Joseph H. Pilates의 오리지널 리퍼토리 그대로.<br/>클래식 필라테스 프라이빗 스튜디오.</p>
       <div class="hero-actions">
-        <a class="btn-fill" href="#cta">상담 문의</a>
-        <a class="btn-line" href="#programs">프로그램 보기</a>
+        <a class="btn-fill" href="https://booking.naver.com/booking/13/bizes/866976" target="_blank">상담 예약</a>
+        <a class="btn-line" href="programs.html">프로그램 보기</a>
       </div>
     </div>
     <div class="hero-bottom">
@@ -345,52 +290,43 @@ footer li a:hover{color:rgba(255,255,255,.6)}
     </div>
   </div>
 </section>
-</div><!-- /hero-wrap -->
 
-<!-- STRENGTHS -->
-<div class="sec-label reveal">
-<div class="sec-label-inner">
-  <span class="sec-label-n">Why Regina Pilates</span>
-  <span class="sec-label-t">스튜디오 차별점</span>
-</div>
+<div class="sec-lbl reveal">
+  <div class="w"><span class="sec-lbl-n">Why Regina Pilates</span></div>
 </div>
 <section id="strengths">
-<div class="str-inner">
-  <div class="str-item reveal">
-    <div class="str-no">01 — Classical</div>
-    <div class="str-title">Original<br/>Repertoire</div>
-    <p class="str-desc">Joseph H. Pilates가 직접 설계한 오리지널 리퍼토리 그대로. 변형 없이 100년간 검증된 움직임의 원리를 따릅니다.</p>
-    <div class="str-tag">정통 클래식</div>
+  <div class="w">
+    <div class="str-item reveal">
+      <div class="str-no">01 — Classical</div>
+      <div class="str-title">Original<br/>Repertoire</div>
+      <p class="str-desc">Joseph H. Pilates가 직접 설계한 오리지널 리퍼토리 그대로. 변형 없이 100년간 검증된 움직임의 원리를 따릅니다.</p>
+      <div class="str-tag">정통 클래식</div>
+    </div>
+    <div class="str-item reveal">
+      <div class="str-no">02 — Private</div>
+      <div class="str-title">Exclusive<br/>Studio</div>
+      <p class="str-desc">그룹 수업 없이 오직 한 분만을 위한 공간과 시간. 완전한 집중과 개인화된 지도가 이루어지는 프라이빗 스튜디오입니다.</p>
+      <div class="str-tag">프라이빗 스튜디오</div>
+    </div>
+    <div class="str-item reveal">
+      <div class="str-no">03 — Certified</div>
+      <div class="str-title">Master<br/>Lineage</div>
+      <p class="str-desc">세계적 마스터 Dorothee Vandewalle 문하 직접 사사. Peak Pilates PPC Level 3 국제 최고등급 보유. 35개국 공인 자격.</p>
+      <div class="str-tag">검증된 전문성</div>
+    </div>
   </div>
-  <div class="str-item reveal">
-    <div class="str-no">02 — Private</div>
-    <div class="str-title">Exclusive<br/>Studio</div>
-    <p class="str-desc">그룹 수업 없이 오직 한 분만을 위한 공간과 시간. 완전한 집중과 개인화된 지도가 이루어지는 프라이빗 스튜디오입니다.</p>
-    <div class="str-tag">프라이빗 스튜디오</div>
-  </div>
-  <div class="str-item reveal">
-    <div class="str-no">03 — Certified</div>
-    <div class="str-title">Master<br/>Lineage</div>
-    <p class="str-desc">세계적 마스터 Dorothee Vandewalle 문하 직접 사사. Peak Pilates PPC Level 3 국제 최고등급 보유. 35개국 공인 자격.</p>
-    <div class="str-tag">검증된 전문성</div>
-  </div>
-</div>
 </section>
 
-<!-- STUDIO BAND -->
 <div id="studio-band" class="reveal">
-  <img src="images/studio.jpg" alt="레지나 필라테스 청담 스튜디오 전경"/>
+  <img src="images/studio.jpg" alt="레지나 필라테스 청담 스튜디오"/>
   <div class="studio-overlay">
     <div class="studio-overlay-t">Gratz Apparatus</div>
     <div class="studio-overlay-s">Original Equipment by Joseph H. Pilates · Since 1923</div>
   </div>
 </div>
 
-<!-- PROGRAMS -->
-<div class="sec-label reveal">
-  <span class="sec-label-n">Programs</span>
-  <span class="sec-label-t">레슨 프로그램</span>
-</div>
+<div class="sec-lbl reveal">
+  <div class="w"><span class="sec-lbl-n">Programs</span></div>
 </div>
 <section id="programs">
   <div class="programs-grid">
@@ -398,225 +334,166 @@ footer li a:hover{color:rgba(255,255,255,.6)}
       <div class="prog-num">Program 01</div>
       <div class="prog-title">Posture Correction</div>
       <div class="prog-ko">자세 교정 프로그램</div>
-      <p class="prog-desc">체형 불균형과 만성 통증의 근본 원인을 클래식 필라테스 원리로 접근합니다. 코어 안정화와 척추 정렬을 통한 지속적인 체형 변화를 목표로 합니다.</p>
+      <p class="prog-desc">체형 불균형과 만성 통증의 근본 원인을 클래식 필라테스 원리로 접근합니다.</p>
       <div class="prog-arrow">자세히 보기</div>
     </div>
     <div class="prog-item reveal">
       <div class="prog-num">Program 02</div>
       <div class="prog-title">Menopause Pilates</div>
       <div class="prog-ko">갱년기 여성을 위한 프로그램</div>
-      <p class="prog-desc">갱년기 여성의 신체 변화에 맞춘 특화 프로그램. 골밀도 유지, 호르몬 균형, 체형 관리를 클래식 필라테스로 종합적으로 접근합니다.</p>
+      <p class="prog-desc">갱년기 여성의 신체 변화에 맞춘 특화 프로그램. 골밀도 유지, 호르몬 균형, 체형 관리를 종합적으로 접근합니다.</p>
       <div class="prog-arrow">자세히 보기</div>
     </div>
     <div class="prog-item reveal">
       <div class="prog-num">Program 03</div>
       <div class="prog-title">Pre / Post Natal</div>
       <div class="prog-ko">산전 · 산후 임산부 프로그램</div>
-      <p class="prog-desc">임신 중과 출산 후 몸의 안전한 회복을 위한 프로그램. JY Classic Pilates Association 인증 Pre/Post Natal 전문 지도로 진행됩니다.</p>
+      <p class="prog-desc">임신 중과 출산 후 몸의 안전한 회복을 위한 전문 프로그램입니다.</p>
       <div class="prog-arrow">자세히 보기</div>
     </div>
     <div class="prog-item reveal">
       <div class="prog-num">Program 04</div>
       <div class="prog-title">Golf Performance</div>
       <div class="prog-ko">골프 퍼포먼스 향상 프로그램</div>
-      <p class="prog-desc">골퍼를 위한 특화 프로그램. 코어 안정성, 회전력, 유연성을 동시에 향상시켜 스윙 퀄리티와 비거리 향상, 부상 예방에 집중합니다.</p>
+      <p class="prog-desc">코어 안정성, 회전력, 유연성을 동시에 향상시켜 스윙 퀄리티와 비거리를 높입니다.</p>
       <div class="prog-arrow">자세히 보기</div>
     </div>
     <div class="prog-item reveal" style="border-right:1px solid var(--line)">
       <div class="prog-num">Program 05</div>
       <div class="prog-title">Kids &amp; Teen</div>
       <div class="prog-ko">어린이 · 청소년 키즈 프로그램</div>
-      <p class="prog-desc">성장기 아이들의 바른 체형 발달을 위한 클래식 필라테스 프로그램. 집중력 향상, 유연성, 코어 발달을 통해 건강한 성장을 돕습니다.</p>
+      <p class="prog-desc">성장기 아이들의 바른 체형 발달을 위한 클래식 필라테스 프로그램입니다.</p>
       <div class="prog-arrow">자세히 보기</div>
     </div>
   </div>
 </section>
 
-<!-- TRIAL LESSON -->
 <section id="trial">
   <div class="trial-inner">
     <div class="trial-left reveal">
-      <div class="trial-eyebrow">Special Offer</div>
+      <div class="trial-ey">Special Offer</div>
       <h2 class="trial-title">클래식 필라테스를<br/>처음 시작하는<br/>분들을 위한</h2>
-      <p class="trial-desc">
-        바디 리딩 세션 기반의 개인화된 트라이얼 레슨.<br/>
-        처음 한 번에 한해 Special 레슨비가 적용됩니다.<br/>
-        예약 필수 — 아래 프로그램을 선택하세요.
-      </p>
+      <p class="trial-desc">바디 리딩 세션 기반의 개인화된 트라이얼 레슨.<br/>처음 한 번에 한해 Special 레슨비가 적용됩니다.</p>
       <div class="trial-notice">
         <div class="trial-notice-t">예약 안내</div>
-        <div class="trial-notice-d">네이버 예약 링크로 사전 예약 후 방문 부탁드립니다.<br/>문의는 카카오톡 채널 또는 상담 문의로 연락주세요.</div>
+        <div class="trial-notice-d">네이버 예약 링크로 사전 예약 후 방문 부탁드립니다.</div>
       </div>
     </div>
     <div class="trial-right reveal">
-      <div class="trial-type-label">Special Trial Lessons</div>
+      <div class="trial-type-lbl">Special Trial Lessons</div>
       <div class="trial-card">
-        <div class="trial-card-header">
+        <div class="trial-card-hd">
           <div class="trial-card-title">1:1 Private Lesson</div>
           <div class="trial-card-badge">1인 진행</div>
         </div>
-        <p class="trial-card-desc">
-          원장님과 단둘이 진행하는 완전한 프라이빗 트라이얼 세션.<br/>
-          바디 리딩을 통해 몸 상태를 분석하고 맞춤 필라테스를 경험합니다.
-        </p>
-        <a class="trial-booking-btn" href="https://booking.naver.com/booking/13/bizes/866976/items/5155413" target="_blank">네이버 예약 →</a>
+        <p class="trial-card-desc">바디 리딩을 통해 몸 상태를 분석하고 맞춤 필라테스를 경험합니다.</p>
+        <a class="trial-btn" href="https://booking.naver.com/booking/13/bizes/866976/items/5155413" target="_blank">네이버 예약 →</a>
       </div>
       <div class="trial-card">
-        <div class="trial-card-header">
+        <div class="trial-card-hd">
           <div class="trial-card-title">1:2 Private Lesson</div>
           <div class="trial-card-badge">2인 진행</div>
         </div>
-        <p class="trial-card-desc">
-          친구, 커플, 가족과 함께하는 프라이빗 듀엣 트라이얼 세션.<br/>
-          두 분이 함께 클래식 필라테스를 합리적인 비용으로 경험하세요.
-        </p>
-        <a class="trial-booking-btn" href="https://booking.naver.com/booking/13/bizes/866976/items/7824671" target="_blank">네이버 예약 →</a>
+        <p class="trial-card-desc">친구, 커플, 가족과 함께하는 프라이빗 듀엣 트라이얼 세션.</p>
+        <a class="trial-btn" href="https://booking.naver.com/booking/13/bizes/866976/items/7824671" target="_blank">네이버 예약 →</a>
       </div>
     </div>
   </div>
 </section>
 
-<!-- DIRECTOR -->
-<div class="sec-label reveal">
-<div class="sec-label-inner">
-  <span class="sec-label-n">Director</span>
-  <span class="sec-label-t">원장 소개</span>
-</div>
+<div class="sec-lbl reveal">
+  <div class="w"><span class="sec-lbl-n">Director</span></div>
 </div>
 <section id="director">
-<div class="dir-inner">
-  <div class="dir-photo reveal">
-    <img src="images/director.jpg" alt="레지나 원장"/>
-    <div class="dir-photo-label">
-      <div class="badge-en">Director · Classical Pilates</div>
-      <div class="badge-ko">레지나 원장</div>
+  <div class="dir-inner">
+    <div class="dir-photo reveal">
+      <img src="images/director.jpg" alt="레지나 원장"/>
+      <div class="dir-photo-lbl">
+        <div class="badge-en">Director · Classical Pilates</div>
+        <div class="badge-ko">레지나 원장</div>
+      </div>
+    </div>
+    <div class="dir-text reveal">
+      <div class="dir-ey">Director Profile</div>
+      <div class="dir-div"></div>
+      <div class="dir-name">Regina</div>
+      <div class="dir-role">원장 · 클래식 필라테스 전문가</div>
+      <p class="dir-desc">마스터 Dorothee Vandewalle 문하에서 직접 사사한 클래식 필라테스 전문가입니다. Joseph H. Pilates → Romana Kryzanowska → Dorothee Vandewalle로 이어지는 정통 클래식 계보의 직계 전수자입니다.</p>
+      <div class="dir-lineage">
+        <div class="dir-lineage-lbl">Classical Lineage</div>
+        <div class="dir-lineage-flow">Joseph H. Pilates → Romana Kryzanowska → Dorothee Vandewalle → Regina 원장 (직접 사사)</div>
+      </div>
+      <div class="cert-list">
+        <div class="cert-item"><div class="cert-dot"></div><div><div class="cert-title-t">M.A.T. Pilates Teacher Certification Basic / Intermediate / Advance System</div><div class="cert-desc-t">Dorothee Vandewalle가 창시한 M.A.T. 티처 트레이닝 공인 자격. 미국 내 가장 엄격한 클래식 필라테스 강사 인증 과정.</div></div></div>
+        <div class="cert-item"><div class="cert-dot"></div><div><div class="cert-title-t">Built Pilates Basic / Intermediate / Advance System</div><div class="cert-desc-t">Dorothee Vandewalle의 클래식 필라테스 티처 트레이닝 정규 과정을 이수한 Jung Ah Teacher Certification.</div></div></div>
+        <div class="cert-item"><div class="cert-dot"></div><div><div class="cert-title-t">Built Pilates by Dorothee Vandewalle — Classic Pilates Workshop</div><div class="cert-desc-t">Dorothee Vandewalle 한국 방문 시 직접 진행한 클래식 필라테스 워크샵 참가.</div></div></div>
+        <div class="cert-item"><div class="cert-dot"></div><div><div class="cert-title-t">Peak Pilates PPC Level 1 / 2 / 3</div><div class="cert-desc-t">전 세계 35개국 인정 국제 클래식 필라테스 최상위 인증.</div></div></div>
+        <div class="cert-item"><div class="cert-dot"></div><div><div class="cert-title-t">JY Classic Pilates Association — Pre / Post Natal Pilates Program</div></div></div>
+      </div>
     </div>
   </div>
-  <div class="dir-text reveal">
-    <div class="dir-eyebrow">Director Profile</div>
-    <div class="dir-divider"></div>
-    <div class="dir-name">Regina</div>
-    <div class="dir-role">원장 · 클래식 필라테스 전문가</div>
-    <p class="dir-desc">
-      마스터 Dorothee Vandewalle 문하에서 직접 사사한 클래식 필라테스 전문가입니다.
-      Joseph H. Pilates → Romana Kryzanowska → Dorothee Vandewalle로 이어지는
-      정통 클래식 계보의 직계 전수자로, 오리지널 리퍼토리를 변형 없이 지도합니다.
-    </p>
-    <div class="dir-lineage">
-      <div class="dir-lineage-lbl">Classical Lineage</div>
-      <div class="dir-lineage-flow">Joseph H. Pilates → Romana Kryzanowska → Dorothee Vandewalle → Regina 원장 (직접 사사)</div>
-    </div>
-    <div class="cert-list">
-      <div class="cert-item">
-        <div class="cert-dot"></div>
-        <div class="cert-content">
-          <div class="cert-title">M.A.T. Pilates Teacher Certification Basic / Intermediate / Advance System</div>
-          <div class="cert-desc">Dorothee Vandewalle가 창시한 M.A.T. 티처 트레이닝 공인 자격. 미국 내 가장 엄격한 클래식 필라테스 강사 인증 과정.</div>
-        </div>
-      </div>
-      <div class="cert-item">
-        <div class="cert-dot"></div>
-        <div class="cert-content">
-          <div class="cert-title">Built Pilates Basic / Intermediate / Advance System</div>
-          <div class="cert-desc">Dorothee Vandewalle의 클래식 필라테스 티처 트레이닝 정규 과정을 이수한 Jung Ah Teacher Certification.</div>
-        </div>
-      </div>
-      <div class="cert-item">
-        <div class="cert-dot"></div>
-        <div class="cert-content">
-          <div class="cert-title">Built Pilates by Dorothee Vandewalle — Classic Pilates Workshop</div>
-          <div class="cert-desc">Dorothee Vandewalle 한국 방문 시 직접 진행한 클래식 필라테스 워크샵 참가.</div>
-        </div>
-      </div>
-      <div class="cert-item">
-        <div class="cert-dot"></div>
-        <div class="cert-content">
-          <div class="cert-title">Peak Pilates PPC Level 1 / 2 / 3</div>
-          <div class="cert-desc">전 세계 35개국 인정 국제 클래식 필라테스 최상위 인증.</div>
-        </div>
-      </div>
-      <div class="cert-item">
-        <div class="cert-dot"></div>
-        <div class="cert-content">
-          <div class="cert-title">JY Classic Pilates Association — Pre / Post Natal Pilates Program</div>
-          <div class="cert-desc"></div>
-        </div>
-      </div>
-    </div>
-</div>
 </section>
 
-<!-- APPARATUS -->
 <section id="apparatus">
-<div class="app-inner">
-  <div class="app-photo reveal">
-    <img src="images/studio.jpg" alt="Gratz Apparatus"/>
-  </div>
-  <div class="app-text reveal">
-    <div class="app-eyebrow">Studio Equipment</div>
-    <h2 class="app-title">Gratz<br/>Apparatus</h2>
-    <p class="app-desc">레지나 필라테스 청담은 Joseph H. Pilates가 직접 설계하고 Gratz Industries에서 제작한 오리지널 어패러터스를 사용합니다. 세계 클래식 필라테스 스튜디오의 Gold Standard로 인정받는 장비로, 100년간 변하지 않은 설계 원리 그대로입니다.</p>
-    <div class="app-tag">Gold Standard · Since 1923</div>
+  <div class="app-inner">
+    <div class="app-photo reveal">
+      <img src="images/studio.jpg" alt="Gratz Apparatus"/>
+    </div>
+    <div class="app-text reveal">
+      <div class="app-ey">Studio Equipment</div>
+      <h2 class="app-title">Gratz<br/>Apparatus</h2>
+      <p class="app-desc">레지나 필라테스 청담은 Joseph H. Pilates가 직접 설계하고 Gratz Industries에서 제작한 오리지널 어패러터스를 사용합니다. 세계 클래식 필라테스 스튜디오의 Gold Standard로 인정받는 장비입니다.</p>
+      <span class="app-tag">Gold Standard · Since 1923</span>
+    </div>
   </div>
 </section>
 
-<!-- CTA -->
 <section id="cta">
-<div class="cta-inner">
-  <div class="reveal">
-    <div class="cta-eyebrow">Start Your Journey</div>
-    <h2 class="cta-title">클래식 필라테스를<br/>시작하세요</h2>
+  <div class="cta-inner">
+    <div class="reveal">
+      <div class="cta-ey">Start Your Journey</div>
+      <h2 class="cta-title">클래식 필라테스를<br/>시작하세요</h2>
+    </div>
+    <div class="reveal">
+      <p class="cta-desc">바디 리딩 세션으로 시작합니다.<br/>당신의 몸에 맞는 클래식 필라테스를 경험하세요.</p>
+      <a class="btn-white" href="https://booking.naver.com/booking/13/bizes/866976" target="_blank">상담 예약하기</a>
+    </div>
   </div>
-  <div class="reveal" style="display:flex;flex-direction:column;gap:14px;align-items:flex-start">
-    <p class="cta-desc">바디 리딩 세션으로 시작합니다.<br/>당신의 몸에 맞는 클래식 필라테스를 경험하세요.<br/>KakaoTalk 채널 또는 아래 버튼으로 문의주세요.</p>
-    <a class="btn-white" href="#trial">트라이얼 레슨 예약</a>
-  </div>
-</div>
 </section>
 
-<!-- FOOTER -->
 <footer id="footer">
-<div class="foot-inner">
-  <div class="foot-grid">
-    <div>
-      <div class="foot-logo"><img src="images/logo_light.png" alt="Regina Pilates"/></div>
-      <p class="foot-addr">서울특별시 강남구 학동로77길 10, 3층<br/>청담역 8번 출구 도보 5분</p>
-      <p class="foot-brand-desc">Joseph H. Pilates의 오리지널 리퍼토리를 그대로 전수하는 클래식 필라테스 프라이빗 스튜디오.</p>
+  <div class="w">
+    <div class="foot-grid">
+      <div>
+        <div class="foot-logo"><img src="images/logo_light.png" alt="Regina Pilates"/></div>
+        <p class="foot-addr">서울특별시 강남구 학동로77길 10, 3층<br/>청담역 8번 출구 도보 5분</p>
+        <p class="foot-desc">Joseph H. Pilates의 오리지널 리퍼토리를 그대로 전수하는 클래식 필라테스 프라이빗 스튜디오.</p>
+      </div>
+      <div>
+        <h5>Pages</h5>
+        <ul>
+          <li><a href="director.html">원장 소개</a></li>
+          <li><a href="studio.html">스튜디오</a></li>
+          <li><a href="programs.html">프로그램</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Contact</h5>
+        <ul>
+          <li><a href="https://booking.naver.com/booking/13/bizes/866976" target="_blank">상담 예약</a></li>
+          <li><a href="#">KakaoTalk</a></li>
+          <li><a href="#">Instagram</a></li>
+        </ul>
+      </div>
     </div>
-    <div>
-      <h5>Programs</h5>
-      <ul>
-        <li><a href="#">자세 교정</a></li>
-        <li><a href="#">갱년기 여성 프로그램</a></li>
-        <li><a href="#">산전 · 산후 프로그램</a></li>
-        <li><a href="#">골프 퍼포먼스</a></li>
-        <li><a href="#">키즈 · 청소년</a></li>
-      </ul>
-    </div>
-    <div>
-      <h5>Contact</h5>
-      <ul>
-        <li><a href="#">KakaoTalk 채널</a></li>
-        <li><a href="#">Instagram</a></li>
-        <li><a href="#">Naver 예약</a></li>
-      </ul>
-    </div>
-  </div>
-  <div class="foot-bot">
-    <span class="foot-copy">© 2026 Regina Pilates · All rights reserved</span>
-    <div class="foot-sns">
-      <a href="#">Instagram</a>
-      <a href="#">KakaoTalk</a>
-      <a href="#">Naver</a>
+    <div class="foot-bot">
+      <span class="foot-copy">© 2026 Regina Pilates · All rights reserved</span>
     </div>
   </div>
 </footer>
-
 <script>
-const obs = new IntersectionObserver(entries => {
-  entries.forEach(e => { if(e.isIntersecting){ e.target.classList.add('in'); obs.unobserve(e.target); } });
-}, {threshold:0.1});
-document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+const obs=new IntersectionObserver(e=>{e.forEach(x=>{if(x.isIntersecting){x.target.classList.add('in');obs.unobserve(x.target);}});},{threshold:0.08});
+document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
 </script>
 </body>
 </html>
