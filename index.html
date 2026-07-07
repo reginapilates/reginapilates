@@ -76,7 +76,9 @@ a{text-decoration:none}
 /* ── FOOTER ── */
 #footer{background:var(--ink);max-width:1280px;margin:0 auto;}
 #footer .w{padding-top:64px;padding-bottom:44px;}
-.foot-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:36px;padding-bottom:40px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:24px;}
+.foot-grid{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:40px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:24px;}
+.foot-brand{flex:1;max-width:340px;}
+.foot-nav-group{display:flex;gap:100px;}
 .foot-logo{margin-bottom:14px;}.foot-logo img{height:53px;width:auto;opacity:.75;}
 .foot-addr{font-family:var(--ko);font-size:.9rem;color:rgba(255,255,255,.35);line-height:1.85;margin-top:10px;}
 .foot-desc{font-family:var(--ko);font-size:.88rem;color:rgba(255,255,255,.22);line-height:1.9;margin-top:8px;}
@@ -684,11 +686,12 @@ footer li a:hover{color:rgba(255,255,255,.65);}
 <footer id="footer">
   <div class="w">
     <div class="foot-grid">
-      <div>
+      <div class="foot-brand">
         <div class="foot-logo"><img src="images/logo_light.png" alt="Regina Pilates"/></div>
         <p class="foot-addr">서울특별시 강남구 학동로77길 10, 3층<br/>청담역 8번 출구 도보 5분</p>
         <p class="foot-desc">Joseph H. Pilates의 오리지널 리퍼토리를 그대로 전수하는 클래식 필라테스 프라이빗 스튜디오.</p>
       </div>
+      <div class="foot-nav-group">
       <div>
         <h5>Pages</h5>
         <ul>
@@ -701,10 +704,11 @@ footer li a:hover{color:rgba(255,255,255,.65);}
         <h5>Contact</h5>
         <ul>
           <li><a href="https://booking.naver.com/booking/13/bizes/866976" target="_blank">상담 예약</a></li>
-          <li><a href="#">KakaoTalk</a></li>
-          <li><a href="#">Instagram</a></li>
+          <li><a href="http://pf.kakao.com/_avJDxj" target="_blank">KakaoTalk</a></li>
+          <li><a href="https://www.instagram.com/regina_classicpilates" target="_blank">Instagram</a></li>
         </ul>
       </div>
+      </div><!-- /foot-nav-group -->
     </div>
     <div class="foot-bot">
       <span class="foot-copy">© 2026 Regina Pilates · All rights reserved</span>
