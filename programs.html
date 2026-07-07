@@ -150,6 +150,160 @@ footer li a:hover{color:rgba(255,255,255,.65);}
   .prog-text{padding:40px 22px;}
   .cta-sec .w{grid-template-columns:1fr;padding-top:72px;padding-bottom:72px;}
 }
+
+@media(max-width:768px){
+  /* ── BODY ── */
+  body{max-width:100%;}
+
+  /* ── NAV ── */
+  #nav{height:64px;}
+  .nav-inner{padding:0 20px;}
+  .nav-logo img{height:44px;}
+  .nav-links{display:none;}
+  .nav-cta{display:none;}
+
+  /* ── .w WRAPPER ── */
+  .w{padding:0 20px;}
+
+  /* ── PAGE HERO ── */
+  .page-hero{min-height:320px;padding-top:64px;}
+  .page-hero .hero-content{padding:48px 20px 40px;}
+  .hero-title{font-size:clamp(2.4rem,10vw,3.6rem);letter-spacing:.14em;}
+  .hero-eyebrow{font-size:.58rem;letter-spacing:.24em;}
+  .hero-sub{font-size:.9rem;margin-top:12px;}
+
+  /* ── SPLIT ── */
+  .split,.split.rev{grid-template-columns:1fr!important;direction:ltr!important;height:auto!important;}
+  .split-photo{height:62vw;}
+  .split-text{padding:40px 20px;}
+  .s-title{font-size:1.5rem;}
+  .s-desc{font-size:.95rem;}
+  .s-ul li{font-size:.9rem;}
+
+  /* ── DARK BAND ── */
+  .dark-band,.dark-band{max-width:100%;}
+  .dark-band .w{padding-top:48px;padding-bottom:48px;}
+  .db-title{font-size:1.6rem;}
+  .db-desc{font-size:.92rem;}
+
+  /* ── FOOTER ── */
+  #footer{max-width:100%;}
+  #footer .w{padding-top:44px;padding-bottom:28px;}
+  .foot-grid{grid-template-columns:1fr;gap:28px;}
+  .foot-logo img{height:42px;}
+  .foot-addr,.foot-desc{font-size:.85rem;}
+  footer h5{margin-top:4px;}
+  footer li a{font-size:.85rem;}
+  .foot-copy{font-size:.52rem;}
+}
+
+@media(max-width:768px){
+  .ci-sec{max-width:100%;}
+  .ci-sec .w{padding-top:52px;padding-bottom:52px;}
+  .ci-title{font-size:1.6rem;}
+  .ci-desc{font-size:.92rem;}
+  .ci-grid{grid-template-columns:1fr;}
+  .ci-item{padding:28px 20px;}
+  .ci-item-title{font-size:.95rem;}
+  .ci-item-desc{font-size:.88rem;}
+
+  .dark-band{max-width:100%;}
+  .db-title{font-size:1.5rem;}
+
+  .prog-sec,.prog-sec.rev{grid-template-columns:1fr!important;direction:ltr!important;height:auto!important;max-width:100%!important;}
+  .prog-photo{height:62vw;}
+  .prog-text{padding:36px 20px;}
+  .prog-en{font-size:1.3rem;}
+  .prog-ko{font-size:.98rem;}
+  .prog-hl{font-size:.92rem;}
+  .prog-desc{font-size:.88rem;}
+  .prog-ul li{font-size:.86rem;}
+  .prog-tags{margin-bottom:10px;}
+
+  .cta-sec{max-width:100%;}
+  .cta-sec .w{grid-template-columns:1fr;padding-top:60px;padding-bottom:60px;gap:24px;}
+  .cta-title{font-size:1.6rem;}
+  .cta-desc{font-size:.92rem;}
+  .btn-wh{font-size:.62rem;padding:12px 28px;}
+}
+
+
+/* ── HAMBURGER MENU ── */
+.hamburger{
+  display:none;
+  flex-direction:column;
+  gap:5px;
+  cursor:pointer;
+  padding:8px;
+  background:none;
+  border:none;
+}
+.hamburger span{
+  display:block;
+  width:24px;
+  height:1.5px;
+  background:var(--ink);
+  transition:.3s;
+}
+.hamburger.open span:nth-child(1){transform:translateY(6.5px) rotate(45deg);}
+.hamburger.open span:nth-child(2){opacity:0;}
+.hamburger.open span:nth-child(3){transform:translateY(-6.5px) rotate(-45deg);}
+
+/* MOBILE MENU DRAWER */
+.mobile-menu{
+  display:none;
+  position:fixed;
+  top:64px;left:0;right:0;
+  background:rgba(250,250,247,.98);
+  backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--line);
+  z-index:199;
+  padding:0;
+  max-height:0;
+  overflow:hidden;
+  transition:max-height .35s ease, padding .35s ease;
+}
+.mobile-menu.open{
+  max-height:300px;
+  padding:12px 0 20px;
+}
+.mobile-menu ul{
+  list-style:none;
+  display:flex;
+  flex-direction:column;
+}
+.mobile-menu ul li a{
+  display:block;
+  font-family:var(--en);
+  font-size:.8rem;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  color:var(--ink2);
+  padding:14px 24px;
+  border-bottom:1px solid var(--line);
+  transition:.2s;
+}
+.mobile-menu ul li:last-child a{border-bottom:none;}
+.mobile-menu ul li a:hover{color:var(--accent);background:var(--paper);}
+.mobile-menu .mobile-cta{
+  display:block;
+  font-family:var(--en);
+  font-size:.75rem;
+  letter-spacing:.2em;
+  text-transform:uppercase;
+  background:var(--accent);
+  color:#fff;
+  text-align:center;
+  padding:14px 24px;
+  margin:12px 20px 0;
+  transition:.2s;
+}
+.mobile-menu .mobile-cta:hover{background:var(--accentD);}
+
+@media(max-width:768px){
+  .hamburger{display:flex;}
+  .mobile-menu{display:block;}
+}
 </style>
 </head>
 <body>
@@ -166,8 +320,22 @@ footer li a:hover{color:rgba(255,255,255,.65);}
       </ul>
       <a class="nav-cta" href="https://booking.naver.com/booking/13/bizes/866976" target="_blank">상담 예약</a>
     </div>
+
+  <!-- MOBILE MENU -->
+  <button class="hamburger" id="hamburger" aria-label="메뉴">
+    <span></span><span></span><span></span>
+  </button>
   </div>
 </nav>
+
+<div class="mobile-menu" id="mobileMenu">
+  <ul>
+    <li><a href="director.html">원장 소개</a></li>
+    <li><a href="studio.html">스튜디오</a></li>
+    <li><a href="programs.html">프로그램</a></li>
+  </ul>
+  <a class="mobile-cta" href="https://booking.naver.com/booking/13/bizes/866976" target="_blank">상담 예약</a>
+</div>
 
 <div class="page-hero">
   <img class="bg" src="images/studio_01.jpg" alt="프로그램"/>
@@ -266,7 +434,7 @@ footer li a:hover{color:rgba(255,255,255,.65);}
 </section>
 
 <section class="prog-sec reveal" id="kids">
-  <div class="prog-photo"><img src="images/studio_10.jpg" alt="키즈 청소년"/></div>
+  <div class="prog-photo"><img src="images/studio_07.jpg" alt="키즈 청소년"/></div>
   <div class="prog-text bg-tint">
     <div class="prog-en">Kids &amp; Teen</div>
     <div class="prog-ko">어린이 · 청소년 키즈 프로그램</div>
@@ -327,6 +495,29 @@ footer li a:hover{color:rgba(255,255,255,.65);}
 <script>
 const obs=new IntersectionObserver(e=>{e.forEach(x=>{if(x.isIntersecting){x.target.classList.add('in');obs.unobserve(x.target);}});},{threshold:0.08});
 document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+</script>
+
+<script>
+const hbg = document.getElementById('hamburger');
+const menu = document.getElementById('mobileMenu');
+hbg.addEventListener('click', () => {
+  hbg.classList.toggle('open');
+  menu.classList.toggle('open');
+});
+// 메뉴 링크 클릭시 닫기
+menu.querySelectorAll('a').forEach(a => {
+  a.addEventListener('click', () => {
+    hbg.classList.remove('open');
+    menu.classList.remove('open');
+  });
+});
+// 스크롤시 닫기
+window.addEventListener('scroll', () => {
+  if(menu.classList.contains('open')){
+    hbg.classList.remove('open');
+    menu.classList.remove('open');
+  }
+});
 </script>
 </body>
 </html>
