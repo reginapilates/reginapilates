@@ -7,20 +7,11 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@100;200;300;400&family=Nanum+Gothic:wght@400;700&display=swap" rel="stylesheet"/>
 <style>
-:root{
-  --bg:#FAFAF7;--paper:#F4F2EC;--tint:#EAE6DC;
-  --accent:#8E8276;--accentL:#C4B89A;--accentD:#5C5246;
-  --ink:#1C1916;--ink2:#7A736A;
-  --line:#E0DAD0;--line2:#D5CCBF;--white:#FFFFFF;
-  --en:'Outfit',sans-serif;--ko:'Nanum Gothic',sans-serif;
-}
+:root{--bg:#FAFAF7;--paper:#F4F2EC;--tint:#EAE6DC;--accent:#8E8276;--accentL:#C4B89A;--accentD:#5C5246;--ink:#1C1916;--ink2:#7A736A;--line:#E0DAD0;--line2:#D5CCBF;--white:#FFFFFF;--en:'Outfit',sans-serif;--ko:'Nanum Gothic',sans-serif;}
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 html{scroll-behavior:smooth}
 body{font-family:var(--ko);background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;overflow-x:hidden}
-img{display:block}
-a{text-decoration:none}
-
-/* NAV */
+img{display:block}a{text-decoration:none}
 #nav{position:fixed;top:0;left:0;right:0;z-index:200;background:rgba(250,250,247,.97);backdrop-filter:blur(16px);border-bottom:1px solid var(--line);padding:0 56px;height:86px;display:flex;align-items:center;justify-content:space-between;}
 .nav-logo img{height:62px;width:auto;object-fit:contain}
 .nav-right{display:flex;align-items:center;gap:40px}
@@ -30,88 +21,94 @@ a{text-decoration:none}
 .nav-cta{font-family:var(--en);font-size:.75rem;letter-spacing:.2em;text-transform:uppercase;padding:11px 28px;background:var(--accent);color:var(--white);transition:.2s;}
 .nav-cta:hover{background:var(--accentD)}
 
-/* HERO */
-.page-hero{padding-top:86px;background:var(--ink);min-height:420px;display:flex;align-items:flex-end;position:relative;overflow:hidden;}
-.page-hero-bg{position:absolute;inset:0;background:linear-gradient(to right, rgba(28,25,22,.85) 50%, rgba(28,25,22,.3));z-index:1;}
-.page-hero-img{position:absolute;inset:0;object-fit:cover;width:100%;height:100%;object-position:center 20%;}
-.page-hero-text{position:relative;z-index:2;padding:72px 60px;}
-.page-hero-en{font-family:var(--en);font-size:.65rem;letter-spacing:.36em;text-transform:uppercase;color:var(--accentL);margin-bottom:14px;}
-.page-hero-title{font-family:var(--en);font-weight:200;font-size:clamp(2.8rem,5vw,4.8rem);letter-spacing:.2em;text-transform:uppercase;color:#fff;line-height:1;}
-.page-hero-ko{font-family:var(--ko);font-size:1rem;color:rgba(255,255,255,.5);margin-top:14px;}
+/* PAGE HERO */
+.page-hero{padding-top:86px;min-height:500px;position:relative;overflow:hidden;display:flex;align-items:flex-end;}
+.page-hero-bg-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 15%;}
+.page-hero-overlay{position:absolute;inset:0;background:linear-gradient(135deg,rgba(28,25,22,.85) 0%,rgba(28,25,22,.4) 65%,rgba(28,25,22,.1) 100%);}
+.page-hero-content{position:relative;z-index:2;padding:80px 60px;max-width:700px;}
+.page-hero-eyebrow{font-family:var(--en);font-size:.62rem;letter-spacing:.38em;text-transform:uppercase;color:var(--accentL);margin-bottom:16px;display:flex;align-items:center;gap:14px;}
+.page-hero-eyebrow::before{content:'';width:28px;height:1px;background:var(--accentL);}
+.page-hero-title{font-family:var(--en);font-weight:200;font-size:clamp(3.2rem,6vw,5.5rem);letter-spacing:.22em;text-transform:uppercase;color:#fff;line-height:.95;padding-left:.22em;}
+.page-hero-sub{font-family:var(--ko);font-size:1rem;color:rgba(255,255,255,.55);margin-top:18px;line-height:2.1;}
 
 /* INTRO */
-.dir-intro{display:grid;grid-template-columns:45% 55%;min-height:600px;}
-.dir-intro-photo{position:relative;overflow:hidden;}
+.dir-intro{display:grid;grid-template-columns:44% 56%;min-height:620px;}
+.dir-intro-photo{overflow:hidden;position:relative;}
 .dir-intro-photo img{width:100%;height:100%;object-fit:cover;object-position:center 10%;}
 .dir-intro-text{padding:80px 64px;background:var(--paper);display:flex;flex-direction:column;justify-content:center;}
-.dir-tag{display:inline-block;font-family:var(--en);font-size:.6rem;letter-spacing:.28em;text-transform:uppercase;color:var(--accent);border:1px solid var(--accentL);padding:6px 14px;margin-bottom:24px;}
-.dir-name-en{font-family:var(--en);font-weight:200;font-size:3.2rem;letter-spacing:.28em;text-transform:uppercase;color:var(--ink);padding-left:.28em;line-height:1;}
-.dir-name-ko{font-family:var(--ko);font-size:1rem;color:var(--accent);margin-top:8px;margin-bottom:28px;}
-.dir-divider{height:1px;background:var(--ink);width:40px;margin-bottom:28px;}
-.dir-intro-desc{font-family:var(--ko);font-size:1rem;color:var(--ink2);line-height:2.2;margin-bottom:24px;}
-.dir-lineage-box{background:var(--tint);border-left:3px solid var(--accent);padding:18px 22px;}
-.dir-lineage-lbl{font-family:var(--en);font-size:.6rem;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);margin-bottom:8px;}
-.dir-lineage-flow{font-family:var(--ko);font-size:.9rem;color:var(--ink2);line-height:1.9;}
+.dir-tag{display:inline-block;font-family:var(--en);font-size:.6rem;letter-spacing:.28em;text-transform:uppercase;color:var(--accent);border:1px solid var(--accentL);padding:6px 14px;margin-bottom:22px;}
+.dir-name{font-family:var(--en);font-weight:200;font-size:3.4rem;letter-spacing:.28em;text-transform:uppercase;color:var(--ink);padding-left:.28em;line-height:1;}
+.dir-role{font-family:var(--ko);font-size:1rem;color:var(--accent);margin-top:8px;margin-bottom:28px;}
+.dir-divider{height:2px;background:linear-gradient(to right,var(--ink),transparent);width:60px;margin-bottom:28px;}
+.dir-desc{font-family:var(--ko);font-size:1rem;color:var(--ink2);line-height:2.2;margin-bottom:24px;}
+.lineage-box{background:var(--tint);border-left:3px solid var(--accent);padding:18px 22px;}
+.lineage-lbl{font-family:var(--en);font-size:.6rem;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);margin-bottom:8px;}
+.lineage-flow{font-family:var(--ko);font-size:.92rem;color:var(--ink2);line-height:2;}
 
 /* PHILOSOPHY */
-.section-band{padding:80px 60px;background:var(--white);}
-.section-band.dark{background:var(--ink);}
-.band-eyebrow{font-family:var(--en);font-size:.6rem;letter-spacing:.36em;text-transform:uppercase;color:var(--accentL);margin-bottom:14px;display:flex;align-items:center;gap:12px;}
-.band-eyebrow::before{content:'';width:24px;height:1px;background:var(--accentL);}
-.band-title{font-family:var(--en);font-weight:200;font-size:clamp(2rem,3.5vw,3rem);letter-spacing:.12em;text-transform:uppercase;color:var(--ink);line-height:1.1;margin-bottom:28px;}
-.band-title.light{color:#fff;}
-.band-desc{font-family:var(--ko);font-size:1rem;color:var(--ink2);line-height:2.2;max-width:680px;}
-.band-desc.light{color:rgba(255,255,255,.55);}
+.dark-band{background:var(--ink);padding:80px 60px;}
+.dark-band-inner{max-width:800px;}
+.dark-eyebrow{font-family:var(--en);font-size:.62rem;letter-spacing:.36em;text-transform:uppercase;color:var(--accentL);margin-bottom:16px;display:flex;align-items:center;gap:14px;}
+.dark-eyebrow::before{content:'';width:28px;height:1px;background:var(--accentL);}
+.dark-title{font-family:var(--en);font-weight:200;font-size:clamp(2rem,3.5vw,3rem);letter-spacing:.12em;text-transform:uppercase;color:#fff;line-height:1.05;margin-bottom:22px;}
+.dark-desc{font-family:var(--ko);font-size:1rem;color:rgba(255,255,255,.5);line-height:2.3;}
 
-/* PHOTO GRID */
-.photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;background:var(--line);}
-.photo-grid-item{aspect-ratio:1;overflow:hidden;}
-.photo-grid-item img{width:100%;height:100%;object-fit:cover;transition:.4s;}
-.photo-grid-item:hover img{transform:scale(1.04);}
+/* PHOTO STRIP */
+.photo-strip{display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px;}
+.photo-strip-item{aspect-ratio:3/4;overflow:hidden;}
+.photo-strip-item img{width:100%;height:100%;object-fit:cover;transition:.5s;}
+.photo-strip-item:hover img{transform:scale(1.05);}
 
-/* CERTS */
-.certs-section{padding:80px 60px;background:var(--tint);}
-.certs-title{font-family:var(--en);font-weight:200;font-size:2rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ink);margin-bottom:48px;}
-.cert-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px;background:var(--line);}
-.cert-card{background:var(--white);padding:36px 40px;}
-.cert-card-num{font-family:var(--en);font-size:.56rem;letter-spacing:.3em;text-transform:uppercase;color:var(--accentL);margin-bottom:14px;}
-.cert-card-title{font-family:var(--en);font-size:.88rem;letter-spacing:.06em;color:var(--ink);font-weight:400;margin-bottom:10px;line-height:1.4;}
-.cert-card-desc{font-family:var(--ko);font-size:.9rem;color:var(--ink2);line-height:1.9;}
+/* CERTS — 풀위드 리스트 */
+.certs-section{padding:88px 60px;background:var(--bg);}
+.certs-header{margin-bottom:60px;}
+.certs-en{font-family:var(--en);font-size:.62rem;letter-spacing:.36em;text-transform:uppercase;color:var(--accentL);margin-bottom:14px;display:flex;align-items:center;gap:14px;}
+.certs-en::before{content:'';width:28px;height:1px;background:var(--accentL);}
+.certs-title{font-family:var(--en);font-weight:200;font-size:clamp(2rem,3vw,2.8rem);letter-spacing:.12em;text-transform:uppercase;color:var(--ink);}
+
+.cert-row{border-top:1px solid var(--line);padding:44px 0;display:grid;grid-template-columns:1fr 2fr;gap:60px;align-items:start;}
+.cert-row:last-child{border-bottom:1px solid var(--line);}
+.cert-left{}
+.cert-num{font-family:var(--en);font-size:.58rem;letter-spacing:.3em;text-transform:uppercase;color:var(--accentL);margin-bottom:10px;}
+.cert-name{font-family:var(--en);font-size:1.05rem;letter-spacing:.05em;color:var(--ink);font-weight:400;line-height:1.4;}
+.cert-right{}
+.cert-badge{display:inline-block;font-family:var(--en);font-size:.56rem;letter-spacing:.18em;text-transform:uppercase;background:var(--accent);color:#fff;padding:4px 12px;margin-bottom:14px;}
+.cert-headline{font-family:var(--ko);font-size:1.05rem;color:var(--ink);font-weight:700;margin-bottom:10px;line-height:1.6;}
+.cert-desc{font-family:var(--ko);font-size:.95rem;color:var(--ink2);line-height:2.1;}
+.cert-highlight{background:var(--tint);border-left:2px solid var(--accentL);padding:12px 16px;margin-top:14px;font-family:var(--ko);font-size:.9rem;color:var(--ink2);line-height:1.8;}
 
 /* QUOTE */
-.quote-section{padding:100px 60px;background:var(--accent);text-align:center;}
-.quote-mark{font-family:var(--en);font-size:4rem;color:rgba(255,255,255,.2);line-height:.5;margin-bottom:24px;}
-.quote-text{font-family:var(--ko);font-size:1.2rem;color:#fff;line-height:2.1;max-width:680px;margin:0 auto;}
-.quote-source{font-family:var(--en);font-size:.6rem;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-top:24px;}
+.quote-sec{background:var(--accent);padding:100px 60px;text-align:center;}
+.quote-mark{font-family:var(--en);font-size:5rem;color:rgba(255,255,255,.18);line-height:.4;margin-bottom:28px;}
+.quote-text{font-family:var(--ko);font-size:1.15rem;color:#fff;line-height:2.2;max-width:660px;margin:0 auto;}
+.quote-src{font-family:var(--en);font-size:.6rem;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.45);margin-top:24px;}
 
 /* FOOTER */
-#footer{background:var(--ink);padding:60px 60px 40px;}
-.foot-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:36px;padding-bottom:40px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:24px;}
-.foot-logo{margin-bottom:16px;}
-.foot-logo img{height:53px;width:auto;opacity:.75}
+#footer{background:var(--ink);padding:64px 60px 44px;}
+.foot-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:36px;padding-bottom:44px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:28px;}
+.foot-logo{margin-bottom:14px;}.foot-logo img{height:53px;width:auto;opacity:.75}
 .foot-addr{font-family:var(--ko);font-size:.9rem;color:rgba(255,255,255,.35);line-height:1.85;margin-top:10px;}
-.foot-brand-desc{font-family:var(--ko);font-size:.9rem;color:rgba(255,255,255,.28);line-height:1.95;max-width:280px;margin-top:10px;}
+.foot-brand-desc{font-family:var(--ko);font-size:.88rem;color:rgba(255,255,255,.25);line-height:1.95;max-width:280px;margin-top:10px;}
 footer h5{font-family:var(--en);font-size:.6rem;letter-spacing:.24em;text-transform:uppercase;color:var(--accentL);margin-bottom:14px;}
-footer ul{list-style:none;display:flex;flex-direction:column;gap:8px;}
+footer ul{list-style:none;display:flex;flex-direction:column;gap:9px;}
 footer li a{font-family:var(--ko);font-size:.9rem;color:rgba(255,255,255,.3);transition:.2s;}
-footer li a:hover{color:rgba(255,255,255,.6);}
-.foot-bot{display:flex;justify-content:space-between;align-items:center;}
+footer li a:hover{color:rgba(255,255,255,.65);}
+.foot-bot{display:flex;justify-content:space-between;}
 .foot-copy{font-family:var(--en);font-size:.58rem;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.16);}
 
 .reveal{opacity:0;transform:translateY(24px);transition:opacity .7s ease,transform .7s ease}
 .reveal.in{opacity:1;transform:translateY(0)}
 
 @media(max-width:960px){
-  #nav{padding:0 20px}
-  .nav-links{display:none}
-  .page-hero-text{padding:48px 22px}
+  #nav{padding:0 20px}.nav-links{display:none}
+  .page-hero-content{padding:52px 22px}
   .dir-intro{grid-template-columns:1fr}
-  .dir-intro-photo{height:55vw}
+  .dir-intro-photo{height:60vw}
   .dir-intro-text{padding:44px 22px}
-  .section-band,.certs-section{padding:60px 22px}
-  .cert-grid{grid-template-columns:1fr}
-  .photo-grid{grid-template-columns:1fr 1fr}
-  .quote-section{padding:72px 22px}
+  .dark-band,.certs-section{padding:60px 22px}
+  .cert-row{grid-template-columns:1fr;gap:20px}
+  .photo-strip{grid-template-columns:1fr 1fr}
+  .quote-sec{padding:72px 22px}
   #footer{padding:52px 22px 32px}
   .foot-grid{grid-template-columns:1fr}
 }
@@ -120,28 +117,25 @@ footer li a:hover{color:rgba(255,255,255,.6);}
 <body>
 
 <nav id="nav">
-  <a class="nav-logo" href="index.html">
-    <img src="images/logo_dark.png" alt="Regina Pilates"/>
-  </a>
+  <a class="nav-logo" href="index.html"><img src="images/logo_dark.png" alt="Regina Pilates"/></a>
   <div class="nav-right">
     <ul class="nav-links">
       <li><a href="director.html" class="active">원장 소개</a></li>
       <li><a href="studio.html">스튜디오</a></li>
       <li><a href="programs.html">프로그램</a></li>
-      <li><a href="index.html#trial">체험 레슨</a></li>
     </ul>
-    <a class="nav-cta" href="index.html#cta">상담 문의</a>
+    <a class="nav-cta" href="https://booking.naver.com/booking/13/bizes/866976" target="_blank">상담 예약</a>
   </div>
 </nav>
 
 <!-- HERO -->
 <div class="page-hero">
-  <img class="page-hero-img" src="images/director_01.jpg" alt="Regina 원장"/>
-  <div class="page-hero-bg"></div>
-  <div class="page-hero-text">
-    <div class="page-hero-en">Director · Classical Pilates Specialist</div>
+  <img class="page-hero-bg-img" src="images/director_01.jpg" alt="Regina 원장"/>
+  <div class="page-hero-overlay"></div>
+  <div class="page-hero-content">
+    <div class="page-hero-eyebrow">Director · Classical Pilates Specialist</div>
     <div class="page-hero-title">Regina</div>
-    <div class="page-hero-ko">클래식 필라테스의 정통 계보를 직접 사사한 전문가</div>
+    <div class="page-hero-sub">클래식 필라테스의 정통 계보를 직접 사사한 전문가.<br/>세계 최고 마스터 Dorothee Vandewalle 문하 직계 전수자.</div>
   </div>
 </div>
 
@@ -152,78 +146,114 @@ footer li a:hover{color:rgba(255,255,255,.6);}
   </div>
   <div class="dir-intro-text reveal">
     <span class="dir-tag">Founder & Director</span>
-    <div class="dir-name-en">Regina</div>
-    <div class="dir-name-ko">레지나 원장</div>
+    <div class="dir-name">Regina</div>
+    <div class="dir-role">레지나 원장 · 클래식 필라테스 전문가</div>
     <div class="dir-divider"></div>
-    <p class="dir-intro-desc">
-      클래식 필라테스의 세계적 마스터 Dorothee Vandewalle에게 직접 사사한 전문가입니다.<br/><br/>
-      Joseph H. Pilates → Romana Kryzanowska → Dorothee Vandewalle로 이어지는 정통 클래식 계보의 직계 전수자로,
-      오리지널 리퍼토리를 단 한 가지도 변형하지 않고 그대로 지도합니다.<br/><br/>
-      전 세계 35개국에서 인정받는 Peak Pilates PPC Level 3 최상위 자격을 보유하고 있으며,
-      산전·산후 전문 자격까지 갖춘 클래식 필라테스 전문가입니다.
+    <p class="dir-desc">
+      Joseph H. Pilates → Romana Kryzanowska → Dorothee Vandewalle로 이어지는<br/>
+      클래식 필라테스 정통 계보의 직계 전수자입니다.<br/><br/>
+      세계적인 마스터 Dorothee Vandewalle에게 직접 사사했으며,<br/>
+      전 세계 35개국에서 인정받는 Peak Pilates PPC Level 3 최상위 자격을 보유합니다.<br/><br/>
+      오리지널 리퍼토리를 단 하나도 변형하지 않고 그대로 지도합니다.
     </p>
-    <div class="dir-lineage-box">
-      <div class="dir-lineage-lbl">Classical Lineage</div>
-      <div class="dir-lineage-flow">Joseph H. Pilates → Romana Kryzanowska → Dorothee Vandewalle → <strong>Regina 원장</strong> (직접 사사)</div>
+    <div class="lineage-box">
+      <div class="lineage-lbl">Classical Lineage</div>
+      <div class="lineage-flow">Joseph H. Pilates → Romana Kryzanowska<br/>→ Dorothee Vandewalle → <strong>Regina 원장</strong> (직접 사사)</div>
     </div>
   </div>
 </section>
 
 <!-- PHILOSOPHY -->
-<section class="section-band dark reveal">
-  <div class="band-eyebrow" style="color:var(--accentL);">Teaching Philosophy</div>
-  <div class="band-title light">원본 그대로.<br/>변형 없이.</div>
-  <p class="band-desc light">
-    클래식 필라테스는 Joseph H. Pilates가 설계한 정확한 순서와 원칙이 있습니다.
-    레지나 원장은 유행에 맞춰 변형된 동작이 아닌, 100년간 검증된 오리지널 리퍼토리만을 지도합니다.
-    몸은 정직합니다. 올바른 움직임만이 몸을 바꿉니다.
-  </p>
+<section class="dark-band reveal">
+  <div class="dark-band-inner">
+    <div class="dark-eyebrow">Teaching Philosophy</div>
+    <div class="dark-title">원본 그대로.<br/>변형 없이. 타협 없이.</div>
+    <p class="dark-desc">클래식 필라테스는 Joseph H. Pilates가 설계한 정확한 순서와 원칙이 있습니다. 유행에 맞춰 변형된 동작이 아닌, 100년간 검증된 오리지널 리퍼토리만을 지도합니다. 몸은 정직합니다. 올바른 움직임만이 몸을 진짜로 바꿉니다.</p>
+  </div>
 </section>
 
-<!-- PHOTO GRID -->
-<div class="photo-grid">
-  <div class="photo-grid-item"><img src="images/studio_01.jpg" alt="스튜디오"/></div>
-  <div class="photo-grid-item"><img src="images/studio_07.jpg" alt="어패러터스"/></div>
-  <div class="photo-grid-item"><img src="images/studio_08.jpg" alt="기구"/></div>
+<!-- PHOTO STRIP -->
+<div class="photo-strip">
+  <div class="photo-strip-item reveal"><img src="images/studio_07.jpg" alt="스튜디오"/></div>
+  <div class="photo-strip-item reveal"><img src="images/studio_08.jpg" alt="기구"/></div>
+  <div class="photo-strip-item reveal"><img src="images/studio_09.jpg" alt="스튜디오"/></div>
 </div>
 
-<!-- CERTS -->
-<section class="certs-section reveal">
-  <div class="certs-title">Certifications &<br/>Qualifications</div>
-  <div class="cert-grid">
-    <div class="cert-card reveal">
-      <div class="cert-card-num">01</div>
-      <div class="cert-card-title">M.A.T. Pilates Teacher Certification<br/>Basic / Intermediate / Advance System</div>
-      <div class="cert-card-desc">Dorothee Vandewalle가 창시한 M.A.T. 티처 트레이닝 공인 자격. 미국 내 가장 엄격한 클래식 필라테스 강사 인증 과정.</div>
+<!-- CERTIFICATIONS -->
+<section class="certs-section">
+  <div class="certs-header reveal">
+    <div class="certs-en">Certifications & Qualifications</div>
+    <div class="certs-title">자격 & 경력</div>
+  </div>
+
+  <div class="cert-row reveal">
+    <div class="cert-left">
+      <div class="cert-num">01</div>
+      <div class="cert-name">M.A.T. Pilates Teacher Certification<br/>Basic / Intermediate / Advance System</div>
     </div>
-    <div class="cert-card reveal">
-      <div class="cert-card-num">02</div>
-      <div class="cert-card-title">Built Pilates<br/>Basic / Intermediate / Advance System</div>
-      <div class="cert-card-desc">Dorothee Vandewalle의 클래식 필라테스 티처 트레이닝 정규 과정을 이수한 Jung Ah Teacher Certification.</div>
+    <div class="cert-right">
+      <div class="cert-badge">미국 최고 권위 인증</div>
+      <div class="cert-headline">미국에서 가장 엄격한 클래식 필라테스 자격. Dorothee Vandewalle가 직접 수여합니다.</div>
+      <p class="cert-desc">M.A.T.(Metropolitan Authentic Training)는 Dorothee Vandewalle가 창시한 클래식 필라테스 티처 트레이닝 프로그램입니다. 미국 내 가장 엄격하고 포괄적인 인증 과정으로, 수료까지 700시간 이상이 소요됩니다. 전 세계 클래식 필라테스 스튜디오와 강사들이 인정하는 최상위 자격 중 하나입니다.</p>
+      <div class="cert-highlight">Dorothee는 Romana Kryzanowska에게 직접 사사했으며, 30년 이상 클래식 필라테스를 지도해온 세계 최고의 마스터 티처입니다. 그 문하에서 직접 수료한 강사는 전 세계적으로 극소수입니다.</div>
     </div>
-    <div class="cert-card reveal">
-      <div class="cert-card-num">03</div>
-      <div class="cert-card-title">Built Pilates by Dorothee Vandewalle<br/>Classic Pilates Workshop</div>
-      <div class="cert-card-desc">Dorothee Vandewalle 한국 방문 시 직접 진행한 클래식 필라테스 워크샵 참가.</div>
+  </div>
+
+  <div class="cert-row reveal">
+    <div class="cert-left">
+      <div class="cert-num">02</div>
+      <div class="cert-name">Built Pilates<br/>Basic / Intermediate / Advance System<br/><span style="font-size:.85rem;color:var(--ink2);">Jung Ah Teacher Certification</span></div>
     </div>
-    <div class="cert-card reveal">
-      <div class="cert-card-num">04</div>
-      <div class="cert-card-title">Peak Pilates PPC<br/>Level 1 / 2 / 3</div>
-      <div class="cert-card-desc">전 세계 35개국 인정 국제 클래식 필라테스 최상위 인증.</div>
+    <div class="cert-right">
+      <div class="cert-badge">Dorothee 정규 과정 이수</div>
+      <div class="cert-headline">Dorothee의 클래식 필라테스 티처 트레이닝 정규 과정을 모두 이수한 자격입니다.</div>
+      <p class="cert-desc">Built Pilates는 Dorothee Vandewalle의 클래식 필라테스 철학과 교수법을 체계화한 프로그램입니다. Basic부터 Advance까지 전 단계를 이수하며, 각 단계에서 까다로운 실기·이론 평가를 통과해야만 자격이 부여됩니다.</p>
     </div>
-    <div class="cert-card reveal">
-      <div class="cert-card-num">05</div>
-      <div class="cert-card-title">JY Classic Pilates Association<br/>Pre / Post Natal Pilates Program</div>
-      <div class="cert-card-desc">임신·출산 전후 전문 필라테스 지도 자격.</div>
+  </div>
+
+  <div class="cert-row reveal">
+    <div class="cert-left">
+      <div class="cert-num">03</div>
+      <div class="cert-name">Built Pilates by Dorothee Vandewalle<br/>Classic Pilates Workshop</div>
+    </div>
+    <div class="cert-right">
+      <div class="cert-badge">마스터와의 직접 수업</div>
+      <div class="cert-headline">Dorothee Vandewalle의 한국 방문 워크샵에 직접 참가했습니다.</div>
+      <p class="cert-desc">Dorothee Vandewalle가 한국을 직접 방문해 진행한 클래식 필라테스 워크샵입니다. 세계 최정상의 마스터로부터 직접 피드백과 교정을 받는 극히 드문 기회로, 이 경험은 클래식 필라테스의 본질을 더욱 깊이 이해하는 계기가 됐습니다.</p>
+    </div>
+  </div>
+
+  <div class="cert-row reveal">
+    <div class="cert-left">
+      <div class="cert-num">04</div>
+      <div class="cert-name">Peak Pilates PPC<br/>Level 1 / 2 / 3</div>
+    </div>
+    <div class="cert-right">
+      <div class="cert-badge">전 세계 35개국 공인 · 최상위 등급</div>
+      <div class="cert-headline">전 세계 35개국이 인정하는 국제 클래식 필라테스 최상위 자격. Level 3는 최고 등급입니다.</div>
+      <p class="cert-desc">Peak Pilates PPC(Pilates Professionals Certification)는 클래식 필라테스의 모든 기구(Mat, Reformer, Cadillac, Chair, Barrel, Ped-o-Pul 등)에 대한 완전한 이해와 지도 능력을 검증하는 국제 자격입니다. Level 3 취득까지 600시간 이상의 수련과 엄격한 실기·이론 평가를 통과해야 합니다.</p>
+      <div class="cert-highlight">Level 3는 단순한 동작 지도를 넘어, 체형 분석·움직임 패턴 교정·특수 집단(임산부, 재활 등) 지도 능력까지 포함하는 최상위 레벨입니다.</div>
+    </div>
+  </div>
+
+  <div class="cert-row reveal">
+    <div class="cert-left">
+      <div class="cert-num">05</div>
+      <div class="cert-name">JY Classic Pilates Association<br/>Pre / Post Natal Pilates Program</div>
+    </div>
+    <div class="cert-right">
+      <div class="cert-badge">임신·출산 전후 전문 자격</div>
+      <div class="cert-headline">임신 중과 출산 후, 안전하고 효과적인 필라테스 지도를 위한 전문 자격입니다.</div>
+      <p class="cert-desc">산전·산후 여성의 신체 변화, 금기 동작, 단계별 안전한 움직임 설계 능력을 검증하는 전문 자격입니다. 임신 초·중·후기별 맞춤 지도, 출산 후 골반저근 및 코어 회복 프로그램 설계 능력을 포함합니다.</p>
     </div>
   </div>
 </section>
 
 <!-- QUOTE -->
-<div class="quote-section reveal">
+<div class="quote-sec reveal">
   <div class="quote-mark">"</div>
   <p class="quote-text">클래식 필라테스는 몸에 새로운 것을 더하는 것이 아닙니다.<br/>몸이 본래 알고 있던 올바른 움직임을 되찾는 일입니다.</p>
-  <div class="quote-source">— Regina, Director · Regina Pilates Cheongdam</div>
+  <div class="quote-src">— Regina, Director · Regina Pilates Cheongdam</div>
 </div>
 
 <footer id="footer">
@@ -239,25 +269,21 @@ footer li a:hover{color:rgba(255,255,255,.6);}
         <li><a href="director.html">원장 소개</a></li>
         <li><a href="studio.html">스튜디오</a></li>
         <li><a href="programs.html">프로그램</a></li>
-        <li><a href="index.html#trial">체험 레슨</a></li>
       </ul>
     </div>
     <div>
       <h5>Contact</h5>
       <ul>
+        <li><a href="https://booking.naver.com/booking/13/bizes/866976" target="_blank">상담 예약</a></li>
         <li><a href="#">KakaoTalk 채널</a></li>
         <li><a href="#">Instagram</a></li>
-        <li><a href="#">Naver 예약</a></li>
       </ul>
     </div>
   </div>
-  <div class="foot-bot">
-    <span class="foot-copy">© 2026 Regina Pilates · All rights reserved</span>
-  </div>
+  <div class="foot-bot"><span class="foot-copy">© 2026 Regina Pilates · All rights reserved</span></div>
 </footer>
-
 <script>
-const obs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');obs.unobserve(e.target);}});},{threshold:0.1});
+const obs=new IntersectionObserver(e=>{e.forEach(x=>{if(x.isIntersecting){x.target.classList.add('in');obs.unobserve(x.target);}});},{threshold:0.08});
 document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
 </script>
 </body>
