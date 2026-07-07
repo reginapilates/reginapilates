@@ -12,7 +12,8 @@
 html{scroll-behavior:smooth}
 body{font-family:var(--ko);background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;overflow-x:hidden}
 img{display:block}a{text-decoration:none}
-#nav{position:fixed;top:0;left:0;right:0;z-index:200;background:rgba(250,250,247,.97);backdrop-filter:blur(16px);border-bottom:1px solid var(--line);padding:0 56px;height:86px;display:flex;align-items:center;justify-content:space-between;}
+#nav{position:fixed;top:0;left:0;right:0;z-index:200;background:rgba(250,250,247,.97);backdrop-filter:blur(16px);border-bottom:1px solid var(--line);height:86px;display:flex;align-items:center;justify-content:center;}
+.nav-inner{max-width:1280px;width:100%;padding:0 56px;display:flex;align-items:center;justify-content:space-between;}
 .nav-logo img{height:62px;width:auto;object-fit:contain}
 .nav-right{display:flex;align-items:center;gap:40px}
 .nav-links{display:flex;gap:36px;list-style:none}
@@ -117,6 +118,65 @@ footer li a:hover{color:rgba(255,255,255,.65);}
 .reveal{opacity:0;transform:translateY(24px);transition:opacity .7s ease,transform .7s ease}
 .reveal.in{opacity:1;transform:translateY(0)}
 
+/* ── GLOBAL MAX-WIDTH 1280px ── */
+/* 배경은 full-width, 콘텐츠는 최대 1280px */
+:root{--mw:1280px;--px:60px;}
+.nav-inner,
+.page-hero-content,
+.studio-intro,
+.dir-intro-text > *,
+.certs-section > *,
+.certs-section,
+.dark-band > *,
+.classical-intro .ci-inner,
+.split-text > *,
+.prog-text > *,
+.facility-sec > *:not(.facility-top):not(.facility-bottom),
+.map-text > *,
+.quote-sec > *,
+.dir-intro-text,
+.split-text,
+.prog-text,
+.facility-sec,
+.map-text,
+.cta-band,
+.quote-sec,
+#footer .foot-inner{
+  /* 각 섹션의 max-width는 개별 적용 */
+}
+
+/* 핵심: 섹션 자체에 max-width 적용 */
+.site-center{
+  max-width:var(--mw);
+  margin-left:auto;
+  margin-right:auto;
+}
+
+/* 전체 페이지 콘텐츠를 감싸는 방식 */
+#site-wrapper{
+  max-width:1280px;
+  margin:0 auto;
+}
+
+/* 고정 nav는 별도 처리 */
+#nav .nav-inner{
+  max-width:1280px;
+  margin:0 auto;
+  width:100%;
+  padding:0 60px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+
+/* SITE MAX WIDTH */
+.site-body{max-width:1280px;margin:0 auto;position:relative;}
+#footer .foot-inner,
+.page-hero-content,
+.studio-intro,.classical-intro,.ci-inner,
+.dir-intro-text,.dir-intro,.certs-section,
+.dark-band,.dark-band-inner{max-width:1280px;}
+
 @media(max-width:960px){
   #nav{padding:0 20px}.nav-links{display:none}
   .page-hero-content{padding:52px 22px}
@@ -141,6 +201,7 @@ footer li a:hover{color:rgba(255,255,255,.65);}
 <body>
 
 <nav id="nav">
+  <div class="nav-inner">
   <a class="nav-logo" href="index.html"><img src="images/logo_dark.png" alt="Regina Pilates"/></a>
   <div class="nav-right">
     <ul class="nav-links">
@@ -150,7 +211,10 @@ footer li a:hover{color:rgba(255,255,255,.65);}
     </ul>
     <a class="nav-cta" href="https://booking.naver.com/booking/13/bizes/866976" target="_blank">상담 예약</a>
   </div>
+  </div>
 </nav>
+
+<div id="site-wrapper">
 
 <!-- HERO -->
 <div class="page-hero">
@@ -296,6 +360,7 @@ footer li a:hover{color:rgba(255,255,255,.65);}
 </section>
 
 <footer id="footer">
+  <div style="max-width:1280px;margin:0 auto;">
   <div class="foot-grid">
     <div>
       <div class="foot-logo"><img src="images/logo_light.png" alt="Regina Pilates"/></div>
@@ -320,10 +385,12 @@ footer li a:hover{color:rgba(255,255,255,.65);}
     </div>
   </div>
   <div class="foot-bot"><span class="foot-copy">© 2026 Regina Pilates · All rights reserved</span></div>
+  </div>
 </footer>
 <script>
 const obs=new IntersectionObserver(e=>{e.forEach(x=>{if(x.isIntersecting){x.target.classList.add('in');obs.unobserve(x.target);}});},{threshold:0.08});
 document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
 </script>
+</div><!-- /site-wrapper -->
 </body>
 </html>
