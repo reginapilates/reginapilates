@@ -25,10 +25,14 @@ a{text-decoration:none}
   position:fixed;top:0;left:0;right:0;z-index:200;
   background:rgba(250,250,247,.97);backdrop-filter:blur(16px);
   border-bottom:1px solid var(--line);
-  padding:0 56px;height:86px;
+  height:86px;
+  display:flex;align-items:center;justify-content:center;
+}
+.nav-inner{
+  max-width:1280px;width:100%;padding:0 60px;
   display:flex;align-items:center;justify-content:space-between;
 }
-.nav-right{display:flex;align-items:center;gap:40px}
+.nav-right{display:flex;align-items:center;gap:36px}
 .nav-logo img{height:62px;width:auto;object-fit:contain}
 .nav-links{display:flex;gap:36px;list-style:none}
 .nav-links a{
@@ -45,9 +49,10 @@ a{text-decoration:none}
 .nav-cta:hover{background:var(--accentD)}
 
 /* ── HERO ── */
-#hero{display:grid;grid-template-columns:44% 56%;min-height:100vh;padding-top:86px}
+#hero-wrap{max-width:1280px;margin:0 auto;}
+#hero{display:grid;grid-template-columns:44% 56%;min-height:100vh;padding-top:86px;}
 .hero-text{
-  background:var(--bg);padding:80px 56px 80px 60px;
+  background:var(--bg);padding:80px 60px 60px 60px;
   display:flex;flex-direction:column;justify-content:space-between;
   position:relative;
 }
@@ -77,18 +82,18 @@ a{text-decoration:none}
   color:var(--ink);text-transform:uppercase;padding-left:.22em;
 }
 .hero-title em{display:block;font-style:normal}
-.hero-ko{font-family:var(--ko);font-size:1.03rem;color:var(--ink2);line-height:2.1;margin-top:22px;max-width:300px}
-.hero-actions{display:flex;flex-direction:column;gap:10px;margin-top:34px;width:fit-content}
+.hero-ko{font-family:var(--ko);font-size:1.03rem;color:var(--ink2);line-height:2.1;margin-top:22px;}
+.hero-actions{display:flex;flex-direction:row;gap:14px;margin-top:34px;flex-wrap:wrap;}
 .btn-fill{
-  font-family:var(--en);font-size:.62rem;letter-spacing:.22em;text-transform:uppercase;
-  padding:13px 36px;background:var(--accent);color:var(--white);
-  border:none;cursor:pointer;transition:.25s;text-align:center;
+  font-family:var(--en);font-size:.68rem;letter-spacing:.2em;text-transform:uppercase;
+  padding:14px 40px;background:var(--accent);color:var(--white);
+  border:none;cursor:pointer;transition:.25s;text-align:center;display:inline-block;
 }
 .btn-fill:hover{background:var(--accentD)}
 .btn-line{
-  font-family:var(--en);font-size:.62rem;letter-spacing:.22em;text-transform:uppercase;
-  padding:12px 36px;border:1px solid var(--accent);color:var(--accent);
-  background:transparent;cursor:pointer;transition:.25s;text-align:center;
+  font-family:var(--en);font-size:.68rem;letter-spacing:.2em;text-transform:uppercase;
+  padding:13px 40px;border:1px solid var(--accent);color:var(--accent);
+  background:transparent;cursor:pointer;transition:.25s;text-align:center;display:inline-block;
 }
 .btn-line:hover{background:var(--accent);color:var(--white)}
 .hero-bottom{border-top:1px solid var(--line);padding-top:22px;display:flex;gap:36px}
@@ -97,14 +102,18 @@ a{text-decoration:none}
 
 /* ── SEC LABEL ── */
 .sec-label{
-  padding:32px 60px 24px;background:var(--white);
+  background:var(--white);
   border-top:3px solid var(--accent);border-bottom:1px solid var(--line);
+}
+.sec-label-inner{
+  max-width:1280px;margin:0 auto;padding:32px 60px 24px;
 }
 .sec-label-n{font-family:var(--en);font-size:.6rem;letter-spacing:.36em;text-transform:uppercase;color:var(--accentL);display:block;margin-bottom:8px}
 .sec-label-t{display:none}
 
 /* ── STRENGTHS ── */
-#strengths{display:grid;grid-template-columns:repeat(3,1fr);background:var(--tint)}
+#strengths{background:var(--tint)}
+#strengths .str-inner{display:grid;grid-template-columns:repeat(3,1fr);max-width:1280px;margin:0 auto;}
 .str-item{padding:52px 48px;border-right:1px solid var(--line2)}
 .str-item:last-child{border-right:none}
 .str-no{font-family:var(--en);font-size:.56rem;letter-spacing:.24em;text-transform:uppercase;color:var(--accentL);margin-bottom:16px}
@@ -113,7 +122,7 @@ a{text-decoration:none}
 .str-tag{display:inline-block;margin-top:14px;font-family:var(--en);font-size:.55rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);border:1px solid var(--line2);padding:4px 12px}
 
 /* ── STUDIO BAND ── */
-#studio-band{height:480px;position:relative;overflow:hidden}
+#studio-band{height:480px;position:relative;overflow:hidden;}
 #studio-band img{width:100%;height:100%;object-fit:cover;object-position:center 45%}
 .studio-overlay{
   position:absolute;inset:0;background:rgba(28,25,22,.38);
@@ -124,7 +133,7 @@ a{text-decoration:none}
 
 /* ── PROGRAMS ── */
 #programs{background:var(--white)}
-.programs-grid{display:grid;grid-template-columns:repeat(3,1fr)}
+.programs-grid{display:grid;grid-template-columns:repeat(3,1fr);max-width:1280px;margin:0 auto;}
 .prog-item{
   padding:52px 44px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);
   position:relative;transition:.3s;
@@ -144,6 +153,7 @@ a{text-decoration:none}
 #trial{background:var(--ink);padding:0}
 .trial-inner{
   display:grid;grid-template-columns:1fr 1fr;
+  max-width:1280px;margin:0 auto;
 }
 .trial-left{
   padding:88px 64px;border-right:1px solid rgba(255,255,255,.08);
@@ -190,7 +200,8 @@ a{text-decoration:none}
 .trial-notice-d{font-family:var(--ko);font-size:.94rem;color:rgba(255,255,255,.38);line-height:1.8}
 
 /* ── DIRECTOR ── */
-#director{display:grid;grid-template-columns:45% 55%;background:var(--paper)}
+#director{background:var(--paper)}
+#director .dir-inner{display:grid;grid-template-columns:45% 55%;max-width:1280px;margin:0 auto;}
 .dir-photo{position:relative;overflow:hidden;min-height:580px}
 .dir-photo img{width:100%;height:100%;object-fit:cover;object-position:center 10%}
 .dir-photo-label{
@@ -218,7 +229,8 @@ a{text-decoration:none}
 .cert-desc{font-family:var(--ko);font-size:.92rem;color:var(--ink2);line-height:1.8}
 
 /* ── APPARATUS ── */
-#apparatus{display:grid;grid-template-columns:55% 45%;background:var(--white)}
+#apparatus{background:var(--white)}
+#apparatus .app-inner{display:grid;grid-template-columns:55% 45%;max-width:1280px;margin:0 auto;}
 .app-photo{position:relative;overflow:hidden;min-height:500px}
 .app-photo img{width:100%;height:100%;object-fit:cover;object-position:center 40%}
 .app-text{padding:88px 60px;display:flex;flex-direction:column;justify-content:center;background:var(--tint)}
@@ -228,7 +240,8 @@ a{text-decoration:none}
 .app-tag{display:inline-block;margin-top:22px;font-family:var(--en);font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);border:1px solid var(--line2);padding:8px 20px;background:var(--white)}
 
 /* ── CTA ── */
-#cta{background:var(--accent);padding:110px 60px;display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center}
+#cta{background:var(--accent);padding:110px 0;}
+.cta-inner{max-width:1280px;margin:0 auto;padding:0 60px;display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;}
 .cta-eyebrow{font-family:var(--en);font-size:.58rem;letter-spacing:.34em;text-transform:uppercase;color:rgba(255,255,255,.55);margin-bottom:14px}
 .cta-title{font-family:var(--en);font-weight:200;font-size:clamp(2.2rem,4.5vw,3.4rem);letter-spacing:.1em;text-transform:uppercase;color:#fff;line-height:1.1}
 .cta-desc{font-family:var(--ko);font-size:1.03rem;color:rgba(255,255,255,.6);line-height:2.1;margin-bottom:18px}
@@ -239,7 +252,8 @@ a{text-decoration:none}
 .btn-white:hover{background:var(--ink);color:#fff}
 
 /* ── FOOTER ── */
-#footer{background:var(--ink);padding:72px 60px 44px}
+#footer{background:var(--ink);padding:72px 0 44px;}
+.foot-inner{max-width:1280px;margin:0 auto;padding:0 60px;}
 .foot-logo{margin-bottom:22px}
 .foot-logo img{height:53px;width:auto;opacity:.75}
 .foot-grid{
@@ -290,23 +304,22 @@ footer li a:hover{color:rgba(255,255,255,.6)}
 <!-- NAV -->
 <nav id="nav">
   <div class="nav-inner">
-  <a class="nav-logo" href="#">
-    <img src="images/logo_dark.png" alt="Regina Pilates"/>
-  </a>
-  <div class="nav-right">
-    <ul class="nav-links">
-      <li><a href="director.html">원장 소개</a></li>
-      <li><a href="studio.html">스튜디오</a></li>
-      <li><a href="programs.html">프로그램</a></li>
-    </ul>
-    <a class="nav-cta" href="https://booking.naver.com/booking/13/bizes/866976" target="_blank">상담 예약</a>
-  </div>
+    <a class="nav-logo" href="#">
+      <img src="images/logo_dark.png" alt="Regina Pilates"/>
+    </a>
+    <div class="nav-right">
+      <ul class="nav-links">
+        <li><a href="director.html">원장 소개</a></li>
+        <li><a href="studio.html">스튜디오</a></li>
+        <li><a href="programs.html">프로그램</a></li>
+      </ul>
+      <a class="nav-cta" href="https://booking.naver.com/booking/13/bizes/866976" target="_blank">상담 예약</a>
+    </div>
   </div>
 </nav>
 
-<div id="site-wrapper">
-
 <!-- HERO -->
+<div id="hero-wrap">
 <section id="hero">
   <div class="hero-text">
     <div class="hero-main">
@@ -332,13 +345,17 @@ footer li a:hover{color:rgba(255,255,255,.6)}
     </div>
   </div>
 </section>
+</div><!-- /hero-wrap -->
 
 <!-- STRENGTHS -->
 <div class="sec-label reveal">
+<div class="sec-label-inner">
   <span class="sec-label-n">Why Regina Pilates</span>
   <span class="sec-label-t">스튜디오 차별점</span>
 </div>
+</div>
 <section id="strengths">
+<div class="str-inner">
   <div class="str-item reveal">
     <div class="str-no">01 — Classical</div>
     <div class="str-title">Original<br/>Repertoire</div>
@@ -357,6 +374,7 @@ footer li a:hover{color:rgba(255,255,255,.6)}
     <p class="str-desc">세계적 마스터 Dorothee Vandewalle 문하 직접 사사. Peak Pilates PPC Level 3 국제 최고등급 보유. 35개국 공인 자격.</p>
     <div class="str-tag">검증된 전문성</div>
   </div>
+</div>
 </section>
 
 <!-- STUDIO BAND -->
@@ -372,6 +390,7 @@ footer li a:hover{color:rgba(255,255,255,.6)}
 <div class="sec-label reveal">
   <span class="sec-label-n">Programs</span>
   <span class="sec-label-t">레슨 프로그램</span>
+</div>
 </div>
 <section id="programs">
   <div class="programs-grid">
@@ -459,10 +478,13 @@ footer li a:hover{color:rgba(255,255,255,.6)}
 
 <!-- DIRECTOR -->
 <div class="sec-label reveal">
+<div class="sec-label-inner">
   <span class="sec-label-n">Director</span>
   <span class="sec-label-t">원장 소개</span>
 </div>
+</div>
 <section id="director">
+<div class="dir-inner">
   <div class="dir-photo reveal">
     <img src="images/director.jpg" alt="레지나 원장"/>
     <div class="dir-photo-label">
@@ -521,11 +543,12 @@ footer li a:hover{color:rgba(255,255,255,.6)}
         </div>
       </div>
     </div>
-  </div>
+</div>
 </section>
 
 <!-- APPARATUS -->
 <section id="apparatus">
+<div class="app-inner">
   <div class="app-photo reveal">
     <img src="images/studio.jpg" alt="Gratz Apparatus"/>
   </div>
@@ -539,6 +562,7 @@ footer li a:hover{color:rgba(255,255,255,.6)}
 
 <!-- CTA -->
 <section id="cta">
+<div class="cta-inner">
   <div class="reveal">
     <div class="cta-eyebrow">Start Your Journey</div>
     <h2 class="cta-title">클래식 필라테스를<br/>시작하세요</h2>
@@ -547,11 +571,12 @@ footer li a:hover{color:rgba(255,255,255,.6)}
     <p class="cta-desc">바디 리딩 세션으로 시작합니다.<br/>당신의 몸에 맞는 클래식 필라테스를 경험하세요.<br/>KakaoTalk 채널 또는 아래 버튼으로 문의주세요.</p>
     <a class="btn-white" href="#trial">트라이얼 레슨 예약</a>
   </div>
+</div>
 </section>
 
 <!-- FOOTER -->
 <footer id="footer">
-  <div style="max-width:1280px;margin:0 auto;">
+<div class="foot-inner">
   <div class="foot-grid">
     <div>
       <div class="foot-logo"><img src="images/logo_light.png" alt="Regina Pilates"/></div>
@@ -593,6 +618,5 @@ const obs = new IntersectionObserver(entries => {
 }, {threshold:0.1});
 document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
 </script>
-</div><!-- /site-wrapper -->
 </body>
 </html>
