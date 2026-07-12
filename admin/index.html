@@ -1192,8 +1192,8 @@ async function saveContract() {
   const endDate = document.getElementById('nc-end').value;
   const note = document.getElementById('nc-note').value;
   const signedAt = new Date().toISOString().split('T')[0];
-  const marketingConsent = document.getElementById('nc-agree-marketing').checked;
-  const adConsent = document.getElementById('nc-agree-ad').checked;
+  const marketingConsent = false;
+  const adConsent = false;
 
   // 1. 먼저 Notion에 계약 저장
   const body = {
@@ -1488,8 +1488,8 @@ function previewContractPDF() {
     startDate: document.getElementById('nc-start').value,
     endDate: document.getElementById('nc-end').value,
     signedAt: new Date().toISOString().split('T')[0],
-    marketingConsent: document.getElementById('nc-agree-marketing').checked,
-    adConsent: document.getElementById('nc-agree-ad').checked,
+    marketingConsent: false,
+    adConsent: false,
     note: document.getElementById('nc-note').value,
     sigData,
   });
