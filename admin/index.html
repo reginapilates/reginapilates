@@ -1,1 +1,1101 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Regina Pilates — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500&family=Nanum+Gothic:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#FAFAF7;
+  --surface:#F3F2EE;
+  --border:#E5E3DC;
+  --accent:#8E8276;
+  --accent-light:#C4BAB0;
+  --text:#1A1816;
+  --text-muted:#6B6560;
+  --danger:#C0392B;
+  --warning:#E67E22;
+  --success:#27AE60;
+  --info:#2980B9;
+  --white:#FFFFFF;
+}
+html{scrollbar-gutter:stable;}
+body{font-family:'Nanum Gothic',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;}
 
+/* ── LOGIN ── */
+#login-screen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:999;}
+.login-box{width:360px;padding:48px 40px;background:var(--white);border:1px solid var(--border);}
+.login-logo{font-family:'Outfit',sans-serif;font-weight:200;font-size:22px;letter-spacing:0.15em;color:var(--text);margin-bottom:8px;}
+.login-sub{font-size:12px;color:var(--text-muted);margin-bottom:32px;letter-spacing:0.05em;}
+.login-box input{width:100%;padding:12px 14px;border:1px solid var(--border);background:var(--bg);font-family:'Nanum Gothic',sans-serif;font-size:14px;color:var(--text);outline:none;margin-bottom:12px;}
+.login-box input:focus{border-color:var(--accent);}
+.login-btn{width:100%;padding:13px;background:var(--text);color:var(--white);border:none;font-family:'Nanum Gothic',sans-serif;font-size:14px;cursor:pointer;letter-spacing:0.05em;}
+.login-btn:hover{background:var(--accent);}
+.login-error{color:var(--danger);font-size:12px;margin-top:8px;display:none;}
+
+/* ── LAYOUT ── */
+#app{display:none;}
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:220px;background:var(--text);padding:0;z-index:100;display:flex;flex-direction:column;}
+.sidebar-logo{padding:28px 24px 24px;border-bottom:1px solid rgba(255,255,255,0.1);}
+.sidebar-logo-en{font-family:'Outfit',sans-serif;font-weight:200;font-size:16px;letter-spacing:0.15em;color:var(--white);}
+.sidebar-logo-kr{font-size:11px;color:rgba(255,255,255,0.4);margin-top:3px;letter-spacing:0.05em;}
+.sidebar-nav{padding:20px 0;flex:1;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:12px 24px;color:rgba(255,255,255,0.6);cursor:pointer;font-size:13px;transition:all 0.15s;border-left:2px solid transparent;}
+.nav-item:hover{color:var(--white);background:rgba(255,255,255,0.05);}
+.nav-item.active{color:var(--white);background:rgba(255,255,255,0.08);border-left-color:var(--accent-light);}
+.nav-item svg{width:16px;height:16px;flex-shrink:0;}
+.sidebar-bottom{padding:20px 24px;border-top:1px solid rgba(255,255,255,0.1);}
+.logout-btn{font-size:12px;color:rgba(255,255,255,0.4);cursor:pointer;background:none;border:none;font-family:'Nanum Gothic',sans-serif;}
+.logout-btn:hover{color:rgba(255,255,255,0.7);}
+
+.main{margin-left:220px;min-height:100vh;padding:32px 36px;}
+.page{display:none;}
+.page.active{display:block;}
+
+/* ── HEADER ── */
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;}
+.page-title{font-family:'Outfit',sans-serif;font-weight:300;font-size:24px;letter-spacing:0.05em;}
+.btn{padding:9px 18px;font-family:'Nanum Gothic',sans-serif;font-size:13px;cursor:pointer;border:none;transition:all 0.15s;}
+.btn-primary{background:var(--text);color:var(--white);}
+.btn-primary:hover{background:var(--accent);}
+.btn-secondary{background:var(--surface);color:var(--text);border:1px solid var(--border);}
+.btn-secondary:hover{border-color:var(--accent);}
+.btn-danger{background:var(--danger);color:var(--white);}
+.btn-sm{padding:6px 12px;font-size:12px;}
+
+/* ── STATS ── */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px;}
+.stat-card{background:var(--white);border:1px solid var(--border);padding:20px 22px;}
+.stat-label{font-size:11px;color:var(--text-muted);letter-spacing:0.05em;margin-bottom:8px;}
+.stat-value{font-family:'Outfit',sans-serif;font-weight:300;font-size:28px;color:var(--text);}
+.stat-sub{font-size:11px;color:var(--text-muted);margin-top:4px;}
+
+/* ── ALERTS ── */
+.alert-banner{padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;gap:10px;font-size:13px;}
+.alert-banner.warning{background:#FEF9E7;border:1px solid #F9E79F;color:#7D6608;}
+.alert-banner.danger{background:#FDEDEC;border:1px solid #F5B7B1;color:#7B241C;}
+.alert-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.alert-dot.yellow{background:var(--warning);}
+.alert-dot.red{background:var(--danger);}
+
+/* ── SEARCH & FILTER ── */
+.toolbar{display:flex;align-items:center;gap:12px;margin-bottom:20px;}
+.search-input{flex:1;max-width:280px;padding:9px 14px;border:1px solid var(--border);background:var(--white);font-family:'Nanum Gothic',sans-serif;font-size:13px;color:var(--text);outline:none;}
+.search-input:focus{border-color:var(--accent);}
+.filter-tabs{display:flex;gap:4px;}
+.filter-tab{padding:8px 14px;font-size:12px;cursor:pointer;border:1px solid var(--border);background:var(--white);color:var(--text-muted);font-family:'Nanum Gothic',sans-serif;}
+.filter-tab.active{background:var(--text);color:var(--white);border-color:var(--text);}
+
+/* ── MEMBER LIST ── */
+.member-table{width:100%;border-collapse:collapse;background:var(--white);border:1px solid var(--border);}
+.member-table th{padding:11px 16px;text-align:left;font-size:11px;color:var(--text-muted);letter-spacing:0.05em;font-weight:400;border-bottom:1px solid var(--border);background:var(--surface);}
+.member-table td{padding:13px 16px;border-bottom:1px solid var(--border);font-size:13px;}
+.member-table tr:last-child td{border-bottom:none;}
+.member-table tr:hover td{background:var(--surface);cursor:pointer;}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;font-size:11px;border-radius:0;}
+.badge-active{background:#EBF5FB;color:var(--info);}
+.badge-warning{background:#FEF9E7;color:var(--warning);}
+.badge-danger{background:#FDEDEC;color:var(--danger);}
+.badge-muted{background:var(--surface);color:var(--text-muted);}
+.progress-bar{width:100px;height:4px;background:var(--border);overflow:hidden;}
+.progress-fill{height:100%;background:var(--accent);}
+
+/* ── DETAIL VIEW ── */
+.detail-header{display:flex;align-items:center;gap:16px;margin-bottom:28px;}
+.back-btn{display:flex;align-items:center;gap:6px;color:var(--text-muted);cursor:pointer;font-size:13px;background:none;border:none;font-family:'Nanum Gothic',sans-serif;padding:0;}
+.back-btn:hover{color:var(--text);}
+.detail-name{font-family:'Outfit',sans-serif;font-weight:300;font-size:26px;}
+.detail-meta{font-size:13px;color:var(--text-muted);margin-top:2px;}
+
+.tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:24px;}
+.tab{padding:12px 20px;font-size:13px;cursor:pointer;color:var(--text-muted);border-bottom:2px solid transparent;margin-bottom:-1px;}
+.tab.active{color:var(--text);border-bottom-color:var(--accent);}
+
+/* ── PROFILE ── */
+.profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+.profile-section{background:var(--white);border:1px solid var(--border);padding:24px;}
+.section-title{font-size:11px;letter-spacing:0.08em;color:var(--text-muted);margin-bottom:16px;text-transform:uppercase;}
+.field-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);}
+.field-row:last-child{border-bottom:none;}
+.field-label{font-size:12px;color:var(--text-muted);}
+.field-value{font-size:13px;color:var(--text);text-align:right;}
+
+/* ── CONTRACTS ── */
+.contract-card{background:var(--white);border:1px solid var(--border);padding:20px 24px;margin-bottom:12px;}
+.contract-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.contract-name{font-size:15px;font-weight:700;}
+.contract-meta{font-size:12px;color:var(--text-muted);margin-bottom:12px;}
+.contract-progress{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+.contract-progress-bar{flex:1;height:6px;background:var(--border);}
+.contract-progress-fill{height:100%;background:var(--accent);transition:width 0.3s;}
+.contract-actions{display:flex;gap:8px;}
+
+/* ── SESSIONS ── */
+.session-list{display:flex;flex-direction:column;gap:8px;}
+.session-item{background:var(--white);border:1px solid var(--border);padding:14px 18px;display:flex;align-items:center;gap:16px;}
+.session-no{font-family:'Outfit',sans-serif;font-weight:300;font-size:20px;color:var(--accent);width:36px;flex-shrink:0;}
+.session-info{flex:1;}
+.session-date{font-size:13px;font-weight:700;}
+.session-condition{font-size:12px;color:var(--text-muted);margin-top:2px;}
+.session-memo{font-size:12px;color:var(--text-muted);}
+.condition-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px;}
+.cond-최상{background:#27AE60;}
+.cond-좋음{background:#2ECC71;}
+.cond-보통{background:#F1C40F;}
+.cond-피로{background:#E67E22;}
+.cond-통증{background:#E74C3C;}
+
+/* ── FORMS ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;}
+.modal{background:var(--white);width:100%;max-width:680px;max-height:90vh;overflow-y:auto;}
+.modal-header{padding:24px 28px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--white);z-index:1;}
+.modal-title{font-family:'Outfit',sans-serif;font-weight:300;font-size:20px;}
+.modal-close{background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-muted);line-height:1;}
+.modal-body{padding:24px 28px;}
+.modal-footer{padding:16px 28px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;position:sticky;bottom:0;background:var(--white);}
+
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+.form-row.full{grid-template-columns:1fr;}
+.form-group{display:flex;flex-direction:column;gap:6px;}
+.form-label{font-size:11px;color:var(--text-muted);letter-spacing:0.05em;}
+.form-label.required::after{content:' *';color:var(--danger);}
+.form-input{padding:10px 12px;border:1px solid var(--border);background:var(--bg);font-family:'Nanum Gothic',sans-serif;font-size:13px;color:var(--text);outline:none;width:100%;}
+.form-input:focus{border-color:var(--accent);}
+.form-select{padding:10px 12px;border:1px solid var(--border);background:var(--bg);font-family:'Nanum Gothic',sans-serif;font-size:13px;color:var(--text);outline:none;width:100%;cursor:pointer;}
+.form-select:focus{border-color:var(--accent);}
+.form-textarea{padding:10px 12px;border:1px solid var(--border);background:var(--bg);font-family:'Nanum Gothic',sans-serif;font-size:13px;color:var(--text);outline:none;width:100%;resize:vertical;min-height:80px;}
+.form-section{font-size:11px;letter-spacing:0.08em;color:var(--text-muted);text-transform:uppercase;margin:20px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+.checkbox-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;}
+.checkbox-row input[type=checkbox]{margin-top:2px;cursor:pointer;}
+.checkbox-label{font-size:13px;line-height:1.5;}
+.checkbox-label small{display:block;font-size:11px;color:var(--text-muted);margin-top:2px;}
+
+/* ── SIGNATURE ── */
+.sig-container{border:1px solid var(--border);background:var(--white);margin-top:8px;}
+.sig-label{padding:10px 14px;font-size:11px;color:var(--text-muted);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+.sig-clear{background:none;border:none;font-size:11px;color:var(--text-muted);cursor:pointer;font-family:'Nanum Gothic',sans-serif;}
+.sig-clear:hover{color:var(--danger);}
+canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-action:none;}
+
+/* ── EMPTY STATE ── */
+.empty-state{text-align:center;padding:60px 20px;color:var(--text-muted);}
+.empty-state svg{width:40px;height:40px;margin-bottom:12px;opacity:0.3;}
+.empty-state p{font-size:13px;}
+
+/* ── LOADING ── */
+.loading{text-align:center;padding:40px;color:var(--text-muted);font-size:13px;}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:24px;right:24px;padding:14px 20px;background:var(--text);color:var(--white);font-size:13px;z-index:999;transform:translateY(100px);opacity:0;transition:all 0.3s;}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.success{background:var(--success);}
+.toast.error{background:var(--danger);}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">REGINA PILATES</div>
+    <div class="login-sub">관리자 로그인</div>
+    <input type="password" id="pw-input" placeholder="비밀번호" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="login-btn" onclick="doLogin()">로그인</button>
+    <div class="login-error" id="login-error">비밀번호가 올바르지 않습니다.</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-en">REGINA PILATES</div>
+      <div class="sidebar-logo-kr">레지나 필라테스 청담</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-item active" onclick="showPage('dashboard')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        대시보드
+      </div>
+      <div class="nav-item" onclick="showPage('members')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        회원 관리
+      </div>
+      <div class="nav-item" onclick="showPage('programs')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 6h16M4 10h16M4 14h8M4 18h8"/></svg>
+        프로그램
+      </div>
+      <div class="nav-item" onclick="showPage('contracts')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
+        계약 관리
+      </div>
+    </nav>
+    <div class="sidebar-bottom">
+      <button class="logout-btn" onclick="doLogout()">로그아웃</button>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-header">
+        <div class="page-title">대시보드</div>
+        <div style="font-size:12px;color:var(--text-muted)" id="today-date"></div>
+      </div>
+      <div class="stats-grid" id="stats-grid">
+        <div class="stat-card"><div class="stat-label">전체 회원</div><div class="stat-value" id="stat-total">—</div></div>
+        <div class="stat-card"><div class="stat-label">진행중 계약</div><div class="stat-value" id="stat-active">—</div></div>
+        <div class="stat-card"><div class="stat-label">리마케팅 대상</div><div class="stat-value" id="stat-alert">—</div></div>
+        <div class="stat-card"><div class="stat-label">이번달 신규</div><div class="stat-value" id="stat-new">—</div></div>
+      </div>
+      <div id="alert-list"></div>
+    </div>
+
+    <!-- MEMBERS -->
+    <div class="page" id="page-members">
+      <div class="page-header">
+        <div class="page-title">회원 관리</div>
+        <button class="btn btn-primary" onclick="openNewMemberModal()">+ 신규 회원</button>
+      </div>
+      <div class="toolbar">
+        <input class="search-input" id="member-search" placeholder="이름 또는 연락처 검색..." oninput="filterMembers()">
+        <div class="filter-tabs">
+          <div class="filter-tab active" onclick="setFilter('all',this)">전체</div>
+          <div class="filter-tab" onclick="setFilter('active',this)">진행중</div>
+          <div class="filter-tab" onclick="setFilter('alert',this)">리마케팅</div>
+        </div>
+      </div>
+      <table class="member-table">
+        <thead>
+          <tr>
+            <th>이름</th><th>연락처</th><th>현재 프로그램</th><th>잔여 횟수</th><th>진행률</th><th>마지막 방문</th><th>상태</th>
+          </tr>
+        </thead>
+        <tbody id="member-table-body">
+          <tr><td colspan="7" class="loading">회원 목록 불러오는 중...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- MEMBER DETAIL -->
+    <div class="page" id="page-member-detail">
+      <div class="detail-header">
+        <button class="back-btn" onclick="showPage('members')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+          회원 목록
+        </button>
+        <div>
+          <div class="detail-name" id="detail-name"></div>
+          <div class="detail-meta" id="detail-meta"></div>
+        </div>
+        <button class="btn btn-primary" onclick="openNewContractModal()">+ 새 계약</button>
+      </div>
+      <div class="tabs">
+        <div class="tab active" onclick="showTab('profile',this)">프로필</div>
+        <div class="tab" onclick="showTab('contracts',this)">계약 히스토리</div>
+        <div class="tab" onclick="showTab('sessions',this)">세션 로그</div>
+      </div>
+      <div id="tab-profile"></div>
+      <div id="tab-contracts" style="display:none"></div>
+      <div id="tab-sessions" style="display:none"></div>
+    </div>
+
+    <!-- PROGRAMS -->
+    <div class="page" id="page-programs">
+      <div class="page-header">
+        <div class="page-title">프로그램 관리</div>
+        <button class="btn btn-primary" onclick="openNewProgramModal()">+ 새 프로그램</button>
+      </div>
+      <table class="member-table">
+        <thead>
+          <tr><th>프로그램명</th><th>유형</th><th>강사</th><th>횟수</th><th>회당 금액</th><th>총액</th><th>할인</th><th>최종 금액</th><th>상태</th></tr>
+        </thead>
+        <tbody id="programs-table-body">
+          <tr><td colspan="9" class="loading">불러오는 중...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- CONTRACTS -->
+    <div class="page" id="page-contracts">
+      <div class="page-header">
+        <div class="page-title">계약 관리</div>
+      </div>
+      <table class="member-table">
+        <thead>
+          <tr><th>계약명</th><th>서명일</th><th>기간</th><th>잔여</th><th>금액</th><th>상태</th><th>계약서</th></tr>
+        </thead>
+        <tbody id="contracts-table-body">
+          <tr><td colspan="7" class="loading">불러오는 중...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL: 신규 회원 -->
+<div class="modal-overlay" id="modal-new-member" style="display:none">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">신규 회원 등록</div>
+      <button class="modal-close" onclick="closeModal('modal-new-member')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-section">기본 정보</div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label required">이름</label><input class="form-input" id="nm-name" placeholder="홍길동"></div>
+        <div class="form-group"><label class="form-label">연락처</label><input class="form-input" id="nm-phone" placeholder="010-0000-0000"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">이메일</label><input class="form-input" id="nm-email" type="email" placeholder="example@email.com"></div>
+        <div class="form-group"><label class="form-label">생년월일</label><input class="form-input" id="nm-birth" type="date"></div>
+      </div>
+      <div class="form-row full">
+        <div class="form-group"><label class="form-label">주소</label><input class="form-input" id="nm-address" placeholder="주소"></div>
+      </div>
+      <div class="form-section">신체 정보</div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">신장 (cm)</label><input class="form-input" id="nm-height" type="number" placeholder="165"></div>
+        <div class="form-group"><label class="form-label">체중 (kg)</label><input class="form-input" id="nm-weight" type="number" placeholder="55"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">필라테스 경험</label>
+          <select class="form-select" id="nm-exp">
+            <option value="">선택</option>
+            <option>없음</option><option>6개월 미만</option><option>6개월~1년</option><option>1년 이상</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">방문 경로</label>
+          <select class="form-select" id="nm-source">
+            <option value="">선택</option>
+            <option>인스타그램</option><option>지인 소개</option><option>네이버</option><option>기타</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row full">
+        <div class="form-group"><label class="form-label">통증/병력</label><textarea class="form-textarea" id="nm-pain" placeholder="허리 디스크, 무릎 통증 등 특이사항"></textarea></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">수술 여부</label>
+          <select class="form-select" id="nm-surgery" onchange="toggleSurgery()">
+            <option value="false">없음</option><option value="true">있음</option>
+          </select>
+        </div>
+        <div class="form-group" id="surgery-detail-group" style="display:none">
+          <label class="form-label">수술 내용</label>
+          <input class="form-input" id="nm-surgery-detail" placeholder="수술명 및 시기">
+        </div>
+      </div>
+      <div class="form-section">마케팅 동의</div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="nm-marketing">
+        <label class="checkbox-label" for="nm-marketing">
+          수업 안내 정보 수신 동의 (선택)
+          <small>수업 일정, 프로그램 변경 등을 카카오톡/문자로 받습니다. 거부하셔도 서비스 이용에 불이익이 없습니다.</small>
+        </label>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="nm-ad">
+        <label class="checkbox-label" for="nm-ad">
+          광고성 정보 수신 동의 (선택)
+          <small>재등록 안내, 이벤트 정보 등을 카카오톡/문자로 받습니다. 거부하셔도 서비스 이용에 불이익이 없습니다.</small>
+        </label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-new-member')">취소</button>
+      <button class="btn btn-primary" onclick="saveMember()">등록</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: 새 계약 + 서명 -->
+<div class="modal-overlay" id="modal-new-contract" style="display:none">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">새 계약 작성</div>
+      <button class="modal-close" onclick="closeModal('modal-new-contract')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-section">프로그램 선택</div>
+      <div class="form-row full">
+        <div class="form-group">
+          <label class="form-label required">프로그램</label>
+          <select class="form-select" id="nc-program" onchange="onProgramSelect()">
+            <option value="">프로그램을 선택하세요</option>
+          </select>
+        </div>
+      </div>
+      <div id="nc-program-info" style="display:none;background:var(--surface);padding:14px 16px;margin-bottom:16px;font-size:13px;">
+        <div id="nc-program-detail"></div>
+      </div>
+      <div class="form-section">계약 정보</div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">시작일</label><input class="form-input" id="nc-start" type="date"></div>
+        <div class="form-group"><label class="form-label">종료일</label><input class="form-input" id="nc-end" type="date"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">결제 방법</label>
+          <select class="form-select" id="nc-payment">
+            <option>카드</option><option>현금</option><option>계좌이체</option><option>혼합</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">총 결제 금액</label><input class="form-input" id="nc-amount" type="number" placeholder="자동 계산"></div>
+      </div>
+      <div class="form-row full">
+        <div class="form-group"><label class="form-label">비고</label><textarea class="form-textarea" id="nc-note" placeholder="특이사항"></textarea></div>
+      </div>
+      <div class="form-section">이용약관</div>
+      <div style="background:var(--surface);padding:16px;font-size:12px;line-height:1.8;color:var(--text-muted);margin-bottom:16px;max-height:200px;overflow-y:auto;">
+        <p><b>제1조 (수강료 환불 규정)</b><br>
+        수강권 구매 후 수업 시작 전: 전액 환불<br>
+        수업 시작 후 1/3 경과 전: 잔여 금액의 2/3 환불<br>
+        수업 시작 후 1/2 경과 전: 잔여 금액의 1/2 환불<br>
+        수업 시작 후 1/2 경과 이후: 환불 불가</p>
+        <p style="margin-top:10px"><b>제2조 (수강권 양도)</b><br>
+        수강권은 본인 이외의 타인에게 양도할 수 없습니다.</p>
+        <p style="margin-top:10px"><b>제3조 (수강권 정지)</b><br>
+        부상, 질병, 출산 등의 사유로 수강권 정지가 가능합니다. 정지 기간은 최대 30일이며, 횟수권 사용 기간은 정지 기간만큼 연장됩니다.</p>
+        <p style="margin-top:10px"><b>제4조 (개인 물품 관리)</b><br>
+        회원의 개인 물품 분실에 대해 스튜디오는 책임을 지지 않습니다.</p>
+        <p style="margin-top:10px"><b>제5조 (부상 및 사고)</b><br>
+        회원은 본인의 신체 상태를 강사에게 성실히 고지할 의무가 있으며, 고지 의무를 다하지 않아 발생한 부상 및 사고에 대해 스튜디오는 책임을 지지 않습니다.</p>
+        <p style="margin-top:10px"><b>제6조 (촬영 및 초상권)</b><br>
+        스튜디오 내 타인의 동의 없는 촬영은 금지됩니다.</p>
+        <p style="margin-top:10px"><b>제7조 (개인정보 수집 및 이용)</b><br>
+        수집 항목: 성명, 연락처, 생년월일, 신체 정보 / 수집 목적: 회원 관리 및 수업 안전을 위해 활용 / 보유 기간: 회원 탈퇴 후 3년</p>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="nc-agree-info">
+        <label class="checkbox-label" for="nc-agree-info"><b>[필수]</b> 개인정보 수집·이용에 동의합니다.</label>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="nc-agree-terms">
+        <label class="checkbox-label" for="nc-agree-terms"><b>[필수]</b> 이용약관에 동의합니다.</label>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="nc-agree-marketing">
+        <label class="checkbox-label" for="nc-agree-marketing">[선택] 수업 안내 정보 수신에 동의합니다.</label>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="nc-agree-ad">
+        <label class="checkbox-label" for="nc-agree-ad">[선택] 광고성 정보 수신에 동의합니다.</label>
+      </div>
+      <div class="form-section">서명</div>
+      <div class="sig-container">
+        <div class="sig-label">
+          <span>아래에 서명해 주세요</span>
+          <button class="sig-clear" onclick="clearSig()">지우기</button>
+        </div>
+        <canvas id="sigPad"></canvas>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-new-contract')">취소</button>
+      <button class="btn btn-primary" onclick="saveContract()">계약 완료</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: 세션 기록 -->
+<div class="modal-overlay" id="modal-session" style="display:none">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-header">
+      <div class="modal-title">세션 출석 기록</div>
+      <button class="modal-close" onclick="closeModal('modal-session')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">날짜</label><input class="form-input" id="sess-date" type="date"></div>
+        <div class="form-group">
+          <label class="form-label">컨디션</label>
+          <select class="form-select" id="sess-condition">
+            <option>최상</option><option>좋음</option><option selected>보통</option><option>피로</option><option>통증</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row full">
+        <div class="form-group"><label class="form-label">메모</label><textarea class="form-textarea" id="sess-memo" placeholder="오늘 수업 내용 또는 특이사항"></textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-session')">취소</button>
+      <button class="btn btn-primary" onclick="saveSession()">출석 기록</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: 새 프로그램 -->
+<div class="modal-overlay" id="modal-new-program" style="display:none">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-header">
+      <div class="modal-title">새 프로그램 등록</div>
+      <button class="modal-close" onclick="closeModal('modal-new-program')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row full">
+        <div class="form-group"><label class="form-label required">프로그램명</label><input class="form-input" id="np-name" placeholder="Private 1:1 - Regina 25회"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">유형</label>
+          <select class="form-select" id="np-type">
+            <option>1:1</option><option>1:2</option><option>1:3</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">강사</label><input class="form-input" id="np-instructor" placeholder="Regina"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">횟수</label><input class="form-input" id="np-sessions" type="number" placeholder="25"></div>
+        <div class="form-group"><label class="form-label">회당 금액 (원)</label><input class="form-input" id="np-price" type="number" placeholder="50000" oninput="calcProgramPrice()"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">할인율 (%)</label><input class="form-input" id="np-discount" type="number" placeholder="0" oninput="calcProgramPrice()"></div>
+        <div class="form-group"><label class="form-label">최종 금액 (자동 계산)</label><input class="form-input" id="np-final" readonly style="background:var(--surface)"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-new-program')">취소</button>
+      <button class="btn btn-primary" onclick="saveProgram()">등록</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = '';  // Cloudflare Functions base URL (같은 도메인)
+const ADMIN_PW = 'regina2026';  // 임시 비밀번호 (Cloudflare 환경변수로 관리 권장)
+
+let currentMember = null;
+let currentContract = null;
+let allMembers = [];
+let allContracts = [];
+let allAlerts = [];
+let currentFilter = 'all';
+let sigCanvas, sigCtx, isDrawing = false;
+
+// ── AUTH ──
+function doLogin() {
+  const pw = document.getElementById('pw-input').value;
+  if (pw === ADMIN_PW) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    initApp();
+  } else {
+    document.getElementById('login-error').style.display = 'block';
+  }
+}
+
+function doLogout() {
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('pw-input').value = '';
+}
+
+// ── NAV ──
+function showPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  const navItems = document.querySelectorAll('.nav-item');
+  navItems.forEach(n => { if (n.getAttribute('onclick')?.includes(page)) n.classList.add('active'); });
+
+  if (page === 'members') loadMembers();
+  if (page === 'programs') loadPrograms();
+  if (page === 'contracts') loadAllContracts();
+}
+
+function showTab(tab, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('tab-profile').style.display = tab === 'profile' ? 'block' : 'none';
+  document.getElementById('tab-contracts').style.display = tab === 'contracts' ? 'block' : 'none';
+  document.getElementById('tab-sessions').style.display = tab === 'sessions' ? 'block' : 'none';
+}
+
+// ── INIT ──
+function initApp() {
+  document.getElementById('today-date').textContent = new Date().toLocaleDateString('ko-KR', {year:'numeric',month:'long',day:'numeric',weekday:'long'});
+  loadDashboard();
+}
+
+// ── DASHBOARD ──
+async function loadDashboard() {
+  try {
+    const [membersRes, alertsRes] = await Promise.all([
+      fetch(`${API}/api/members`),
+      fetch(`${API}/api/alerts`)
+    ]);
+    const membersData = await membersRes.json();
+    const alertsData = await alertsRes.json();
+    allMembers = membersData.members || [];
+    allAlerts = alertsData.alerts || [];
+
+    const thisMonth = new Date().toISOString().slice(0,7);
+    const newThisMonth = allMembers.filter(m => m.createdAt?.startsWith(thisMonth)).length;
+
+    document.getElementById('stat-total').textContent = allMembers.length;
+    document.getElementById('stat-alert').textContent = allAlerts.length;
+    document.getElementById('stat-new').textContent = newThisMonth;
+
+    // 알림 배너
+    const alertList = document.getElementById('alert-list');
+    if (allAlerts.length === 0) {
+      alertList.innerHTML = '<div class="alert-banner warning"><div class="alert-dot yellow"></div>리마케팅 대상 회원이 없습니다. 모든 회원이 활발히 수업 중이에요! 🎉</div>';
+    } else {
+      alertList.innerHTML = allAlerts.map(a => {
+        const types = a.alertTypes;
+        const isRed = types.includes('long_absence_60') || types.includes('no_sessions');
+        const msgs = [];
+        if (types.includes('long_absence_60')) msgs.push('60일 이상 미출석');
+        else if (types.includes('long_absence_30')) msgs.push('30일 이상 미출석');
+        if (types.includes('low_sessions')) msgs.push(`잔여 ${a.remaining}회`);
+        if (types.includes('no_sessions')) msgs.push('잔여 횟수 없음');
+        if (types.includes('expiring_soon')) msgs.push(`만료 ${a.daysUntilExpiry}일 전`);
+        return `<div class="alert-banner ${isRed?'danger':'warning'}" onclick="openMemberById('${a.memberId}')" style="cursor:pointer">
+          <div class="alert-dot ${isRed?'red':'yellow'}"></div>
+          <b>${a.contractTitle}</b> — ${msgs.join(', ')}
+        </div>`;
+      }).join('');
+    }
+  } catch(e) {
+    console.error(e);
+  }
+}
+
+// ── MEMBERS ──
+async function loadMembers() {
+  const tbody = document.getElementById('member-table-body');
+  tbody.innerHTML = '<tr><td colspan="7" class="loading">불러오는 중...</td></tr>';
+  try {
+    const res = await fetch(`${API}/api/members`);
+    const data = await res.json();
+    allMembers = data.members || [];
+    renderMemberTable();
+  } catch(e) {
+    tbody.innerHTML = '<tr><td colspan="7" class="empty-state">불러오기 실패</td></tr>';
+  }
+}
+
+function renderMemberTable() {
+  const search = document.getElementById('member-search')?.value || '';
+  let members = allMembers.filter(m =>
+    m.name.includes(search) || m.phone.includes(search)
+  );
+
+  const tbody = document.getElementById('member-table-body');
+  if (members.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><p>등록된 회원이 없습니다</p></div></td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = members.map(m => `
+    <tr onclick="openMember('${m.id}')">
+      <td><b>${m.name}</b></td>
+      <td>${m.phone || '—'}</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td><span class="badge badge-active">활성</span></td>
+    </tr>
+  `).join('');
+}
+
+function filterMembers() { renderMemberTable(); }
+function setFilter(f, el) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderMemberTable();
+}
+
+async function openMember(id) {
+  currentMember = allMembers.find(m => m.id === id);
+  if (!currentMember) return;
+
+  document.getElementById('detail-name').textContent = currentMember.name;
+  document.getElementById('detail-meta').textContent = `${currentMember.phone || ''} ${currentMember.email ? '· ' + currentMember.email : ''}`;
+
+  renderProfile();
+  await loadMemberContracts();
+  await loadMemberSessions();
+
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-member-detail').classList.add('active');
+}
+
+async function openMemberById(id) {
+  if (!allMembers.length) {
+    const res = await fetch(`${API}/api/members`);
+    const data = await res.json();
+    allMembers = data.members || [];
+  }
+  openMember(id);
+  showPage('member-detail');
+}
+
+function renderProfile() {
+  const m = currentMember;
+  document.getElementById('tab-profile').innerHTML = `
+    <div class="profile-grid">
+      <div class="profile-section">
+        <div class="section-title">기본 정보</div>
+        <div class="field-row"><span class="field-label">이름</span><span class="field-value">${m.name}</span></div>
+        <div class="field-row"><span class="field-label">연락처</span><span class="field-value">${m.phone||'—'}</span></div>
+        <div class="field-row"><span class="field-label">이메일</span><span class="field-value">${m.email||'—'}</span></div>
+        <div class="field-row"><span class="field-label">생년월일</span><span class="field-value">${m.birthDate||'—'}</span></div>
+        <div class="field-row"><span class="field-label">주소</span><span class="field-value">${m.address||'—'}</span></div>
+        <div class="field-row"><span class="field-label">방문 경로</span><span class="field-value">${m.visitSource||'—'}</span></div>
+        <div class="field-row"><span class="field-label">마케팅 동의</span><span class="field-value">${m.marketingConsent?'동의':'미동의'}</span></div>
+        <div class="field-row"><span class="field-label">광고 수신</span><span class="field-value">${m.adConsent?'동의':'미동의'}</span></div>
+      </div>
+      <div class="profile-section">
+        <div class="section-title">신체 / 운동 정보</div>
+        <div class="field-row"><span class="field-label">신장</span><span class="field-value">${m.height?m.height+'cm':'—'}</span></div>
+        <div class="field-row"><span class="field-label">체중</span><span class="field-value">${m.weight?m.weight+'kg':'—'}</span></div>
+        <div class="field-row"><span class="field-label">필라테스 경험</span><span class="field-value">${m.pilatesExp||'—'}</span></div>
+        <div class="field-row"><span class="field-label">통증/병력</span><span class="field-value">${m.painHistory||'—'}</span></div>
+        <div class="field-row"><span class="field-label">수술 여부</span><span class="field-value">${m.surgery?'있음 ('+m.surgeryDetail+')':'없음'}</span></div>
+        <div class="field-row"><span class="field-label">등록일</span><span class="field-value">${m.createdAt||'—'}</span></div>
+      </div>
+    </div>
+  `;
+}
+
+// ── CONTRACTS ──
+async function loadMemberContracts() {
+  const res = await fetch(`${API}/api/contracts?memberId=${currentMember.id}`);
+  const data = await res.json();
+  allContracts = data.contracts || [];
+  document.getElementById('stat-active').textContent = allContracts.filter(c=>c.status==='진행중').length;
+
+  document.getElementById('tab-contracts').innerHTML = allContracts.length === 0
+    ? '<div class="empty-state"><p>계약 내역이 없습니다</p></div>'
+    : allContracts.map(c => {
+        const pct = c.sessions > 0 ? Math.round((c.sessions - c.remainingSessions) / c.sessions * 100) : 0;
+        const statusBadge = c.status === '진행중' ? 'badge-active' : c.status === '일시정지' ? 'badge-warning' : 'badge-muted';
+        return `
+        <div class="contract-card">
+          <div class="contract-card-header">
+            <div class="contract-name">${c.title}</div>
+            <span class="badge ${statusBadge}">${c.status}</span>
+          </div>
+          <div class="contract-meta">${c.startDate||''} ~ ${c.endDate||''} · ${c.paymentMethod||''} · ${c.totalAmount?.toLocaleString()||0}원</div>
+          <div class="contract-progress">
+            <span style="font-size:12px;color:var(--text-muted)">${c.sessions-c.remainingSessions}/${c.sessions}회</span>
+            <div class="contract-progress-bar"><div class="contract-progress-fill" style="width:${pct}%"></div></div>
+            <span style="font-size:12px;color:var(--text-muted)">잔여 ${c.remainingSessions}회</span>
+          </div>
+          <div class="contract-actions">
+            <button class="btn btn-secondary btn-sm" onclick="openSessionModal('${c.id}',${c.remainingSessions},${c.sessions-c.remainingSessions+1})">출석 기록</button>
+            ${c.driveLink ? `<a href="${c.driveLink}" target="_blank" class="btn btn-secondary btn-sm">계약서 보기 🔗</a>` : ''}
+            ${c.status==='진행중' ? `<button class="btn btn-secondary btn-sm" onclick="pauseContract('${c.id}')">일시정지</button>` : ''}
+          </div>
+          ${c.note ? `<div style="margin-top:10px;font-size:12px;color:var(--text-muted)">📝 ${c.note}</div>` : ''}
+        </div>`;
+      }).join('');
+}
+
+async function loadAllContracts() {
+  const tbody = document.getElementById('contracts-table-body');
+  try {
+    const res = await fetch(`${API}/api/contracts`);
+    const data = await res.json();
+    const contracts = data.contracts || [];
+    if (contracts.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><p>계약 내역이 없습니다</p></div></td></tr>';
+      return;
+    }
+    tbody.innerHTML = contracts.map(c => `
+      <tr>
+        <td><b>${c.title}</b></td>
+        <td>${c.signedAt||'—'}</td>
+        <td>${c.startDate||'—'} ~ ${c.endDate||'—'}</td>
+        <td>${c.remainingSessions}/${c.sessions}회</td>
+        <td>${c.totalAmount?.toLocaleString()||0}원</td>
+        <td><span class="badge ${c.status==='진행중'?'badge-active':c.status==='완료'?'badge-muted':'badge-warning'}">${c.status}</span></td>
+        <td>${c.driveLink?`<a href="${c.driveLink}" target="_blank" style="color:var(--accent);font-size:12px">보기 🔗</a>`:'—'}</td>
+      </tr>
+    `).join('');
+  } catch(e) {
+    tbody.innerHTML = '<tr><td colspan="7" class="loading">불러오기 실패</td></tr>';
+  }
+}
+
+// ── SESSIONS ──
+async function loadMemberSessions() {
+  const res = await fetch(`${API}/api/sessions?memberId=${currentMember.id}`);
+  const data = await res.json();
+  const sessions = data.sessions || [];
+
+  document.getElementById('tab-sessions').innerHTML = sessions.length === 0
+    ? '<div class="empty-state"><p>세션 기록이 없습니다</p></div>'
+    : `<div class="session-list">${sessions.map(s => `
+        <div class="session-item">
+          <div class="session-no">#${s.sessionNo}</div>
+          <div class="session-info">
+            <div class="session-date">${s.date}</div>
+            <div class="session-condition">
+              <span class="condition-dot cond-${s.condition}"></span>${s.condition||'—'}
+              ${s.memo ? ' · ' + s.memo : ''}
+            </div>
+          </div>
+        </div>`).join('')}</div>`;
+}
+
+function openSessionModal(contractId, remaining, nextNo) {
+  currentContract = { id: contractId, remaining, nextNo };
+  document.getElementById('sess-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('sess-memo').value = '';
+  document.getElementById('modal-session').style.display = 'flex';
+}
+
+async function saveSession() {
+  if (!currentContract) return;
+  const body = {
+    memberName: currentMember.name,
+    memberId: currentMember.id,
+    contractId: currentContract.id,
+    sessionNo: currentContract.nextNo,
+    remainingSessions: currentContract.remaining,
+    date: document.getElementById('sess-date').value,
+    condition: document.getElementById('sess-condition').value,
+    memo: document.getElementById('sess-memo').value,
+  };
+  try {
+    const res = await fetch(`${API}/api/sessions`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+    if (res.ok) {
+      closeModal('modal-session');
+      showToast('출석이 기록되었습니다', 'success');
+      await loadMemberContracts();
+      await loadMemberSessions();
+    }
+  } catch(e) { showToast('저장 실패: ' + e.message, 'error'); }
+}
+
+// ── PROGRAMS ──
+async function loadPrograms() {
+  const tbody = document.getElementById('programs-table-body');
+  try {
+    const res = await fetch(`${API}/api/programs`);
+    const data = await res.json();
+    const programs = data.all || [];
+    if (programs.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="9"><div class="empty-state"><p>등록된 프로그램이 없습니다</p></div></td></tr>';
+      return;
+    }
+    tbody.innerHTML = programs.map(p => `
+      <tr>
+        <td><b>${p.name}</b></td>
+        <td>${p.type||'—'}</td>
+        <td>${p.instructor||'—'}</td>
+        <td>${p.sessions}회</td>
+        <td>${p.pricePerSession?.toLocaleString()||0}원</td>
+        <td>${p.totalPrice?.toLocaleString()||0}원</td>
+        <td>${p.discount||0}%</td>
+        <td><b>${p.finalPrice?.toLocaleString()||0}원</b></td>
+        <td><span class="badge ${p.isActive?'badge-active':'badge-muted'}">${p.isActive?'운영중':'중단'}</span></td>
+      </tr>
+    `).join('');
+  } catch(e) {
+    tbody.innerHTML = '<tr><td colspan="9" class="loading">불러오기 실패</td></tr>';
+  }
+}
+
+function calcProgramPrice() {
+  const sessions = parseInt(document.getElementById('np-sessions').value)||0;
+  const price = parseInt(document.getElementById('np-price').value)||0;
+  const discount = parseInt(document.getElementById('np-discount').value)||0;
+  const total = sessions * price;
+  const final = total * (1 - discount/100);
+  document.getElementById('np-final').value = Math.round(final).toLocaleString() + '원';
+}
+
+async function saveProgram() {
+  const body = {
+    name: document.getElementById('np-name').value,
+    type: document.getElementById('np-type').value,
+    instructor: document.getElementById('np-instructor').value,
+    sessions: parseInt(document.getElementById('np-sessions').value)||0,
+    pricePerSession: parseInt(document.getElementById('np-price').value)||0,
+    discount: parseInt(document.getElementById('np-discount').value)||0,
+    isActive: true,
+  };
+  if (!body.name) { showToast('프로그램명을 입력해주세요', 'error'); return; }
+  try {
+    const res = await fetch(`${API}/api/programs`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+    if (res.ok) {
+      closeModal('modal-new-program');
+      showToast('프로그램이 등록되었습니다', 'success');
+      loadPrograms();
+    }
+  } catch(e) { showToast('저장 실패', 'error'); }
+}
+
+// ── NEW MEMBER ──
+function toggleSurgery() {
+  const val = document.getElementById('nm-surgery').value;
+  document.getElementById('surgery-detail-group').style.display = val === 'true' ? 'block' : 'none';
+}
+
+async function saveMember() {
+  const name = document.getElementById('nm-name').value.trim();
+  if (!name) { showToast('이름을 입력해주세요', 'error'); return; }
+  const body = {
+    name,
+    phone: document.getElementById('nm-phone').value,
+    email: document.getElementById('nm-email').value,
+    birthDate: document.getElementById('nm-birth').value,
+    address: document.getElementById('nm-address').value,
+    height: parseFloat(document.getElementById('nm-height').value)||null,
+    weight: parseFloat(document.getElementById('nm-weight').value)||null,
+    pilatesExp: document.getElementById('nm-exp').value,
+    visitSource: document.getElementById('nm-source').value,
+    painHistory: document.getElementById('nm-pain').value,
+    surgery: document.getElementById('nm-surgery').value === 'true',
+    surgeryDetail: document.getElementById('nm-surgery-detail').value,
+    marketingConsent: document.getElementById('nm-marketing').checked,
+    adConsent: document.getElementById('nm-ad').checked,
+  };
+  try {
+    const res = await fetch(`${API}/api/members`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+    if (res.ok) {
+      closeModal('modal-new-member');
+      showToast('회원이 등록되었습니다', 'success');
+      loadMembers();
+    }
+  } catch(e) { showToast('저장 실패', 'error'); }
+}
+
+// ── NEW CONTRACT ──
+async function openNewContractModal() {
+  // 프로그램 목록 불러오기
+  const res = await fetch(`${API}/api/programs`);
+  const data = await res.json();
+  const programs = data.programs || [];
+  const sel = document.getElementById('nc-program');
+  sel.innerHTML = '<option value="">프로그램을 선택하세요</option>' +
+    programs.map(p => `<option value="${p.id}" data-price="${p.finalPrice}" data-sessions="${p.sessions}">${p.name} — ${p.finalPrice?.toLocaleString()}원</option>`).join('');
+  document.getElementById('nc-start').value = new Date().toISOString().split('T')[0];
+  document.getElementById('nc-program-info').style.display = 'none';
+  initSigPad();
+  document.getElementById('modal-new-contract').style.display = 'flex';
+}
+
+function onProgramSelect() {
+  const sel = document.getElementById('nc-program');
+  const opt = sel.options[sel.selectedIndex];
+  const price = opt.dataset.price;
+  const sessions = opt.dataset.sessions;
+  if (price) {
+    document.getElementById('nc-amount').value = price;
+    document.getElementById('nc-program-info').style.display = 'block';
+    document.getElementById('nc-program-detail').textContent = `${sessions}회 · 총 ${parseInt(price).toLocaleString()}원`;
+  }
+}
+
+async function saveContract() {
+  if (!document.getElementById('nc-agree-info').checked || !document.getElementById('nc-agree-terms').checked) {
+    showToast('필수 동의 항목을 체크해주세요', 'error'); return;
+  }
+  if (!currentMember) { showToast('회원을 먼저 선택해주세요', 'error'); return; }
+
+  const sigData = sigCanvas.toDataURL('image/png');
+  const isEmpty = !sigData || sigData === 'data:,';
+
+  const sel = document.getElementById('nc-program');
+  const programId = sel.value;
+  const programName = sel.options[sel.selectedIndex]?.text || '';
+
+  const body = {
+    memberName: currentMember.name,
+    memberId: currentMember.id,
+    programId,
+    programName,
+    sessions: parseInt(sel.options[sel.selectedIndex]?.dataset.sessions)||0,
+    totalAmount: parseInt(document.getElementById('nc-amount').value)||0,
+    paymentMethod: document.getElementById('nc-payment').value,
+    startDate: document.getElementById('nc-start').value,
+    endDate: document.getElementById('nc-end').value,
+    note: document.getElementById('nc-note').value,
+    pdfBase64: null, // PDF 생성은 추후 연동
+  };
+
+  try {
+    const res = await fetch(`${API}/api/contracts`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+    if (res.ok) {
+      closeModal('modal-new-contract');
+      showToast('계약이 완료되었습니다', 'success');
+      await loadMemberContracts();
+      showTab('contracts', document.querySelectorAll('.tab')[1]);
+    }
+  } catch(e) { showToast('저장 실패: ' + e.message, 'error'); }
+}
+
+async function pauseContract(contractId) {
+  const note = prompt('일시정지 사유 및 재개 예정일을 입력해주세요:');
+  if (note === null) return;
+  try {
+    await fetch(`${API}/api/contracts?id=${contractId}`, {
+      method:'PUT',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ status:'일시정지', note })
+    });
+    showToast('계약이 일시정지되었습니다', 'success');
+    await loadMemberContracts();
+  } catch(e) { showToast('실패', 'error'); }
+}
+
+// ── SIGNATURE PAD ──
+function initSigPad() {
+  sigCanvas = document.getElementById('sigPad');
+  sigCtx = sigCanvas.getContext('2d');
+  sigCanvas.width = sigCanvas.offsetWidth;
+  sigCanvas.height = 140;
+  sigCtx.strokeStyle = '#1A1816';
+  sigCtx.lineWidth = 2;
+  sigCtx.lineCap = 'round';
+
+  sigCanvas.addEventListener('mousedown', e => { isDrawing=true; sigCtx.beginPath(); sigCtx.moveTo(e.offsetX,e.offsetY); });
+  sigCanvas.addEventListener('mousemove', e => { if(!isDrawing)return; sigCtx.lineTo(e.offsetX,e.offsetY); sigCtx.stroke(); });
+  sigCanvas.addEventListener('mouseup', ()=>isDrawing=false);
+  sigCanvas.addEventListener('touchstart', e => { e.preventDefault(); isDrawing=true; const t=e.touches[0],r=sigCanvas.getBoundingClientRect(); sigCtx.beginPath(); sigCtx.moveTo(t.clientX-r.left,t.clientY-r.top); });
+  sigCanvas.addEventListener('touchmove', e => { e.preventDefault(); if(!isDrawing)return; const t=e.touches[0],r=sigCanvas.getBoundingClientRect(); sigCtx.lineTo(t.clientX-r.left,t.clientY-r.top); sigCtx.stroke(); });
+  sigCanvas.addEventListener('touchend', ()=>isDrawing=false);
+}
+
+function clearSig() {
+  if (sigCtx) sigCtx.clearRect(0,0,sigCanvas.width,sigCanvas.height);
+}
+
+// ── MODALS ──
+function openNewMemberModal() { document.getElementById('modal-new-member').style.display='flex'; }
+function openNewContractModal() {
+  if (!currentMember) { showToast('회원을 먼저 선택해주세요','error'); return; }
+  openNewContractModal();
+}
+function openNewProgramModal() { document.getElementById('modal-new-program').style.display='flex'; }
+function closeModal(id) { document.getElementById(id).style.display='none'; }
+
+// ── TOAST ──
+function showToast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  setTimeout(()=>t.className='toast',3000);
+}
+</script>
+</body>
+</html>
