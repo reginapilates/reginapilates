@@ -1214,33 +1214,62 @@ async function saveContract() {
 
 // PDF 미리보기
 async function previewContractPDF() {
+  showToast('PDF 생성 중...', '');
   const sel = document.getElementById('nc-program');
   const canvas = document.getElementById('sigPad');
   const sigData = canvas ? canvas.toDataURL('image/png') : null;
 
-  const pdfBase64 = await generateContractPDF({
-    memberName: currentMember?.name || '(미입력)',
-    phone: currentMember?.phone || '',
-    programName: sel?.options[sel.selectedIndex]?.text || '(미선택)',
-    sessions: parseInt(sel?.options[sel.selectedIndex]?.dataset.sessions)||0,
-    totalAmount: parseInt(document.getElementById('nc-amount').value)||0,
-    paymentMethod: document.getElementById('nc-payment').value,
-    startDate: document.getElementById('nc-start').value,
-    endDate: document.getElementById('nc-end').value,
-    signedAt: new Date().toISOString().split('T')[0],
-    marketingConsent: document.getElementById('nc-agree-marketing').checked,
-    adConsent: document.getElementById('nc-agree-ad').checked,
-    note: document.getElementById('nc-note').value,
-    sigData,
-  });
+  try {
+    const pdfBase64 = await generateContractPDF({
+      memberName: currentMember?.name || '(미입력)',
+      phone: currentMember?.phone || '',
+      programName: sel?.options[sel.selectedIndex]?.text || '(미선택)',
+      sessions: parseInt(sel?.options[sel.selectedIndex]?.dataset.sessions)||0,
+      totalAmount: parseInt(document.getElementById('nc-amount').value)||0,
+      paymentMethod: document.getElementById('nc-payment').value,
+      startDate: document.getElementById('nc-start').value,
+      endDate: document.getElementById('nc-end').value,
+      signedAt: new Date().toISOString().split('T')[0],
+      marketingConsent: document.getElementById('nc-agree-marketing').checked,
+      adConsent: document.getElementById('nc-agree-ad').checked,
+      note: document.getElementById('nc-note').value,
+      sigData,
+    });
 
-  // 새 탭에서 PDF 열기
-  const byteChars = atob(pdfBase64);
-  const byteArr = new Uint8Array(byteChars.length);
-  for (let i = 0; i < byteChars.length; i++) byteArr[i] = byteChars.charCodeAt(i);
-  const blob = new Blob([byteArr], { type: 'application/pdf' });
-  const url = URL.createObjectURL(blob);
-  window.open(url, '_blank');
+    // blob URL 생성 후 iframe으로 표시
+    const byteChars = atob(pdfBase64);
+    const byteArr = new Uint8Array(byteChars.length);
+    for (let i = 0; i < byteChars.length; i++) byteArr[i] = byteChars.charCodeAt(i);
+    const blob = new Blob([byteArr], { type: 'application/pdf' });
+    const blobUrl = URL.createObjectURL(blob);
+
+    // 기존 미리보기 오버레이 제거
+    const existing = document.getElementById('pdf-preview-overlay');
+    if (existing) existing.remove();
+
+    // 오버레이 생성
+    const overlay = document.createElement('div');
+    overlay.id = 'pdf-preview-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:500;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;';
+
+    overlay.innerHTML = `
+      <div style="width:100%;max-width:800px;height:90vh;background:#fff;display:flex;flex-direction:column;">
+        <div style="padding:12px 16px;background:#1A1816;color:#fff;display:flex;justify-content:space-between;align-items:center;font-size:13px;">
+          <span>계약서 미리보기</span>
+          <div style="display:flex;gap:8px;">
+            <a href="${blobUrl}" download="Regina_${currentMember?.name}_계약서.pdf" style="padding:6px 12px;background:#8E8276;color:#fff;text-decoration:none;font-size:12px;">⬇ 다운로드</a>
+            <button onclick="document.getElementById('pdf-preview-overlay').remove()" style="padding:6px 12px;background:transparent;color:#fff;border:1px solid rgba(255,255,255,0.3);cursor:pointer;font-size:12px;">닫기</button>
+          </div>
+        </div>
+        <iframe src="${blobUrl}" style="flex:1;border:none;width:100%;"></iframe>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+  } catch(e) {
+    showToast('PDF 생성 실패: ' + e.message, 'error');
+    console.error(e);
+  }
 }
 
 // PDF 생성 함수
