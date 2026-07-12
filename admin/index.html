@@ -911,7 +911,8 @@ async function loadMemberContracts() {
           </div>
           <div class="contract-actions">
             <button class="btn btn-secondary btn-sm" ${c.status==='일시정지'?'disabled style="opacity:0.4;cursor:not-allowed"':''} onclick="${c.status!=='일시정지'?`openSessionModal('${c.id}',${c.remainingSessions},${c.sessions-c.remainingSessions+1})`:''}">출석 기록</button>
-            ${c.driveLink ? `<a href="${c.driveLink}" target="_blank" class="btn btn-secondary btn-sm">계약서 보기 🔗</a>` : ''}
+            <button class="btn btn-secondary btn-sm" onclick="viewContractData(${JSON.stringify(c).replace(/"/g,'&quot;')})">계약서 보기</button>
+            ${c.driveLink ? `<a href="${c.driveLink}" target="_blank" class="btn btn-secondary btn-sm">🔗</a>` : ''}
             ${c.status==='진행중' ? `<button class="btn btn-secondary btn-sm" onclick="openPauseModal('${c.id}')">일시정지</button>` : ''}
             ${c.status==='일시정지' ? `<button class="btn btn-primary btn-sm" onclick="resumeContract('${c.id}')">정지 해제</button>` : ''}
           </div>
@@ -931,7 +932,10 @@ async function loadAllContracts() {
       tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><p>계약 내역이 없습니다</p></div></td></tr>';
       return;
     }
-    tbody.innerHTML = contracts.map(c => `
+    // 계약 데이터를 전역에 캐시
+    window._allContractsCache = contracts;
+
+    tbody.innerHTML = contracts.map((c, idx) => `
       <tr>
         <td><b>${c.title}</b></td>
         <td>${c.signedAt||'—'}</td>
@@ -939,7 +943,10 @@ async function loadAllContracts() {
         <td>${c.remainingSessions}/${c.sessions}회</td>
         <td>${c.totalAmount?.toLocaleString()||0}원</td>
         <td><span class="badge ${c.status==='진행중'?'badge-active':c.status==='완료'?'badge-muted':'badge-warning'}">${c.status}</span></td>
-        <td>${c.driveLink?`<a href="${c.driveLink}" target="_blank" style="color:var(--accent);font-size:12px">보기 🔗</a>`:'—'}</td>
+        <td>
+          <button class="btn btn-secondary btn-sm" onclick="viewContractById(${idx})">계약서 보기</button>
+          ${c.driveLink?`<a href="${c.driveLink}" target="_blank" style="color:var(--accent);font-size:11px;margin-left:4px">🔗</a>`:''}
+        </td>
       </tr>
     `).join('');
   } catch(e) {
@@ -1145,7 +1152,18 @@ async function saveContract() {
   showToast('계약서 생성 중...', '');
 
   const currentSigCanvas = document.getElementById('sigPad');
-  const sigData = currentSigCanvas ? currentSigCanvas.toDataURL('image/png') : null;
+  let sigData = null;
+  if (currentSigCanvas) {
+    // 서명을 작게 압축해서 Notion 저장 가능하게 (200x70px, jpeg 0.6)
+    const tmpCanvas = document.createElement('canvas');
+    tmpCanvas.width = 300;
+    tmpCanvas.height = 100;
+    const tmpCtx = tmpCanvas.getContext('2d');
+    tmpCtx.fillStyle = '#ffffff';
+    tmpCtx.fillRect(0, 0, 300, 100);
+    tmpCtx.drawImage(currentSigCanvas, 0, 0, 300, 100);
+    sigData = tmpCanvas.toDataURL('image/jpeg', 0.5);
+  }
 
   const programId = sel.value;
   const programName = sel.options[sel.selectedIndex]?.text || '';
@@ -1173,6 +1191,7 @@ async function saveContract() {
     signedAt,
     note,
     pdfBase64: null,
+    signatureData: sigData || null,
   };
 
   try {
@@ -1206,6 +1225,47 @@ async function saveContract() {
     showToast('계약 완료! 계약서를 인쇄해주세요 🖨️', 'success');
 
   } catch(e) { showToast('저장 실패: ' + e.message, 'error'); }
+}
+
+// 계약 관리 탭에서 계약서 보기
+function viewContractById(idx) {
+  const contracts = window._allContractsCache || [];
+  const c = contracts[idx];
+  if (!c) return;
+  viewContractData(c);
+}
+
+// 계약 데이터로 계약서 렌더링
+async function viewContractData(c) {
+  const parts = c.title ? c.title.split(' - ') : [];
+  const memberName = parts[0] || '—';
+  const programName = parts.slice(1).join(' - ') || c.title || '—';
+
+  // Notion에서 서명 데이터 불러오기
+  let sigData = c.signatureData || null;
+  if (!sigData && c.id) {
+    try {
+      const res = await fetch(`${API}/api/contracts/signature?id=${c.id}`);
+      const data = await res.json();
+      sigData = data.signatureData || null;
+    } catch(e) { console.warn('서명 불러오기 실패', e); }
+  }
+
+  showContractPrint({
+    memberName,
+    phone: '',
+    programName,
+    sessions: c.sessions || 0,
+    totalAmount: c.totalAmount || 0,
+    paymentMethod: c.paymentMethod || '—',
+    startDate: c.startDate || '—',
+    endDate: c.endDate || '—',
+    signedAt: c.signedAt || '—',
+    marketingConsent: false,
+    adConsent: false,
+    note: c.note || '',
+    sigData,
+  });
 }
 
 // HTML 계약서 인쇄
