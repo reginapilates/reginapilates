@@ -1070,22 +1070,62 @@ async function pauseContract(contractId) {
 function initSigPad() {
   sigCanvas = document.getElementById('sigPad');
   sigCtx = sigCanvas.getContext('2d');
-  sigCanvas.width = sigCanvas.offsetWidth;
+
+  // 캔버스 크기를 실제 표시 크기로 설정
+  const rect = sigCanvas.getBoundingClientRect();
+  sigCanvas.width = rect.width || sigCanvas.parentElement.offsetWidth || 600;
   sigCanvas.height = 140;
+
   sigCtx.strokeStyle = '#1A1816';
   sigCtx.lineWidth = 2;
   sigCtx.lineCap = 'round';
+  sigCtx.lineJoin = 'round';
 
-  sigCanvas.addEventListener('mousedown', e => { isDrawing=true; sigCtx.beginPath(); sigCtx.moveTo(e.offsetX,e.offsetY); });
-  sigCanvas.addEventListener('mousemove', e => { if(!isDrawing)return; sigCtx.lineTo(e.offsetX,e.offsetY); sigCtx.stroke(); });
-  sigCanvas.addEventListener('mouseup', ()=>isDrawing=false);
-  sigCanvas.addEventListener('touchstart', e => { e.preventDefault(); isDrawing=true; const t=e.touches[0],r=sigCanvas.getBoundingClientRect(); sigCtx.beginPath(); sigCtx.moveTo(t.clientX-r.left,t.clientY-r.top); });
-  sigCanvas.addEventListener('touchmove', e => { e.preventDefault(); if(!isDrawing)return; const t=e.touches[0],r=sigCanvas.getBoundingClientRect(); sigCtx.lineTo(t.clientX-r.left,t.clientY-r.top); sigCtx.stroke(); });
-  sigCanvas.addEventListener('touchend', ()=>isDrawing=false);
+  // 기존 이벤트 제거 후 재등록
+  const newCanvas = sigCanvas.cloneNode(true);
+  sigCanvas.parentNode.replaceChild(newCanvas, sigCanvas);
+  sigCanvas = newCanvas;
+  sigCtx = sigCanvas.getContext('2d');
+  sigCtx.strokeStyle = '#1A1816';
+  sigCtx.lineWidth = 2;
+  sigCtx.lineCap = 'round';
+  sigCtx.lineJoin = 'round';
+
+  sigCanvas.addEventListener('mousedown', e => {
+    isDrawing = true;
+    const r = sigCanvas.getBoundingClientRect();
+    sigCtx.beginPath();
+    sigCtx.moveTo(e.clientX - r.left, e.clientY - r.top);
+  });
+  sigCanvas.addEventListener('mousemove', e => {
+    if (!isDrawing) return;
+    const r = sigCanvas.getBoundingClientRect();
+    sigCtx.lineTo(e.clientX - r.left, e.clientY - r.top);
+    sigCtx.stroke();
+  });
+  sigCanvas.addEventListener('mouseup', () => isDrawing = false);
+  sigCanvas.addEventListener('mouseleave', () => isDrawing = false);
+  sigCanvas.addEventListener('touchstart', e => {
+    e.preventDefault();
+    isDrawing = true;
+    const t = e.touches[0], r = sigCanvas.getBoundingClientRect();
+    sigCtx.beginPath();
+    sigCtx.moveTo(t.clientX - r.left, t.clientY - r.top);
+  });
+  sigCanvas.addEventListener('touchmove', e => {
+    e.preventDefault();
+    if (!isDrawing) return;
+    const t = e.touches[0], r = sigCanvas.getBoundingClientRect();
+    sigCtx.lineTo(t.clientX - r.left, t.clientY - r.top);
+    sigCtx.stroke();
+  });
+  sigCanvas.addEventListener('touchend', () => isDrawing = false);
 }
 
 function clearSig() {
-  if (sigCtx) sigCtx.clearRect(0,0,sigCanvas.width,sigCanvas.height);
+  sigCanvas = document.getElementById('sigPad');
+  sigCtx = sigCanvas?.getContext('2d');
+  if (sigCtx) sigCtx.clearRect(0, 0, sigCanvas.width, sigCanvas.height);
 }
 
 // ── MODALS ──
