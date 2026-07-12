@@ -44,9 +44,11 @@ export async function onRequest(context) {
         instructor: page.properties.Instructor?.rich_text?.[0]?.plain_text || '',
         sessions: page.properties.Sessions?.number || 0,
         pricePerSession: page.properties.PricePerSession?.number || 0,
-        totalPrice: page.properties.TotalPrice?.formula?.number || 0,
+        totalPrice: page.properties.TotalPrice?.formula?.number ||
+          page.properties.TotalPrice?.number || 0,
         discount: page.properties.Discount?.number || 0,
-        finalPrice: page.properties.FinalPrice?.formula?.number || 0,
+        finalPrice: page.properties.FinalPrice?.formula?.number ||
+          page.properties.FinalPrice?.number || 0,
         duration: page.properties.Duration?.number || null,
         isActive: page.properties.IsActive?.checkbox || false,
       }));
