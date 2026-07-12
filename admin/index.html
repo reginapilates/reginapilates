@@ -1349,26 +1349,28 @@ function showContractPrint(data) {
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
-  body { font-family:'Noto Sans KR',sans-serif; font-size:11pt; color:#1a1a1a; padding:20mm 18mm; }
-  h1 { text-align:center; font-size:18pt; font-weight:700; letter-spacing:0.15em; margin-bottom:4px; }
-  .sub { text-align:center; font-size:9pt; color:#666; margin-bottom:16px; }
-  hr { border:none; border-top:1.5px solid #333; margin:10px 0; }
-  hr.thin { border-top:1px solid #ccc; margin:6px 0; }
-  .section-title { font-size:10pt; font-weight:700; margin:12px 0 6px; }
-  table { width:100%; border-collapse:collapse; font-size:10pt; margin-bottom:8px; }
-  td { padding:5px 8px; border:1px solid #ddd; vertical-align:top; }
-  td.label { background:#f5f5f2; color:#555; width:28%; font-size:9.5pt; }
-  .terms { font-size:9pt; color:#444; line-height:1.7; margin-bottom:8px; }
-  .terms p { margin-bottom:5px; }
-  .agree-row { font-size:10pt; margin-bottom:5px; }
-  .sig-section { margin-top:16px; display:flex; align-items:flex-end; gap:20px; }
+  body { font-family:'Noto Sans KR',sans-serif; font-size:10pt; color:#1a1a1a; padding:18mm 16mm; }
+  h1 { text-align:center; font-size:17pt; font-weight:700; letter-spacing:0.15em; margin-bottom:4px; }
+  .sub { text-align:center; font-size:9pt; color:#666; margin-bottom:14px; }
+  hr { border:none; border-top:1.5px solid #333; margin:8px 0; }
+  hr.thin { border-top:1px solid #ccc; margin:5px 0; }
+  .section-title { font-size:9.5pt; font-weight:700; margin:10px 0 5px; }
+  table { width:100%; border-collapse:collapse; font-size:9.5pt; margin-bottom:6px; table-layout:fixed; }
+  td { padding:4px 6px; border:1px solid #ccc; vertical-align:middle; white-space:nowrap; overflow:hidden; }
+  td.label { background:#f5f5f2; color:#555; font-size:9pt; text-align:center; font-weight:700; }
+  td.val { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  td.val-wrap { white-space:normal; word-break:break-all; }
+  .terms { font-size:8.5pt; color:#444; line-height:1.65; margin-bottom:6px; }
+  .terms p { margin-bottom:4px; }
+  .agree-row { font-size:9.5pt; margin-bottom:4px; }
+  .sig-section { margin-top:14px; display:flex; align-items:flex-end; gap:16px; }
   .sig-line { flex:1; }
-  .sig-label { font-size:9pt; color:#666; margin-bottom:4px; }
-  .sig-box { border-bottom:1px solid #333; min-height:60px; position:relative; }
-  .sig-img { max-height:60px; max-width:200px; }
-  .date-line { font-size:10pt; margin-bottom:12px; }
+  .sig-label { font-size:8.5pt; color:#666; margin-bottom:3px; }
+  .sig-box { border-bottom:1px solid #333; min-height:55px; position:relative; }
+  .sig-img { max-height:55px; max-width:180px; }
+  .date-line { font-size:9.5pt; margin-bottom:10px; }
   @media print {
-    body { padding:15mm 15mm; }
+    body { padding:12mm 14mm; }
     button { display:none !important; }
   }
 </style>
@@ -1379,44 +1381,51 @@ function showContractPrint(data) {
 <hr>
 
 <div class="section-title">회원 정보</div>
-<table>
+<table style="table-layout:fixed;">
+  <colgroup>
+    <col style="width:13%"><col style="width:20%">
+    <col style="width:13%"><col style="width:20%">
+    <col style="width:13%"><col style="width:21%">
+  </colgroup>
   <tr>
-    <td class="label">성&nbsp;&nbsp;&nbsp;명</td>
-    <td>${data.memberName}</td>
+    <td class="label">성&nbsp;&nbsp;명</td>
+    <td class="val">${data.memberName}</td>
     <td class="label">생년월일</td>
-    <td>${data.birthDate||''}</td>
-    <td class="label">연&nbsp;락&nbsp;처</td>
-    <td>${data.phone||''}</td>
+    <td class="val">${data.birthDate||''}</td>
+    <td class="label">연락처</td>
+    <td class="val">${data.phone||''}</td>
   </tr>
   <tr>
-    <td class="label">주&nbsp;&nbsp;&nbsp;소</td>
-    <td colspan="5">${data.address||''}</td>
+    <td class="label">주&nbsp;&nbsp;소</td>
+    <td colspan="5" class="val-wrap">${data.address||''}</td>
   </tr>
   <tr>
     <td class="label">프로그램</td>
-    <td colspan="5"><b>${data.programName}</b></td>
+    <td colspan="5" class="val"><b>${data.programName}</b></td>
   </tr>
   <tr>
-    <td class="label">회당 레슨비</td>
-    <td>${fmt(data.pricePerSession)}원</td>
-    <td class="label">횟&nbsp;&nbsp;&nbsp;수</td>
-    <td>${data.sessions}회</td>
-    <td class="label">총&nbsp;&nbsp;&nbsp;액</td>
-    <td>${fmt(data.totalPrice||data.totalAmount)}원</td>
+    <td class="label">회당레슨비</td>
+    <td class="val">${fmt(data.pricePerSession)}원</td>
+    <td class="label">횟&nbsp;&nbsp;수</td>
+    <td class="val">${data.sessions}회</td>
+    <td class="label">총&nbsp;&nbsp;액</td>
+    <td class="val">${fmt(data.totalPrice||data.totalAmount)}원</td>
   </tr>
   <tr>
-    <td class="label">할&nbsp;인&nbsp;율</td>
-    <td>${data.discountRatio||0}%</td>
-    <td class="label">최종 금액</td>
-    <td><b>${fmt(data.finalPrice||data.totalAmount)}원</b></td>
-    <td class="label">결제 방법</td>
-    <td>${data.paymentMethod==='카드'?'■':'□'}카드 &nbsp; ${data.paymentMethod==='현금'?'■':'□'}현금 &nbsp; ${data.paymentMethod==='계좌이체'?'■':'□'}계좌이체</td>
+    <td class="label">할인율</td>
+    <td class="val">${data.discountRatio||0}%</td>
+    <td class="label">최종금액</td>
+    <td class="val"><b>${fmt(data.finalPrice||data.totalAmount)}원</b></td>
+    <td class="label">결제방법</td>
+    <td class="val">${data.paymentMethod==='카드'?'■':'□'}카드 ${data.paymentMethod==='현금'?'■':'□'}현금 ${data.paymentMethod==='계좌이체'?'■':'□'}이체</td>
   </tr>
   <tr>
     <td class="label">유효기간</td>
-    <td colspan="5">${data.startDate||''} ~ ${data.endDate||''}</td>
+    <td colspan="3" class="val">${data.startDate||''} ~ ${data.endDate||''}</td>
+    <td class="label">결제일</td>
+    <td class="val">${data.signedAt||''}</td>
   </tr>
-  ${data.note ? `<tr><td class="label">비&nbsp;&nbsp;&nbsp;고</td><td colspan="5">${data.note}</td></tr>` : ''}
+  ${data.note ? `<tr><td class="label">비&nbsp;&nbsp;고</td><td colspan="5" class="val-wrap">${data.note}</td></tr>` : ''}
 </table>
 
 <hr class="thin">
