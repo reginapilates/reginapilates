@@ -4,7 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Regina Pilates — Admin</title>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500&family=Nanum+Gothic:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght=200;300;400;500&family=Nanum+Gothic:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 :root{
@@ -1137,36 +1138,225 @@ async function saveContract() {
   }
   if (!currentMember) { showToast('회원을 먼저 선택해주세요', 'error'); return; }
 
-  const sigData = sigCanvas.toDataURL('image/png');
-  const isEmpty = !sigData || sigData === 'data:,';
-
   const sel = document.getElementById('nc-program');
+  if (!sel.value) { showToast('프로그램을 선택해주세요', 'error'); return; }
+
+  showToast('계약서 생성 중...', '');
+
+  // 서명 이미지 가져오기
+  const currentSigCanvas = document.getElementById('sigPad');
+  const sigData = currentSigCanvas ? currentSigCanvas.toDataURL('image/png') : null;
+
   const programId = sel.value;
   const programName = sel.options[sel.selectedIndex]?.text || '';
+  const sessions = parseInt(sel.options[sel.selectedIndex]?.dataset.sessions)||0;
+  const totalAmount = parseInt(document.getElementById('nc-amount').value)||0;
+  const paymentMethod = document.getElementById('nc-payment').value;
+  const startDate = document.getElementById('nc-start').value;
+  const endDate = document.getElementById('nc-end').value;
+  const note = document.getElementById('nc-note').value;
+  const signedAt = new Date().toISOString().split('T')[0];
+  const marketingConsent = document.getElementById('nc-agree-marketing').checked;
+  const adConsent = document.getElementById('nc-agree-ad').checked;
+
+  // PDF 생성
+  let pdfBase64 = null;
+  try {
+    pdfBase64 = await generateContractPDF({
+      memberName: currentMember.name,
+      phone: currentMember.phone,
+      programName,
+      sessions,
+      totalAmount,
+      paymentMethod,
+      startDate,
+      endDate,
+      signedAt,
+      marketingConsent,
+      adConsent,
+      note,
+      sigData,
+    });
+  } catch(pdfErr) {
+    console.error('PDF 생성 실패:', pdfErr);
+    // PDF 실패해도 계약 저장은 진행
+  }
 
   const body = {
     memberName: currentMember.name,
     memberId: currentMember.id,
     programId,
     programName,
-    sessions: parseInt(sel.options[sel.selectedIndex]?.dataset.sessions)||0,
-    totalAmount: parseInt(document.getElementById('nc-amount').value)||0,
-    paymentMethod: document.getElementById('nc-payment').value,
-    startDate: document.getElementById('nc-start').value,
-    endDate: document.getElementById('nc-end').value,
-    note: document.getElementById('nc-note').value,
-    pdfBase64: null, // PDF 생성은 추후 연동
+    sessions,
+    totalAmount,
+    paymentMethod,
+    startDate,
+    endDate,
+    signedAt,
+    note,
+    pdfBase64,
   };
 
   try {
     const res = await fetch(`${API}/api/contracts`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+    const data = await res.json();
     if (res.ok) {
       closeModal('modal-new-contract');
-      showToast('계약이 완료되었습니다', 'success');
+      showToast(pdfBase64 ? '계약 완료 및 계약서 저장됨 📄' : '계약 완료 (PDF 저장 실패)', pdfBase64 ? 'success' : '');
       await loadMemberContracts();
       showTab('contracts', document.querySelectorAll('.tab')[1]);
+    } else {
+      showToast('저장 실패: ' + (data.error||'오류'), 'error');
     }
   } catch(e) { showToast('저장 실패: ' + e.message, 'error'); }
+}
+
+// PDF 생성 함수
+async function generateContractPDF(data) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+
+  const W = 210;
+  const margin = 20;
+  const lineH = 7;
+  let y = 20;
+
+  // 헬퍼
+  const line = (x1, y1, x2, y2) => doc.line(x1, y1, x2, y2);
+  const text = (str, x, yy, opts) => doc.text(str||'', x, yy, opts);
+  const setFont = (size, style='normal') => { doc.setFontSize(size); doc.setFont('helvetica', style); };
+
+  // ── 헤더 ──
+  setFont(18, 'bold');
+  text('REGINA PILATES', W/2, y, { align: 'center' });
+  y += 6;
+  setFont(9);
+  text('레지나 필라테스 청담 | 회원 계약서', W/2, y, { align: 'center' });
+  y += 4;
+  doc.setDrawColor(180, 170, 160);
+  line(margin, y, W-margin, y);
+  y += 8;
+
+  // ── 회원 정보 ──
+  setFont(10, 'bold');
+  text('회원 정보', margin, y);
+  y += 5;
+  doc.setDrawColor(200, 200, 200);
+
+  const fields = [
+    ['성명', data.memberName],
+    ['연락처', data.phone||'—'],
+    ['프로그램', data.programName],
+    ['총 횟수', data.sessions + '회'],
+    ['결제 금액', (data.totalAmount||0).toLocaleString() + '원'],
+    ['결제 방법', data.paymentMethod||'—'],
+    ['수강 시작일', data.startDate||'—'],
+    ['수강 종료일', data.endDate||'—'],
+    ['계약일', data.signedAt],
+  ];
+
+  setFont(9);
+  fields.forEach(([label, val]) => {
+    doc.setFillColor(248, 248, 245);
+    doc.rect(margin, y-4, 40, lineH, 'F');
+    doc.setTextColor(100, 100, 100);
+    text(label, margin+2, y);
+    doc.setTextColor(30, 30, 30);
+    text(String(val), margin+44, y);
+    line(margin, y+2, W-margin, y+2);
+    y += lineH;
+  });
+
+  if (data.note) {
+    doc.setTextColor(100, 100, 100);
+    setFont(8);
+    text('비고: ' + data.note, margin, y+2);
+    y += lineH;
+  }
+
+  y += 4;
+  doc.setDrawColor(180, 170, 160);
+  line(margin, y, W-margin, y);
+  y += 6;
+
+  // ── 이용약관 ──
+  setFont(10, 'bold');
+  doc.setTextColor(30, 30, 30);
+  text('이용약관', margin, y);
+  y += 5;
+
+  setFont(7.5);
+  doc.setTextColor(80, 80, 80);
+  const terms = [
+    '제1조 (수강료 환불) 수업 시작 전: 전액환불 / 1/3경과 전: 잔여2/3환불 / 1/2경과 전: 잔여1/2환불 / 1/2경과 후: 환불불가',
+    '제2조 (수강권 양도) 수강권은 본인 이외 타인에게 양도할 수 없습니다.',
+    '제3조 (수강권 정지) 부상·질병·출산 등으로 정지 가능, 최대 30일, 기간만큼 연장됩니다.',
+    '제4조 (개인 물품) 스튜디오는 회원 개인 물품 분실에 책임을 지지 않습니다.',
+    '제5조 (부상 및 사고) 신체 상태 미고지로 발생한 사고에 스튜디오는 책임을 지지 않습니다.',
+    '제6조 (촬영) 스튜디오 내 타인 동의 없는 촬영은 금지됩니다.',
+    '제7조 (개인정보) 수집항목: 성명·연락처·생년월일·신체정보 / 목적: 회원관리·수업안전 / 보유: 탈퇴 후 3년',
+  ];
+  terms.forEach(t => {
+    const lines = doc.splitTextToSize(t, W - margin*2);
+    doc.text(lines, margin, y);
+    y += lines.length * 4.5 + 1;
+  });
+
+  y += 3;
+  doc.setDrawColor(180, 170, 160);
+  line(margin, y, W-margin, y);
+  y += 6;
+
+  // ── 동의 항목 ──
+  setFont(9, 'bold');
+  doc.setTextColor(30, 30, 30);
+  text('동의 확인', margin, y);
+  y += 5;
+
+  setFont(8.5);
+  const agrees = [
+    ['■', '[필수] 개인정보 수집·이용에 동의합니다.'],
+    ['■', '[필수] 이용약관에 동의합니다.'],
+    [data.marketingConsent ? '■' : '□', '[선택] 수업 안내 정보 수신에 동의합니다.'],
+    [data.adConsent ? '■' : '□', '[선택] 광고성 정보 수신에 동의합니다.'],
+  ];
+  agrees.forEach(([chk, label]) => {
+    doc.setTextColor(chk === '■' ? 30 : 150, 30, 30);
+    text(chk + ' ' + label, margin, y);
+    y += 5.5;
+  });
+
+  y += 4;
+  doc.setDrawColor(180, 170, 160);
+  line(margin, y, W-margin, y);
+  y += 8;
+
+  // ── 서명 ──
+  setFont(9, 'bold');
+  doc.setTextColor(30, 30, 30);
+  text('서명', margin, y);
+  y += 4;
+
+  setFont(8);
+  doc.setTextColor(100, 100, 100);
+  text('계약일: ' + data.signedAt + '    서명:', margin, y);
+  y += 3;
+
+  // 서명 이미지 삽입
+  if (data.sigData && data.sigData.length > 100) {
+    try {
+      doc.addImage(data.sigData, 'PNG', margin+40, y-2, 60, 20);
+    } catch(e) { console.warn('서명 이미지 삽입 실패', e); }
+  }
+
+  y += 22;
+  line(margin+40, y, margin+100, y);
+  setFont(7);
+  text('(서명)', margin+64, y+4, { align: 'center' });
+
+  // base64 반환 (data URI 앞부분 제거)
+  const pdfDataUri = doc.output('datauristring');
+  return pdfDataUri.split(',')[1];
 }
 
 function openPauseModal(contractId) {
