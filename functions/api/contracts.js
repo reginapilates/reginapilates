@@ -73,12 +73,12 @@ export async function onRequest(context) {
 
       // 1. 구글 드라이브에 PDF 저장
       let driveLink = '';
+      let driveError = '';
       if (pdfBase64) {
         try {
           driveLink = await uploadToDrive(env, pdfBase64, memberName, contractData.signedAt);
-          console.log('Drive link:', driveLink);
         } catch(e) {
-          console.error('Drive upload failed:', e.message);
+          driveError = e.message;
         }
       }
 
@@ -116,7 +116,7 @@ export async function onRequest(context) {
         return new Response(JSON.stringify({ error: notionData.message, details: notionData }), { status: 500, headers });
       }
 
-      return new Response(JSON.stringify({ id: notionData.id, driveLink, success: true }), { headers });
+      return new Response(JSON.stringify({ id: notionData.id, driveLink, driveError, success: true }), { headers });
     }
 
     // PUT — 계약 상태 업데이트
