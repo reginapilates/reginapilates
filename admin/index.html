@@ -1273,30 +1273,64 @@ async function viewContractData(c) {
   const memberName = parts[0] || '—';
   const programName = parts.slice(1).join(' - ') || c.title || '—';
 
-  // Notion에서 서명 데이터 불러오기
+  // 1. 서명 데이터
   let sigData = c.signatureData || null;
   if (!sigData && c.id) {
     try {
       const res = await fetch(`${API}/api/contracts/signature?id=${c.id}`);
       const data = await res.json();
       sigData = data.signatureData || null;
-    } catch(e) { console.warn('서명 불러오기 실패', e); }
+    } catch(e) {}
   }
 
+  // 2. 회원 정보 (연락처, 주소, 생년월일)
+  let phone = '', address = '', birthDate = '';
+  if (c.memberId) {
+    try {
+      const mRes = await fetch(`${API}/api/members`);
+      const mData = await mRes.json();
+      const member = (mData.members || []).find(m => m.id === c.memberId);
+      if (member) {
+        phone = member.phone || '';
+        address = member.address || '';
+        birthDate = member.birthDate || '';
+      }
+    } catch(e) {}
+  }
+
+  // 3. 프로그램 가격 정보
+  let pricePerSession = 0, totalPrice = 0, discountRatio = 0, finalPrice = 0;
+  if (c.programId) {
+    try {
+      const pRes = await fetch(`${API}/api/programs`);
+      const pData = await pRes.json();
+      const program = (pData.all || []).find(p => p.id === c.programId);
+      if (program) {
+        pricePerSession = program.pricePerSession || 0;
+        totalPrice = program.totalPrice || 0;
+        discountRatio = program.discount || 0;
+        finalPrice = program.finalPrice || 0;
+      }
+    } catch(e) {}
+  }
+
+  // Fallback
+  if (finalPrice === 0) finalPrice = c.totalAmount || 0;
+  if (totalPrice === 0 && pricePerSession > 0) totalPrice = pricePerSession * (c.sessions || 0);
+  if (totalPrice === 0) totalPrice = finalPrice;
+  if (pricePerSession === 0 && (c.sessions || 0) > 0) pricePerSession = Math.round(totalPrice / c.sessions);
+
   showContractPrint({
-    memberName,
-    phone: '',
-    programName,
+    memberName, phone, address, birthDate, programName,
     sessions: c.sessions || 0,
+    pricePerSession, totalPrice, discountRatio, finalPrice,
     totalAmount: c.totalAmount || 0,
     paymentMethod: c.paymentMethod || '—',
     startDate: c.startDate || '—',
     endDate: c.endDate || '—',
     signedAt: c.signedAt || '—',
-    marketingConsent: false,
-    adConsent: false,
-    note: c.note || '',
-    sigData,
+    marketingConsent: false, adConsent: false,
+    note: c.note || '', sigData,
   });
 }
 
