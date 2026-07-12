@@ -1119,7 +1119,7 @@ async function openNewContractModal() {
   const programs = data.programs || [];
   const sel = document.getElementById('nc-program');
   sel.innerHTML = '<option value="">프로그램을 선택하세요</option>' +
-    programs.map(p => `<option value="${p.id}" data-price="${p.finalPrice}" data-sessions="${p.sessions}">${p.name} — ${p.finalPrice?.toLocaleString()}원</option>`).join('');
+    programs.map(p => `<option value="${p.id}" data-price="${p.finalPrice}" data-sessions="${p.sessions}" data-pps="${p.pricePerSession}" data-total="${p.totalPrice}" data-discount="${p.discount}" data-final="${p.finalPrice}" data-name="${p.name}" data-duration="${p.duration||0}">${p.name} — ${p.finalPrice?.toLocaleString()}원</option>`).join('');
   document.getElementById('nc-start').value = new Date().toISOString().split('T')[0];
   document.getElementById('nc-program-info').style.display = 'none';
   initSigPad();
@@ -1129,12 +1129,25 @@ async function openNewContractModal() {
 function onProgramSelect() {
   const sel = document.getElementById('nc-program');
   const opt = sel.options[sel.selectedIndex];
-  const price = opt.dataset.price;
-  const sessions = opt.dataset.sessions;
-  if (price) {
-    document.getElementById('nc-amount').value = price;
-    document.getElementById('nc-program-info').style.display = 'block';
-    document.getElementById('nc-program-detail').textContent = `${sessions}회 · 총 ${parseInt(price).toLocaleString()}원`;
+  if (!opt.value) return;
+  const pps = parseInt(opt.dataset.pps)||0;
+  const sessions = parseInt(opt.dataset.sessions)||0;
+  const total = parseInt(opt.dataset.total)||0;
+  const discount = parseInt(opt.dataset.discount)||0;
+  const final = parseInt(opt.dataset.final)||0;
+
+  document.getElementById('nc-amount').value = final;
+  document.getElementById('nc-program-info').style.display = 'block';
+  document.getElementById('nc-program-detail').innerHTML =
+    `회당 ${pps.toLocaleString()}원 × ${sessions}회 = ${total.toLocaleString()}원
+     ${discount > 0 ? `<span style="color:var(--danger)"> → 할인 ${discount}% 적용 → 최종 <b>${final.toLocaleString()}원</b></span>` : ''}`;
+
+  // 종료일 자동 계산 (프로그램 duration 기반)
+  const duration = parseInt(opt.dataset.duration)||0;
+  if (duration && document.getElementById('nc-start').value) {
+    const start = new Date(document.getElementById('nc-start').value);
+    start.setMonth(start.getMonth() + duration);
+    document.getElementById('nc-end').value = start.toISOString().split('T')[0];
   }
 }
 
@@ -1148,6 +1161,13 @@ async function saveContract() {
   if (!sel.value) { showToast('프로그램을 선택해주세요', 'error'); return; }
 
   showToast('계약서 생성 중...', '');
+
+  // 프로그램 가격 정보
+  const selOpt = sel.options[sel.selectedIndex];
+  const pricePerSession = parseInt(selOpt.dataset.pps)||0;
+  const totalPrice = parseInt(selOpt.dataset.total)||0;
+  const discountRatio = parseInt(selOpt.dataset.discount)||0;
+  const finalPrice = parseInt(selOpt.dataset.final)||0;
 
   const currentSigCanvas = document.getElementById('sigPad');
   let sigData = null;
@@ -1213,6 +1233,10 @@ async function saveContract() {
       visitSource: currentMember.visitSource || '',
       programName,
       sessions,
+      pricePerSession,
+      totalPrice,
+      discountRatio,
+      finalPrice,
       totalAmount,
       paymentMethod,
       startDate,
@@ -1318,34 +1342,42 @@ function showContractPrint(data) {
   <tr>
     <td class="label">성&nbsp;&nbsp;&nbsp;명</td>
     <td>${data.memberName}</td>
-    <td class="label" style="width:8%">□N □R</td>
-    <td style="width:8%"></td>
     <td class="label">생년월일</td>
     <td>${data.birthDate||''}</td>
-  </tr>
-  <tr>
-    <td class="label">주&nbsp;&nbsp;&nbsp;소</td>
-    <td colspan="3">${data.address||''}</td>
     <td class="label">연&nbsp;락&nbsp;처</td>
     <td>${data.phone||''}</td>
   </tr>
   <tr>
+    <td class="label">주&nbsp;&nbsp;&nbsp;소</td>
+    <td colspan="5">${data.address||''}</td>
+  </tr>
+  <tr>
     <td class="label">프로그램</td>
-    <td colspan="5">${data.programName} &nbsp;&nbsp; ${data.sessions}회</td>
+    <td colspan="5"><b>${data.programName}</b></td>
   </tr>
   <tr>
-    <td class="label">총&nbsp;금&nbsp;액</td>
-    <td>${fmt(data.totalAmount)}원</td>
-    <td class="label" colspan="2">${data.paymentMethod==='카드'?'■':'□'}카드 &nbsp; ${data.paymentMethod==='현금'?'■':'□'}현금</td>
+    <td class="label">회당 레슨비</td>
+    <td>${fmt(data.pricePerSession)}원</td>
+    <td class="label">횟&nbsp;&nbsp;&nbsp;수</td>
+    <td>${data.sessions}회</td>
+    <td class="label">총&nbsp;&nbsp;&nbsp;액</td>
+    <td>${fmt(data.totalPrice||data.totalAmount)}원</td>
+  </tr>
+  <tr>
+    <td class="label">할&nbsp;인&nbsp;율</td>
+    <td>${data.discountRatio||0}%</td>
+    <td class="label">최종 금액</td>
+    <td><b>${fmt(data.finalPrice||data.totalAmount)}원</b></td>
+    <td class="label">결제 방법</td>
+    <td>${data.paymentMethod==='카드'?'■':'□'}카드 &nbsp; ${data.paymentMethod==='현금'?'■':'□'}현금 &nbsp; ${data.paymentMethod==='계좌이체'?'■':'□'}계좌이체</td>
+  </tr>
+  <tr>
     <td class="label">유효기간</td>
-    <td>${data.startDate||''} ~ ${data.endDate||''}</td>
-  </tr>
-  <tr>
-    <td class="label">비&nbsp;&nbsp;&nbsp;고</td>
-    <td colspan="2">${data.note||''}</td>
+    <td colspan="3">${data.startDate||''} ~ ${data.endDate||''}</td>
     <td class="label">가입경로</td>
-    <td colspan="2">${data.visitSource||''}</td>
+    <td>${data.visitSource||''}</td>
   </tr>
+  ${data.note ? `<tr><td class="label">비&nbsp;&nbsp;&nbsp;고</td><td colspan="5">${data.note}</td></tr>` : ''}
 </table>
 
 <hr class="thin">
