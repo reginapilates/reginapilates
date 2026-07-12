@@ -56,6 +56,9 @@ export async function onRequest(context) {
         startDate: page.properties.StartDate?.date?.start || '',
         endDate: page.properties.EndDate?.date?.start || '',
         signedAt: page.properties.SignedAt?.date?.start || '',
+        signatureData: (page.properties.SignatureData?.rich_text?.[0]?.plain_text || '') +
+          (page.properties.SignatureData2?.rich_text?.[0]?.plain_text || '') +
+          (page.properties.SignatureData3?.rich_text?.[0]?.plain_text || ''),
         driveLink: page.properties.DriveLink?.url || '',
         status: page.properties.Status?.select?.name || '',
         pauseDate: page.properties.PauseDate?.date?.start || '',
@@ -106,6 +109,15 @@ export async function onRequest(context) {
             SignedAt: { date: { start: new Date().toISOString().split('T')[0] } },
             DriveLink: driveLink ? { url: driveLink } : undefined,
             Status: { select: { name: '진행중' } },
+            SignatureData: contractData.signatureData ? {
+              rich_text: [{ text: { content: contractData.signatureData.substring(0, 1900) } }]
+            } : undefined,
+            SignatureData2: contractData.signatureData && contractData.signatureData.length > 1900 ? {
+              rich_text: [{ text: { content: contractData.signatureData.substring(1900, 3800) } }]
+            } : undefined,
+            SignatureData3: contractData.signatureData && contractData.signatureData.length > 3800 ? {
+              rich_text: [{ text: { content: contractData.signatureData.substring(3800, 5700) } }]
+            } : undefined,
             Note: { rich_text: [{ text: { content: contractData.note || '' } }] },
           },
         }),
@@ -117,6 +129,28 @@ export async function onRequest(context) {
       }
 
       return new Response(JSON.stringify({ id: notionData.id, driveLink, driveError, success: true }), { headers });
+    }
+
+    // GET signature — 서명 데이터만 조회
+    if (method === 'GET') {
+      const url = new URL(request.url);
+      if (url.pathname.endsWith('/signature')) {
+        const id = url.searchParams.get('id');
+        if (!id) return new Response(JSON.stringify({ error: 'id required' }), { status: 400, headers });
+
+        const response = await fetch(`https://api.notion.com/v1/pages/${id}`, {
+          headers: {
+            'Authorization': `Bearer ${env.NOTION_API_KEY}`,
+            'Notion-Version': '2022-06-28',
+          },
+        });
+        const data = await response.json();
+        const sig1 = data.properties?.SignatureData?.rich_text?.[0]?.plain_text || '';
+        const sig2 = data.properties?.SignatureData2?.rich_text?.[0]?.plain_text || '';
+        const sig3 = data.properties?.SignatureData3?.rich_text?.[0]?.plain_text || '';
+        const signatureData = sig1 + sig2 + sig3;
+        return new Response(JSON.stringify({ signatureData }), { headers });
+      }
     }
 
     // PUT — 계약 상태 업데이트
