@@ -1,5 +1,4 @@
 // functions/api/programs.js
-// 프로그램 목록 조회 + 신규 프로그램 등록
 
 export async function onRequest(context) {
   const { request, env } = context;
@@ -15,7 +14,6 @@ export async function onRequest(context) {
   if (method === 'OPTIONS') return new Response(null, { headers });
 
   try {
-    // GET — 프로그램 목록 조회
     if (method === 'GET') {
       const response = await fetch(
         `https://api.notion.com/v1/databases/${env.NOTION_PROGRAMS_DB_ID}/query`,
@@ -33,7 +31,14 @@ export async function onRequest(context) {
       );
 
       const data = await response.json();
-      const programs = data.results.map(page => ({
+
+      // Notion API 오류 처리
+      if (!response.ok) {
+        return new Response(JSON.stringify({ error: data.message || 'Notion API error', data }), { status: 500, headers });
+      }
+
+      const results = data.results || [];
+      const programs = results.map(page => ({
         id: page.id,
         name: page.properties.Name?.title?.[0]?.plain_text || '',
         type: page.properties.Type?.select?.name || '',
@@ -46,13 +51,10 @@ export async function onRequest(context) {
         isActive: page.properties.IsActive?.checkbox || false,
       }));
 
-      // 활성 프로그램만 필터
       const activePrograms = programs.filter(p => p.isActive);
-
       return new Response(JSON.stringify({ programs: activePrograms, all: programs }), { headers });
     }
 
-    // POST — 신규 프로그램 등록
     if (method === 'POST') {
       const body = await request.json();
 
@@ -78,6 +80,9 @@ export async function onRequest(context) {
       });
 
       const data = await response.json();
+      if (!response.ok) {
+        return new Response(JSON.stringify({ error: data.message || 'Notion API error', data }), { status: 500, headers });
+      }
       return new Response(JSON.stringify({ id: data.id, success: true }), { headers });
     }
 

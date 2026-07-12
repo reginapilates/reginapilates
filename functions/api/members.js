@@ -1,5 +1,4 @@
 // functions/api/members.js
-// 회원 목록 조회 + 신규 회원 등록
 
 export async function onRequest(context) {
   const { request, env } = context;
@@ -15,12 +14,7 @@ export async function onRequest(context) {
   if (method === 'OPTIONS') return new Response(null, { headers });
 
   try {
-    // GET — 회원 목록 조회
     if (method === 'GET') {
-      const url = new URL(request.url);
-      const search = url.searchParams.get('search') || '';
-      const filter = url.searchParams.get('filter') || 'all';
-
       const response = await fetch(
         `https://api.notion.com/v1/databases/${env.NOTION_MEMBERS_DB_ID}/query`,
         {
@@ -37,7 +31,13 @@ export async function onRequest(context) {
       );
 
       const data = await response.json();
-      const members = data.results.map(page => ({
+
+      if (!response.ok) {
+        return new Response(JSON.stringify({ error: data.message || 'Notion API error', data }), { status: 500, headers });
+      }
+
+      const results = data.results || [];
+      const members = results.map(page => ({
         id: page.id,
         name: page.properties.Name?.title?.[0]?.plain_text || '',
         phone: page.properties.Phone?.phone_number || '',
@@ -56,18 +56,15 @@ export async function onRequest(context) {
         createdAt: page.properties.CreatedAt?.date?.start || '',
       }));
 
-      // 검색 필터
-      let filtered = members;
-      if (search) {
-        filtered = filtered.filter(m =>
-          m.name.includes(search) || m.phone.includes(search)
-        );
-      }
+      const url = new URL(request.url);
+      const search = url.searchParams.get('search') || '';
+      const filtered = search
+        ? members.filter(m => m.name.includes(search) || m.phone.includes(search))
+        : members;
 
       return new Response(JSON.stringify({ members: filtered }), { headers });
     }
 
-    // POST — 신규 회원 등록
     if (method === 'POST') {
       const body = await request.json();
 
@@ -82,12 +79,12 @@ export async function onRequest(context) {
           parent: { database_id: env.NOTION_MEMBERS_DB_ID },
           properties: {
             Name: { title: [{ text: { content: body.name } }] },
-            Email: { email: body.email || null },
-            Phone: { phone_number: body.phone || null },
+            Email: body.email ? { email: body.email } : undefined,
+            Phone: body.phone ? { phone_number: body.phone } : undefined,
             BirthDate: body.birthDate ? { date: { start: body.birthDate } } : undefined,
             Address: { rich_text: [{ text: { content: body.address || '' } }] },
-            Height: { number: body.height || null },
-            Weight: { number: body.weight || null },
+            Height: body.height ? { number: body.height } : undefined,
+            Weight: body.weight ? { number: body.weight } : undefined,
             PilatesExp: body.pilatesExp ? { select: { name: body.pilatesExp } } : undefined,
             PainHistory: { rich_text: [{ text: { content: body.painHistory || '' } }] },
             Surgery: { checkbox: body.surgery || false },
@@ -101,6 +98,9 @@ export async function onRequest(context) {
       });
 
       const data = await response.json();
+      if (!response.ok) {
+        return new Response(JSON.stringify({ error: data.message || 'Notion API error', data }), { status: 500, headers });
+      }
       return new Response(JSON.stringify({ id: data.id, success: true }), { headers });
     }
 
