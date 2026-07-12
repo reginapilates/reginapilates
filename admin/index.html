@@ -503,6 +503,7 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('modal-new-contract')">취소</button>
+      <button class="btn btn-secondary" onclick="previewContractPDF()" style="background:var(--surface);border:1px solid var(--border)">📄 미리보기</button>
       <button class="btn btn-primary" onclick="saveContract()">계약 완료</button>
     </div>
   </div>
@@ -1211,6 +1212,37 @@ async function saveContract() {
   } catch(e) { showToast('저장 실패: ' + e.message, 'error'); }
 }
 
+// PDF 미리보기
+async function previewContractPDF() {
+  const sel = document.getElementById('nc-program');
+  const canvas = document.getElementById('sigPad');
+  const sigData = canvas ? canvas.toDataURL('image/png') : null;
+
+  const pdfBase64 = await generateContractPDF({
+    memberName: currentMember?.name || '(미입력)',
+    phone: currentMember?.phone || '',
+    programName: sel?.options[sel.selectedIndex]?.text || '(미선택)',
+    sessions: parseInt(sel?.options[sel.selectedIndex]?.dataset.sessions)||0,
+    totalAmount: parseInt(document.getElementById('nc-amount').value)||0,
+    paymentMethod: document.getElementById('nc-payment').value,
+    startDate: document.getElementById('nc-start').value,
+    endDate: document.getElementById('nc-end').value,
+    signedAt: new Date().toISOString().split('T')[0],
+    marketingConsent: document.getElementById('nc-agree-marketing').checked,
+    adConsent: document.getElementById('nc-agree-ad').checked,
+    note: document.getElementById('nc-note').value,
+    sigData,
+  });
+
+  // 새 탭에서 PDF 열기
+  const byteChars = atob(pdfBase64);
+  const byteArr = new Uint8Array(byteChars.length);
+  for (let i = 0; i < byteChars.length; i++) byteArr[i] = byteChars.charCodeAt(i);
+  const blob = new Blob([byteArr], { type: 'application/pdf' });
+  const url = URL.createObjectURL(blob);
+  window.open(url, '_blank');
+}
+
 // PDF 생성 함수
 async function generateContractPDF(data) {
   const { jsPDF } = window.jspdf;
@@ -1470,64 +1502,77 @@ async function deleteProgram(id, name) {
 
 // ── SIGNATURE PAD ──
 function initSigPad() {
-  sigCanvas = document.getElementById('sigPad');
-  sigCtx = sigCanvas.getContext('2d');
+  // 모달이 완전히 렌더링된 후 실행
+  setTimeout(() => {
+    const canvas = document.getElementById('sigPad');
+    if (!canvas) return;
 
-  // 캔버스 크기를 실제 표시 크기로 설정
-  const rect = sigCanvas.getBoundingClientRect();
-  sigCanvas.width = rect.width || sigCanvas.parentElement.offsetWidth || 600;
-  sigCanvas.height = 140;
+    // 기존 이벤트 제거를 위해 clone
+    const newCanvas = canvas.cloneNode(false);
+    canvas.parentNode.replaceChild(newCanvas, canvas);
+    sigCanvas = newCanvas;
 
-  sigCtx.strokeStyle = '#1A1816';
-  sigCtx.lineWidth = 2;
-  sigCtx.lineCap = 'round';
-  sigCtx.lineJoin = 'round';
+    // 실제 렌더링된 크기로 설정
+    const rect = sigCanvas.getBoundingClientRect();
+    sigCanvas.width = Math.round(rect.width) || 580;
+    sigCanvas.height = 160;
 
-  // 기존 이벤트 제거 후 재등록
-  const newCanvas = sigCanvas.cloneNode(true);
-  sigCanvas.parentNode.replaceChild(newCanvas, sigCanvas);
-  sigCanvas = newCanvas;
-  sigCtx = sigCanvas.getContext('2d');
-  sigCtx.strokeStyle = '#1A1816';
-  sigCtx.lineWidth = 2;
-  sigCtx.lineCap = 'round';
-  sigCtx.lineJoin = 'round';
+    sigCtx = sigCanvas.getContext('2d');
+    sigCtx.strokeStyle = '#1A1816';
+    sigCtx.lineWidth = 2.5;
+    sigCtx.lineCap = 'round';
+    sigCtx.lineJoin = 'round';
 
-  sigCanvas.addEventListener('mousedown', e => {
-    isDrawing = true;
-    const r = sigCanvas.getBoundingClientRect();
-    sigCtx.beginPath();
-    sigCtx.moveTo(e.clientX - r.left, e.clientY - r.top);
-  });
-  sigCanvas.addEventListener('mousemove', e => {
-    if (!isDrawing) return;
-    const r = sigCanvas.getBoundingClientRect();
-    sigCtx.lineTo(e.clientX - r.left, e.clientY - r.top);
-    sigCtx.stroke();
-  });
-  sigCanvas.addEventListener('mouseup', () => isDrawing = false);
-  sigCanvas.addEventListener('mouseleave', () => isDrawing = false);
-  sigCanvas.addEventListener('touchstart', e => {
-    e.preventDefault();
-    isDrawing = true;
-    const t = e.touches[0], r = sigCanvas.getBoundingClientRect();
-    sigCtx.beginPath();
-    sigCtx.moveTo(t.clientX - r.left, t.clientY - r.top);
-  });
-  sigCanvas.addEventListener('touchmove', e => {
-    e.preventDefault();
-    if (!isDrawing) return;
-    const t = e.touches[0], r = sigCanvas.getBoundingClientRect();
-    sigCtx.lineTo(t.clientX - r.left, t.clientY - r.top);
-    sigCtx.stroke();
-  });
-  sigCanvas.addEventListener('touchend', () => isDrawing = false);
+    // 배경 흰색으로
+    sigCtx.fillStyle = '#ffffff';
+    sigCtx.fillRect(0, 0, sigCanvas.width, sigCanvas.height);
+
+    sigCanvas.addEventListener('mousedown', e => {
+      isDrawing = true;
+      const r = sigCanvas.getBoundingClientRect();
+      const scaleX = sigCanvas.width / r.width;
+      const scaleY = sigCanvas.height / r.height;
+      sigCtx.beginPath();
+      sigCtx.moveTo((e.clientX - r.left) * scaleX, (e.clientY - r.top) * scaleY);
+    });
+    sigCanvas.addEventListener('mousemove', e => {
+      if (!isDrawing) return;
+      const r = sigCanvas.getBoundingClientRect();
+      const scaleX = sigCanvas.width / r.width;
+      const scaleY = sigCanvas.height / r.height;
+      sigCtx.lineTo((e.clientX - r.left) * scaleX, (e.clientY - r.top) * scaleY);
+      sigCtx.stroke();
+    });
+    sigCanvas.addEventListener('mouseup', () => isDrawing = false);
+    sigCanvas.addEventListener('mouseleave', () => isDrawing = false);
+    sigCanvas.addEventListener('touchstart', e => {
+      e.preventDefault();
+      isDrawing = true;
+      const t = e.touches[0], r = sigCanvas.getBoundingClientRect();
+      const scaleX = sigCanvas.width / r.width;
+      const scaleY = sigCanvas.height / r.height;
+      sigCtx.beginPath();
+      sigCtx.moveTo((t.clientX - r.left) * scaleX, (t.clientY - r.top) * scaleY);
+    }, { passive: false });
+    sigCanvas.addEventListener('touchmove', e => {
+      e.preventDefault();
+      if (!isDrawing) return;
+      const t = e.touches[0], r = sigCanvas.getBoundingClientRect();
+      const scaleX = sigCanvas.width / r.width;
+      const scaleY = sigCanvas.height / r.height;
+      sigCtx.lineTo((t.clientX - r.left) * scaleX, (t.clientY - r.top) * scaleY);
+      sigCtx.stroke();
+    }, { passive: false });
+    sigCanvas.addEventListener('touchend', () => isDrawing = false);
+  }, 100);
 }
 
 function clearSig() {
-  sigCanvas = document.getElementById('sigPad');
-  sigCtx = sigCanvas?.getContext('2d');
-  if (sigCtx) sigCtx.clearRect(0, 0, sigCanvas.width, sigCanvas.height);
+  const canvas = document.getElementById('sigPad');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 }
 
 // ── MODALS ──
