@@ -313,7 +313,7 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
       </div>
       <table class="member-table">
         <thead>
-          <tr><th>프로그램명</th><th>유형</th><th>강사</th><th>횟수</th><th>회당 금액</th><th>총액</th><th>할인</th><th>최종 금액</th><th>상태</th></tr>
+          <tr><th>프로그램명</th><th>유형</th><th>강사</th><th>횟수</th><th>회당 금액</th><th>총액</th><th>할인</th><th>최종 금액</th><th>기간</th><th>상태</th><th>관리</th></tr>
         </thead>
         <tbody id="programs-table-body">
           <tr><td colspan="9" class="loading">불러오는 중...</td></tr>
@@ -350,7 +350,7 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
       <div class="form-section">기본 정보</div>
       <div class="form-row">
         <div class="form-group"><label class="form-label required">이름</label><input class="form-input" id="nm-name" placeholder="홍길동"></div>
-        <div class="form-group"><label class="form-label">연락처</label><input class="form-input" id="nm-phone" placeholder="010-0000-0000"></div>
+        <div class="form-group"><label class="form-label">연락처</label><input class="form-input" id="nm-phone" placeholder="010-0000-0000" oninput="formatPhone(this)" maxlength="13"></div>
       </div>
       <div class="form-row">
         <div class="form-group"><label class="form-label">이메일</label><input class="form-input" id="nm-email" type="email" placeholder="example@email.com"></div>
@@ -450,7 +450,7 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
             <option>카드</option><option>현금</option><option>계좌이체</option><option>혼합</option>
           </select>
         </div>
-        <div class="form-group"><label class="form-label">총 결제 금액</label><input class="form-input" id="nc-amount" type="number" placeholder="자동 계산"></div>
+        <div class="form-group"><label class="form-label">최종 결제 금액 <small style="color:var(--text-muted);font-size:10px">(수정 가능)</small></label><input class="form-input" id="nc-amount" type="number" placeholder="프로그램 선택 시 자동 입력"></div>
       </div>
       <div class="form-row full">
         <div class="form-group"><label class="form-label">비고</label><textarea class="form-textarea" id="nc-note" placeholder="특이사항"></textarea></div>
@@ -563,10 +563,119 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
         <div class="form-group"><label class="form-label">할인율 (%)</label><input class="form-input" id="np-discount" type="number" placeholder="0" oninput="calcProgramPrice()"></div>
         <div class="form-group"><label class="form-label">최종 금액 (자동 계산)</label><input class="form-input" id="np-final" readonly style="background:var(--surface)"></div>
       </div>
+      <div class="form-row full">
+        <div class="form-group">
+          <label class="form-label">사용 기간</label>
+          <select class="form-select" id="np-duration">
+            <option value="">기간 제한 없음</option>
+            <option value="1">1개월</option><option value="2">2개월</option><option value="3">3개월</option>
+            <option value="4">4개월</option><option value="5">5개월</option><option value="6">6개월</option>
+            <option value="7">7개월</option><option value="8">8개월</option><option value="9">9개월</option>
+            <option value="10">10개월</option><option value="11">11개월</option><option value="12">12개월</option>
+          </select>
+        </div>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('modal-new-program')">취소</button>
       <button class="btn btn-primary" onclick="saveProgram()">등록</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: 프로그램 수정 -->
+<div class="modal-overlay" id="modal-edit-program" style="display:none">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-header">
+      <div class="modal-title">프로그램 수정</div>
+      <button class="modal-close" onclick="closeModal('modal-edit-program')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="ep-id">
+      <div class="form-row full">
+        <div class="form-group"><label class="form-label required">프로그램명</label><input class="form-input" id="ep-name" placeholder="Private 1:1 - Regina 25회"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">유형</label>
+          <select class="form-select" id="ep-type">
+            <option>1:1</option><option>1:2</option><option>1:3</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">강사</label><input class="form-input" id="ep-instructor" placeholder="Regina"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">횟수</label><input class="form-input" id="ep-sessions" type="number" placeholder="25"></div>
+        <div class="form-group"><label class="form-label">회당 금액 (원)</label><input class="form-input" id="ep-price" type="number" placeholder="50000" oninput="calcEditProgramPrice()"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">할인율 (%)</label><input class="form-input" id="ep-discount" type="number" placeholder="0" oninput="calcEditProgramPrice()"></div>
+        <div class="form-group"><label class="form-label">최종 금액 (자동 계산)</label><input class="form-input" id="ep-final" readonly style="background:var(--surface)"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">사용 기간</label>
+          <select class="form-select" id="ep-duration">
+            <option value="">기간 제한 없음</option>
+            <option value="1">1개월</option><option value="2">2개월</option><option value="3">3개월</option>
+            <option value="4">4개월</option><option value="5">5개월</option><option value="6">6개월</option>
+            <option value="7">7개월</option><option value="8">8개월</option><option value="9">9개월</option>
+            <option value="10">10개월</option><option value="11">11개월</option><option value="12">12개월</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">상태</label>
+          <select class="form-select" id="ep-active">
+            <option value="true">운영중</option>
+            <option value="false">중단</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-edit-program')">취소</button>
+      <button class="btn btn-primary" onclick="updateProgram()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: 일시정지 -->
+<div class="modal-overlay" id="modal-pause" style="display:none">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-header">
+      <div class="modal-title">세션 일시정지</div>
+      <button class="modal-close" onclick="closeModal('modal-pause')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row full">
+        <div class="form-group">
+          <label class="form-label required">일시정지 사유</label>
+          <select class="form-select" id="pause-reason">
+            <option value="">사유 선택</option>
+            <option>부상</option><option>질병</option><option>출산</option><option>해외출장</option><option>개인 사정</option><option>기타</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row full">
+        <div class="form-group">
+          <label class="form-label">상세 사유 (선택)</label>
+          <textarea class="form-textarea" id="pause-detail" placeholder="상세 내용을 입력해주세요" style="min-height:60px"></textarea>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">정지 시작일</label>
+          <input class="form-input" id="pause-start" type="date">
+        </div>
+        <div class="form-group">
+          <label class="form-label">재개 예정일 <small style="color:var(--text-muted);font-size:10px">(미정 가능)</small></label>
+          <input class="form-input" id="pause-end" type="date">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-pause')">취소</button>
+      <button class="btn btn-danger" onclick="confirmPause()">일시정지</button>
     </div>
   </div>
 </div>
@@ -799,11 +908,13 @@ async function loadMemberContracts() {
             <span style="font-size:12px;color:var(--text-muted)">잔여 ${c.remainingSessions}회</span>
           </div>
           <div class="contract-actions">
-            <button class="btn btn-secondary btn-sm" onclick="openSessionModal('${c.id}',${c.remainingSessions},${c.sessions-c.remainingSessions+1})">출석 기록</button>
+            <button class="btn btn-secondary btn-sm" ${c.status==='일시정지'?'disabled style="opacity:0.4;cursor:not-allowed"':''} onclick="${c.status!=='일시정지'?`openSessionModal('${c.id}',${c.remainingSessions},${c.sessions-c.remainingSessions+1})`:''}">출석 기록</button>
             ${c.driveLink ? `<a href="${c.driveLink}" target="_blank" class="btn btn-secondary btn-sm">계약서 보기 🔗</a>` : ''}
-            ${c.status==='진행중' ? `<button class="btn btn-secondary btn-sm" onclick="pauseContract('${c.id}')">일시정지</button>` : ''}
+            ${c.status==='진행중' ? `<button class="btn btn-secondary btn-sm" onclick="openPauseModal('${c.id}')">일시정지</button>` : ''}
+            ${c.status==='일시정지' ? `<button class="btn btn-primary btn-sm" onclick="resumeContract('${c.id}')">정지 해제</button>` : ''}
           </div>
-          ${c.note ? `<div style="margin-top:10px;font-size:12px;color:var(--text-muted)">📝 ${c.note}</div>` : ''}
+          ${c.status==='일시정지' ? `<div style="margin-top:10px;font-size:12px;color:var(--warning);background:#FEF9E7;padding:8px 12px;">⏸ 일시정지 중${c.resumeDate?' · 재개 예정: '+c.resumeDate:' · 재개일 미정'}${c.note?' · '+c.note:''}</div>` : ''}
+          ${c.status!=='일시정지' && c.note ? `<div style="margin-top:10px;font-size:12px;color:var(--text-muted)">📝 ${c.note}</div>` : ''}
         </div>`;
       }).join('');
 }
@@ -906,7 +1017,12 @@ async function loadPrograms() {
         <td>${p.totalPrice?.toLocaleString()||0}원</td>
         <td>${p.discount||0}%</td>
         <td><b>${p.finalPrice?.toLocaleString()||0}원</b></td>
+        <td>${p.duration?p.duration+'개월':'제한없음'}</td>
         <td><span class="badge ${p.isActive?'badge-active':'badge-muted'}">${p.isActive?'운영중':'중단'}</span></td>
+        <td style="white-space:nowrap">
+          <button class="btn btn-secondary btn-sm" onclick="openEditProgramModal(${JSON.stringify(p).replace(/"/g,'&quot;')})">수정</button>
+          <button class="btn btn-sm" style="background:#FDEDEC;color:var(--danger);border:1px solid #F5B7B1;margin-left:4px" onclick="deleteProgram('${p.id}','${p.name}')">삭제</button>
+        </td>
       </tr>
     `).join('');
   } catch(e) {
@@ -931,6 +1047,7 @@ async function saveProgram() {
     sessions: parseInt(document.getElementById('np-sessions').value)||0,
     pricePerSession: parseInt(document.getElementById('np-price').value)||0,
     discount: parseInt(document.getElementById('np-discount').value)||0,
+    duration: parseInt(document.getElementById('np-duration').value)||null,
     isActive: true,
   };
   if (!body.name) { showToast('프로그램명을 입력해주세요', 'error'); return; }
@@ -1052,18 +1169,113 @@ async function saveContract() {
   } catch(e) { showToast('저장 실패: ' + e.message, 'error'); }
 }
 
-async function pauseContract(contractId) {
-  const note = prompt('일시정지 사유 및 재개 예정일을 입력해주세요:');
-  if (note === null) return;
+function openPauseModal(contractId) {
+  currentContract = { ...currentContract, pauseContractId: contractId };
+  document.getElementById('pause-start').value = new Date().toISOString().split('T')[0];
+  document.getElementById('pause-end').value = '';
+  document.getElementById('pause-reason').value = '';
+  document.getElementById('pause-detail').value = '';
+  document.getElementById('modal-pause').style.display = 'flex';
+}
+
+async function confirmPause() {
+  const reason = document.getElementById('pause-reason').value;
+  if (!reason) { showToast('일시정지 사유를 선택해주세요', 'error'); return; }
+  const detail = document.getElementById('pause-detail').value;
+  const pauseDate = document.getElementById('pause-start').value;
+  const resumeDate = document.getElementById('pause-end').value;
+  const note = detail ? `${reason} - ${detail}` : reason;
+
+  try {
+    await fetch(`${API}/api/contracts?id=${currentContract.pauseContractId}`, {
+      method:'PUT',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ status:'일시정지', pauseDate, resumeDate: resumeDate||null, note })
+    });
+    closeModal('modal-pause');
+    showToast('세션이 일시정지되었습니다', 'success');
+    await loadMemberContracts();
+  } catch(e) { showToast('실패: ' + e.message, 'error'); }
+}
+
+async function resumeContract(contractId) {
+  if (!confirm('일시정지를 해제하고 세션을 재개하시겠습니까?')) return;
   try {
     await fetch(`${API}/api/contracts?id=${contractId}`, {
       method:'PUT',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ status:'일시정지', note })
+      body: JSON.stringify({ status:'진행중', pauseDate: null, resumeDate: null })
     });
-    showToast('계약이 일시정지되었습니다', 'success');
+    showToast('세션이 재개되었습니다', 'success');
     await loadMemberContracts();
-  } catch(e) { showToast('실패', 'error'); }
+  } catch(e) { showToast('실패: ' + e.message, 'error'); }
+}
+
+// ── PROGRAM EDIT/DELETE ──
+function openEditProgramModal(p) {
+  document.getElementById('ep-id').value = p.id;
+  document.getElementById('ep-name').value = p.name;
+  document.getElementById('ep-type').value = p.type || '1:1';
+  document.getElementById('ep-instructor').value = p.instructor || '';
+  document.getElementById('ep-sessions').value = p.sessions || '';
+  document.getElementById('ep-price').value = p.pricePerSession || '';
+  document.getElementById('ep-discount').value = p.discount || 0;
+  document.getElementById('ep-duration').value = p.duration || '';
+  document.getElementById('ep-active').value = p.isActive ? 'true' : 'false';
+  calcEditProgramPrice();
+  document.getElementById('modal-edit-program').style.display = 'flex';
+}
+
+function calcEditProgramPrice() {
+  const sessions = parseInt(document.getElementById('ep-sessions').value)||0;
+  const price = parseInt(document.getElementById('ep-price').value)||0;
+  const discount = parseInt(document.getElementById('ep-discount').value)||0;
+  const final = sessions * price * (1 - discount/100);
+  document.getElementById('ep-final').value = Math.round(final).toLocaleString() + '원';
+}
+
+async function updateProgram() {
+  const id = document.getElementById('ep-id').value;
+  if (!id) return;
+  const body = {
+    name: document.getElementById('ep-name').value,
+    type: document.getElementById('ep-type').value,
+    instructor: document.getElementById('ep-instructor').value,
+    sessions: parseInt(document.getElementById('ep-sessions').value)||0,
+    pricePerSession: parseInt(document.getElementById('ep-price').value)||0,
+    discount: parseInt(document.getElementById('ep-discount').value)||0,
+    duration: parseInt(document.getElementById('ep-duration').value)||null,
+    isActive: document.getElementById('ep-active').value === 'true',
+  };
+  try {
+    const res = await fetch(`${API}/api/programs?id=${id}`, {
+      method: 'PUT',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (res.ok) {
+      closeModal('modal-edit-program');
+      showToast('프로그램이 수정되었습니다', 'success');
+      loadPrograms();
+    } else {
+      showToast('수정 실패: ' + (data.error||'오류'), 'error');
+    }
+  } catch(e) { showToast('수정 실패: ' + e.message, 'error'); }
+}
+
+async function deleteProgram(id, name) {
+  if (!confirm(`"${name}" 프로그램을 삭제하시겠습니까?\n삭제 후 복구할 수 없습니다.`)) return;
+  try {
+    const res = await fetch(`${API}/api/programs?id=${id}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (res.ok) {
+      showToast('프로그램이 삭제되었습니다', 'success');
+      loadPrograms();
+    } else {
+      showToast('삭제 실패: ' + (data.error||'오류'), 'error');
+    }
+  } catch(e) { showToast('삭제 실패: ' + e.message, 'error'); }
 }
 
 // ── SIGNATURE PAD ──
@@ -1132,6 +1344,18 @@ function clearSig() {
 function openNewMemberModal() { document.getElementById('modal-new-member').style.display='flex'; }
 function openNewProgramModal() { document.getElementById('modal-new-program').style.display='flex'; }
 function closeModal(id) { document.getElementById(id).style.display='none'; }
+
+// ── PHONE FORMAT ──
+function formatPhone(input) {
+  let v = input.value.replace(/[^0-9]/g, '');
+  if (v.length <= 3) {
+    input.value = v;
+  } else if (v.length <= 7) {
+    input.value = v.slice(0,3) + '-' + v.slice(3);
+  } else {
+    input.value = v.slice(0,3) + '-' + v.slice(3,7) + '-' + v.slice(7,11);
+  }
+}
 
 // ── TOAST ──
 function showToast(msg, type='') {
