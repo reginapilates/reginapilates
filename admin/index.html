@@ -1043,7 +1043,7 @@ function calcProgramPrice() {
   const discount = parseInt(document.getElementById('np-discount').value)||0;
   const total = sessions * price;
   const final = total * (1 - discount/100);
-  document.getElementById('np-final').value = Math.round(final).toLocaleString() + '원';
+  document.getElementById('np-final').value = (Math.floor(final / 1000) * 1000).toLocaleString() + '원';
 }
 
 async function saveProgram() {
@@ -1136,7 +1136,7 @@ function onProgramSelect() {
   const discount = parseInt(opt.dataset.discount)||0;
   const final = parseInt(opt.dataset.final)||0;
 
-  document.getElementById('nc-amount').value = final;
+  document.getElementById('nc-amount').value = Math.floor(final / 1000) * 1000;
   document.getElementById('nc-program-info').style.display = 'block';
   document.getElementById('nc-program-detail').innerHTML =
     `회당 ${pps.toLocaleString()}원 × ${sessions}회 = ${total.toLocaleString()}원
@@ -1193,7 +1193,7 @@ async function saveContract() {
   }
 
   const programId = sel.value;
-  const programName = sel.options[sel.selectedIndex]?.text || '';
+  const programName = selOpt.dataset.name || sel.options[sel.selectedIndex]?.text || '';
   const paymentMethod = document.getElementById('nc-payment').value;
   const startDate = document.getElementById('nc-start').value;
   const endDate = document.getElementById('nc-end').value;
@@ -1271,7 +1271,7 @@ function viewContractById(idx) {
 async function viewContractData(c) {
   const parts = c.title ? c.title.split(' - ') : [];
   const memberName = parts[0] || '—';
-  const programName = parts.slice(1).join(' - ') || c.title || '—';
+  let programName = parts.slice(1).join(' - ') || c.title || '—';
 
   // 1. 서명 데이터
   let sigData = c.signatureData || null;
@@ -1306,6 +1306,7 @@ async function viewContractData(c) {
       const pData = await pRes.json();
       const program = (pData.all || []).find(p => p.id === c.programId);
       if (program) {
+        programName = program.name || programName;
         pricePerSession = program.pricePerSession || 0;
         totalPrice = program.totalPrice || 0;
         discountRatio = program.discount || 0;
@@ -1340,6 +1341,7 @@ function showContractPrint(data) {
   if (existing) existing.remove();
 
   const fmt = n => n ? parseInt(n).toLocaleString() : '0';
+  const fmtFloor = n => n ? (Math.floor(parseInt(n) / 1000) * 1000).toLocaleString() : '0';
   const chk = b => b ? '■' : '□';
 
   const html = `<!DOCTYPE html>
@@ -1415,7 +1417,7 @@ function showContractPrint(data) {
     <td class="label">할인율</td>
     <td class="val">${data.discountRatio||0}%</td>
     <td class="label">최종금액</td>
-    <td class="val"><b>${fmt(data.finalPrice||data.totalAmount)}원</b></td>
+    <td class="val"><b>${fmtFloor(data.finalPrice||data.totalAmount)}원</b></td>
     <td class="label">결제방법</td>
     <td class="val">${data.paymentMethod==='카드'?'■':'□'}카드 ${data.paymentMethod==='현금'?'■':'□'}현금 ${data.paymentMethod==='계좌이체'?'■':'□'}이체</td>
   </tr>
@@ -1529,7 +1531,7 @@ function previewContractPDF() {
     birthDate: currentMember?.birthDate || '',
     address: currentMember?.address || '',
     visitSource: currentMember?.visitSource || '',
-    programName: sel?.options[sel.selectedIndex]?.text || '(미선택)',
+    programName: sel?.options[sel.selectedIndex]?.dataset?.name || sel?.options[sel.selectedIndex]?.text || '(미선택)',
     sessions: parseInt(sel?.options[sel.selectedIndex]?.dataset.sessions)||0,
     totalAmount: parseInt(document.getElementById('nc-amount').value)||0,
     paymentMethod: document.getElementById('nc-payment').value,
@@ -1607,7 +1609,7 @@ function calcEditProgramPrice() {
   const price = parseInt(document.getElementById('ep-price').value)||0;
   const discount = parseInt(document.getElementById('ep-discount').value)||0;
   const final = sessions * price * (1 - discount/100);
-  document.getElementById('ep-final').value = Math.round(final).toLocaleString() + '원';
+  document.getElementById('ep-final').value = (Math.floor(final / 1000) * 1000).toLocaleString() + '원';
 }
 
 async function updateProgram() {
