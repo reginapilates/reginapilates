@@ -166,52 +166,52 @@ async function uploadToDrive(env, pdfBase64, memberName, signedAt) {
 
   const date = signedAt || new Date().toISOString().split('T')[0];
   const fileName = `Regina_${memberName}_${date}.pdf`;
+  const pdfBytes = base64ToUint8Array(pdfBase64);
 
-  // Step 1: 메타데이터만 먼저 파일 생성
-  const createRes = await fetch(
-    'https://www.googleapis.com/drive/v3/files?fields=id',
+  // multipart 업로드 (parents 없이 SA 본인 드라이브에 저장)
+  const boundary = 'foo_bar_baz';
+  const metaPart = JSON.stringify({ name: fileName, mimeType: 'application/pdf' });
+
+  // ArrayBuffer로 multipart body 직접 조립
+  const enc = new TextEncoder();
+  const partHeader1 = enc.encode(
+    `--${boundary}
+Content-Type: application/json; charset=UTF-8
+
+${metaPart}
+--${boundary}
+Content-Type: application/pdf
+
+`
+  );
+  const partFooter = enc.encode(`
+--${boundary}--`);
+
+  const bodyBuffer = new Uint8Array(partHeader1.length + pdfBytes.length + partFooter.length);
+  bodyBuffer.set(partHeader1, 0);
+  bodyBuffer.set(pdfBytes, partHeader1.length);
+  bodyBuffer.set(partFooter, partHeader1.length + pdfBytes.length);
+
+  const uploadRes = await fetch(
+    'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',
     {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
+        'Content-Type': `multipart/related; boundary=${boundary}`,
       },
-      body: JSON.stringify({
-        name: fileName,
-        parents: [env.GOOGLE_DRIVE_FOLDER_ID],
-        mimeType: 'application/pdf',
-      }),
+      body: bodyBuffer,
     }
   );
 
-  const createData = await createRes.json();
-  if (!createRes.ok || !createData.id) {
-    throw new Error(`파일 생성 실패: ${JSON.stringify(createData)}`);
+  const uploadData = await uploadRes.json();
+  if (!uploadRes.ok || !uploadData.id) {
+    throw new Error(`업로드 실패: ${JSON.stringify(uploadData)}`);
   }
 
-  const fileId = createData.id;
+  const fileId = uploadData.id;
 
-  // Step 2: 파일 내용 업로드
-  const pdfBytes = base64ToUint8Array(pdfBase64);
-  const uploadRes = await fetch(
-    `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media&fields=id`,
-    {
-      method: 'PATCH',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/pdf',
-        'Content-Length': pdfBytes.length.toString(),
-      },
-      body: pdfBytes,
-    }
-  );
-
-  if (!uploadRes.ok) {
-    const uploadData = await uploadRes.json();
-    throw new Error(`파일 업로드 실패: ${JSON.stringify(uploadData)}`);
-  }
-
-  // Step 3: 공개 읽기 권한 부여
+  // 공개 읽기 권한 부여
   await fetch(
     `https://www.googleapis.com/drive/v3/files/${fileId}/permissions`,
     {
@@ -224,6 +224,21 @@ async function uploadToDrive(env, pdfBase64, memberName, signedAt) {
     }
   );
 
+  // SA 드라이브에서 원장 드라이브 폴더로 이동
+  // (폴더 ID를 addParents로 추가하고 기존 parent 제거)
+  const moveRes = await fetch(
+    `https://www.googleapis.com/drive/v3/files/${fileId}?addParents=${env.GOOGLE_DRIVE_FOLDER_ID}&removeParents=root&fields=id`,
+    {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({}),
+    }
+  );
+
+  // 이동 실패해도 파일은 존재하므로 링크 반환
   return `https://drive.google.com/file/d/${fileId}/view`;
 }
 
