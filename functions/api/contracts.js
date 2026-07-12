@@ -1,5 +1,4 @@
 // functions/api/contracts.js
-// 계약 생성 + PDF 구글드라이브 저장 + Notion 연동
 
 export async function onRequest(context) {
   const { request, env } = context;
@@ -15,17 +14,14 @@ export async function onRequest(context) {
   if (method === 'OPTIONS') return new Response(null, { headers });
 
   try {
-    // GET — 회원별 계약 목록 조회
+    // GET — 회원별 또는 전체 계약 목록
     if (method === 'GET') {
       const url = new URL(request.url);
       const memberId = url.searchParams.get('memberId');
 
-      const filter = memberId ? {
-        filter: {
-          property: 'Member',
-          relation: { contains: memberId }
-        }
-      } : {};
+      const filterBody = memberId
+        ? { filter: { property: 'Member', relation: { contains: memberId } } }
+        : {};
 
       const response = await fetch(
         `https://api.notion.com/v1/databases/${env.NOTION_CONTRACTS_DB_ID}/query`,
@@ -37,14 +33,18 @@ export async function onRequest(context) {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            ...filter,
+            ...filterBody,
             sorts: [{ property: 'SignedAt', direction: 'descending' }],
           }),
         }
       );
 
       const data = await response.json();
-      const contracts = data.results.map(page => ({
+      if (!response.ok) {
+        return new Response(JSON.stringify({ error: data.message }), { status: 500, headers });
+      }
+
+      const contracts = (data.results || []).map(page => ({
         id: page.id,
         title: page.properties.Name?.title?.[0]?.plain_text || '',
         memberId: page.properties.Member?.relation?.[0]?.id || '',
@@ -66,7 +66,7 @@ export async function onRequest(context) {
       return new Response(JSON.stringify({ contracts }), { headers });
     }
 
-    // POST — 새 계약 생성 + PDF 드라이브 저장
+    // POST — 새 계약 생성
     if (method === 'POST') {
       const body = await request.json();
       const { memberName, programName, pdfBase64, ...contractData } = body;
@@ -74,12 +74,17 @@ export async function onRequest(context) {
       // 1. 구글 드라이브에 PDF 저장
       let driveLink = '';
       if (pdfBase64) {
-        driveLink = await uploadToDrive(env, pdfBase64, memberName, contractData.signedAt);
+        try {
+          driveLink = await uploadToDrive(env, pdfBase64, memberName, contractData.signedAt);
+          console.log('Drive link:', driveLink);
+        } catch(e) {
+          console.error('Drive upload failed:', e.message);
+        }
       }
 
       // 2. Notion에 계약 저장
       const title = `${memberName} - ${programName}`;
-      const response = await fetch('https://api.notion.com/v1/pages', {
+      const notionRes = await fetch('https://api.notion.com/v1/pages', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${env.NOTION_API_KEY}`,
@@ -90,24 +95,14 @@ export async function onRequest(context) {
           parent: { database_id: env.NOTION_CONTRACTS_DB_ID },
           properties: {
             Name: { title: [{ text: { content: title } }] },
-            Member: contractData.memberId ? {
-              relation: [{ id: contractData.memberId }]
-            } : undefined,
-            Program: contractData.programId ? {
-              relation: [{ id: contractData.programId }]
-            } : undefined,
+            Member: contractData.memberId ? { relation: [{ id: contractData.memberId }] } : undefined,
+            Program: contractData.programId ? { relation: [{ id: contractData.programId }] } : undefined,
             Sessions: { number: contractData.sessions || 0 },
             RemainingSessions: { number: contractData.sessions || 0 },
             TotalAmount: { number: contractData.totalAmount || 0 },
-            PaymentMethod: contractData.paymentMethod ? {
-              select: { name: contractData.paymentMethod }
-            } : undefined,
-            StartDate: contractData.startDate ? {
-              date: { start: contractData.startDate }
-            } : undefined,
-            EndDate: contractData.endDate ? {
-              date: { start: contractData.endDate }
-            } : undefined,
+            PaymentMethod: contractData.paymentMethod ? { select: { name: contractData.paymentMethod } } : undefined,
+            StartDate: contractData.startDate ? { date: { start: contractData.startDate } } : undefined,
+            EndDate: contractData.endDate ? { date: { start: contractData.endDate } } : undefined,
             SignedAt: { date: { start: new Date().toISOString().split('T')[0] } },
             DriveLink: driveLink ? { url: driveLink } : undefined,
             Status: { select: { name: '진행중' } },
@@ -116,15 +111,15 @@ export async function onRequest(context) {
         }),
       });
 
-      const data = await response.json();
-      return new Response(JSON.stringify({
-        id: data.id,
-        driveLink,
-        success: true
-      }), { headers });
+      const notionData = await notionRes.json();
+      if (!notionRes.ok) {
+        return new Response(JSON.stringify({ error: notionData.message, details: notionData }), { status: 500, headers });
+      }
+
+      return new Response(JSON.stringify({ id: notionData.id, driveLink, success: true }), { headers });
     }
 
-    // PUT — 계약 상태 업데이트 (일시정지/재개/완료)
+    // PUT — 계약 상태 업데이트
     if (method === 'PUT') {
       const url = new URL(request.url);
       const contractId = url.searchParams.get('id');
@@ -134,7 +129,9 @@ export async function onRequest(context) {
       if (body.status) properties.Status = { select: { name: body.status } };
       if (body.remainingSessions !== undefined) properties.RemainingSessions = { number: body.remainingSessions };
       if (body.pauseDate) properties.PauseDate = { date: { start: body.pauseDate } };
+      else if (body.pauseDate === null) properties.PauseDate = { date: null };
       if (body.resumeDate) properties.ResumeDate = { date: { start: body.resumeDate } };
+      else if (body.resumeDate === null) properties.ResumeDate = { date: null };
       if (body.note !== undefined) properties.Note = { rich_text: [{ text: { content: body.note } }] };
 
       const response = await fetch(`https://api.notion.com/v1/pages/${contractId}`, {
@@ -147,106 +144,117 @@ export async function onRequest(context) {
         body: JSON.stringify({ properties }),
       });
 
-      const data = await response.json();
+      if (!response.ok) {
+        const data = await response.json();
+        return new Response(JSON.stringify({ error: data.message }), { status: 500, headers });
+      }
+
       return new Response(JSON.stringify({ success: true }), { headers });
     }
 
     return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers });
 
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), { status: 500, headers });
+    return new Response(JSON.stringify({ error: error.message, stack: error.stack }), { status: 500, headers });
   }
 }
 
-// 구글 드라이브 PDF 업로드
+// ── 구글 드라이브 업로드 ──
 async function uploadToDrive(env, pdfBase64, memberName, signedAt) {
-  try {
-    const serviceAccount = JSON.parse(env.GOOGLE_SERVICE_ACCOUNT_KEY);
-    const token = await getAccessToken(serviceAccount);
+  const serviceAccount = JSON.parse(env.GOOGLE_SERVICE_ACCOUNT_KEY);
+  const token = await getAccessToken(serviceAccount);
 
-    const date = signedAt || new Date().toISOString().split('T')[0];
-    const fileName = `Regina_${memberName}_${date}.pdf`;
-    const pdfBuffer = base64ToArrayBuffer(pdfBase64);
+  const date = signedAt || new Date().toISOString().split('T')[0];
+  const fileName = `Regina_${memberName}_${date}.pdf`;
 
-    // 파일 업로드
-    const metadata = JSON.stringify({
-      name: fileName,
-      parents: [env.GOOGLE_DRIVE_FOLDER_ID],
-    });
+  // Step 1: 메타데이터만 먼저 파일 생성
+  const createRes = await fetch(
+    'https://www.googleapis.com/drive/v3/files?fields=id',
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        name: fileName,
+        parents: [env.GOOGLE_DRIVE_FOLDER_ID],
+        mimeType: 'application/pdf',
+      }),
+    }
+  );
 
-    const boundary = '-------boundary';
-    const body = [
-      `--${boundary}`,
-      'Content-Type: application/json; charset=UTF-8',
-      '',
-      metadata,
-      `--${boundary}`,
-      'Content-Type: application/pdf',
-      'Content-Transfer-Encoding: base64',
-      '',
-      pdfBase64,
-      `--${boundary}--`,
-    ].join('\r\n');
-
-    const uploadRes = await fetch(
-      'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': `multipart/related; boundary=${boundary}`,
-        },
-        body,
-      }
-    );
-
-    const uploadData = await uploadRes.json();
-
-    // 공개 링크 생성
-    await fetch(
-      `https://www.googleapis.com/drive/v3/files/${uploadData.id}/permissions`,
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ role: 'reader', type: 'anyone' }),
-      }
-    );
-
-    return `https://drive.google.com/file/d/${uploadData.id}/view`;
-  } catch (e) {
-    console.error('Drive upload error:', e);
-    return '';
+  const createData = await createRes.json();
+  if (!createRes.ok || !createData.id) {
+    throw new Error(`파일 생성 실패: ${JSON.stringify(createData)}`);
   }
+
+  const fileId = createData.id;
+
+  // Step 2: 파일 내용 업로드
+  const pdfBytes = base64ToUint8Array(pdfBase64);
+  const uploadRes = await fetch(
+    `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media&fields=id`,
+    {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/pdf',
+        'Content-Length': pdfBytes.length.toString(),
+      },
+      body: pdfBytes,
+    }
+  );
+
+  if (!uploadRes.ok) {
+    const uploadData = await uploadRes.json();
+    throw new Error(`파일 업로드 실패: ${JSON.stringify(uploadData)}`);
+  }
+
+  // Step 3: 공개 읽기 권한 부여
+  await fetch(
+    `https://www.googleapis.com/drive/v3/files/${fileId}/permissions`,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ role: 'reader', type: 'anyone' }),
+    }
+  );
+
+  return `https://drive.google.com/file/d/${fileId}/view`;
 }
 
-// Google Service Account JWT → Access Token
+// ── Google Service Account → Access Token ──
 async function getAccessToken(serviceAccount) {
   const now = Math.floor(Date.now() / 1000);
-  const payload = {
+
+  const header = btoa(JSON.stringify({ alg: 'RS256', typ: 'JWT' }))
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+
+  const payload = btoa(JSON.stringify({
     iss: serviceAccount.client_email,
-    scope: 'https://www.googleapis.com/auth/drive.file',
+    scope: 'https://www.googleapis.com/auth/drive',
     aud: 'https://oauth2.googleapis.com/token',
     exp: now + 3600,
     iat: now,
-  };
+  })).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
 
-  const header = { alg: 'RS256', typ: 'JWT' };
-  const encodedHeader = btoa(JSON.stringify(header));
-  const encodedPayload = btoa(JSON.stringify(payload));
-  const signingInput = `${encodedHeader}.${encodedPayload}`;
-
+  const signingInput = `${header}.${payload}`;
   const privateKey = await importPrivateKey(serviceAccount.private_key);
+
   const signature = await crypto.subtle.sign(
     { name: 'RSASSA-PKCS1-v1_5' },
     privateKey,
     new TextEncoder().encode(signingInput)
   );
 
-  const encodedSignature = btoa(String.fromCharCode(...new Uint8Array(signature)));
-  const jwt = `${signingInput}.${encodedSignature}`;
+  const sigB64 = btoa(String.fromCharCode(...new Uint8Array(signature)))
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+
+  const jwt = `${signingInput}.${sigB64}`;
 
   const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
@@ -255,15 +263,20 @@ async function getAccessToken(serviceAccount) {
   });
 
   const tokenData = await tokenRes.json();
+  if (!tokenData.access_token) {
+    throw new Error(`토큰 발급 실패: ${JSON.stringify(tokenData)}`);
+  }
   return tokenData.access_token;
 }
 
 async function importPrivateKey(pem) {
   const pemContents = pem
-    .replace(/-----BEGIN PRIVATE KEY-----/, '')
-    .replace(/-----END PRIVATE KEY-----/, '')
-    .replace(/\n/g, '');
-  const binaryDer = base64ToArrayBuffer(pemContents);
+    .replace('-----BEGIN PRIVATE KEY-----', '')
+    .replace('-----END PRIVATE KEY-----', '')
+    .replace(/\s/g, '');
+
+  const binaryDer = base64ToUint8Array(pemContents);
+
   return crypto.subtle.importKey(
     'pkcs8',
     binaryDer,
@@ -273,10 +286,9 @@ async function importPrivateKey(pem) {
   );
 }
 
-function base64ToArrayBuffer(base64) {
+function base64ToUint8Array(base64) {
   const binary = atob(base64);
-  const buffer = new ArrayBuffer(binary.length);
-  const view = new Uint8Array(buffer);
-  for (let i = 0; i < binary.length; i++) view[i] = binary.charCodeAt(i);
-  return buffer;
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes;
 }
