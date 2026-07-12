@@ -1164,10 +1164,19 @@ async function saveContract() {
 
   // 프로그램 가격 정보
   const selOpt = sel.options[sel.selectedIndex];
-  const pricePerSession = parseInt(selOpt.dataset.pps)||0;
-  const totalPrice = parseInt(selOpt.dataset.total)||0;
+  let pricePerSession = parseInt(selOpt.dataset.pps)||0;
+  let totalPrice = parseInt(selOpt.dataset.total)||0;
   const discountRatio = parseInt(selOpt.dataset.discount)||0;
-  const finalPrice = parseInt(selOpt.dataset.final)||0;
+  let finalPrice = parseInt(selOpt.dataset.final)||0;
+  const sessions = parseInt(selOpt.dataset.sessions)||0;
+  const totalAmount = parseInt(document.getElementById('nc-amount').value)||0;
+
+  // Fallback 계산 (수식 필드가 0인 경우)
+  if (finalPrice === 0) finalPrice = totalAmount;
+  if (totalPrice === 0 && pricePerSession > 0) totalPrice = pricePerSession * sessions;
+  if (totalPrice === 0 && finalPrice > 0 && discountRatio > 0) totalPrice = Math.round(finalPrice / (1 - discountRatio/100));
+  if (totalPrice === 0) totalPrice = finalPrice;
+  if (pricePerSession === 0 && sessions > 0) pricePerSession = Math.round(totalPrice / sessions);
 
   const currentSigCanvas = document.getElementById('sigPad');
   let sigData = null;
@@ -1185,7 +1194,6 @@ async function saveContract() {
 
   const programId = sel.value;
   const programName = sel.options[sel.selectedIndex]?.text || '';
-  const sessions = parseInt(sel.options[sel.selectedIndex]?.dataset.sessions)||0;
   const totalAmount = parseInt(document.getElementById('nc-amount').value)||0;
   const paymentMethod = document.getElementById('nc-payment').value;
   const startDate = document.getElementById('nc-start').value;
@@ -1373,9 +1381,7 @@ function showContractPrint(data) {
   </tr>
   <tr>
     <td class="label">유효기간</td>
-    <td colspan="3">${data.startDate||''} ~ ${data.endDate||''}</td>
-    <td class="label">가입경로</td>
-    <td>${data.visitSource||''}</td>
+    <td colspan="5">${data.startDate||''} ~ ${data.endDate||''}</td>
   </tr>
   ${data.note ? `<tr><td class="label">비&nbsp;&nbsp;&nbsp;고</td><td colspan="5">${data.note}</td></tr>` : ''}
 </table>
