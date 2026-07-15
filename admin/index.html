@@ -734,7 +734,12 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
             <option>1:1</option><option>1:2</option><option>1:3</option>
           </select>
         </div>
-        <div class="form-group"><label class="form-label">강사</label><input class="form-input" id="np-instructor" placeholder="Regina"></div>
+        <div class="form-group">
+          <label class="form-label">강사</label>
+          <select class="form-select" id="np-instructor">
+            <option value="">강사 선택</option>
+          </select>
+        </div>
       </div>
       <div class="form-row">
         <div class="form-group"><label class="form-label">횟수</label><input class="form-input" id="np-sessions" type="number" placeholder="25"></div>
@@ -783,7 +788,12 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
             <option>1:1</option><option>1:2</option><option>1:3</option>
           </select>
         </div>
-        <div class="form-group"><label class="form-label">강사</label><input class="form-input" id="ep-instructor" placeholder="Regina"></div>
+        <div class="form-group">
+          <label class="form-label">강사</label>
+          <select class="form-select" id="ep-instructor">
+            <option value="">강사 선택</option>
+          </select>
+        </div>
       </div>
       <div class="form-row">
         <div class="form-group"><label class="form-label">횟수</label><input class="form-input" id="ep-sessions" type="number" placeholder="25"></div>
@@ -2103,11 +2113,11 @@ async function resumeContract(contractId) {
 }
 
 // ── PROGRAM EDIT/DELETE ──
-function openEditProgramModal(p) {
+async function openEditProgramModal(p) {
   document.getElementById('ep-id').value = p.id;
   document.getElementById('ep-name').value = p.name;
   document.getElementById('ep-type').value = p.type || '1:1';
-  document.getElementById('ep-instructor').value = p.instructor || '';
+  await loadInstructorOptions('ep-instructor', p.instructor || '');
   document.getElementById('ep-sessions').value = p.sessions || '';
   document.getElementById('ep-price').value = p.pricePerSession || '';
   document.getElementById('ep-discount').value = p.discount || 0;
@@ -2246,7 +2256,28 @@ function clearSig() {
 
 // ── MODALS ──
 function openNewMemberModal() { document.getElementById('modal-new-member').style.display='flex'; }
-function openNewProgramModal() { document.getElementById('modal-new-program').style.display='flex'; }
+async function loadInstructorOptions(selectId, selectedValue) {
+  const sel = document.getElementById(selectId);
+  if (!sel) return;
+  try {
+    if (!allInstructors.length) {
+      const res = await fetch(`${API}/api/instructors`);
+      const data = await res.json();
+      allInstructors = data.instructors || [];
+    }
+    sel.innerHTML = '<option value="">강사 선택</option>' +
+      allInstructors.filter(i => i.isActive).map(i =>
+        `<option value="${i.name}" ${i.name === selectedValue ? 'selected' : ''}>${i.name} (Lv.${i.level})</option>`
+      ).join('');
+  } catch(e) {
+    sel.innerHTML = '<option value="">불러오기 실패</option>';
+  }
+}
+
+async function openNewProgramModal() {
+  await loadInstructorOptions('np-instructor', '');
+  document.getElementById('modal-new-program').style.display='flex';
+}
 function closeModal(id) { document.getElementById(id).style.display='none'; }
 
 // ── PHONE FORMAT ──
