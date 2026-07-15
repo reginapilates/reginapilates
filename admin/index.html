@@ -1014,33 +1014,23 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
       <button class="modal-close" onclick="closeModal('modal-new-schedule')">×</button>
     </div>
     <div class="modal-body">
-      <div class="form-row">
+      <input type="hidden" id="ns-contract">
+      <input type="hidden" id="ns-instructor">
+      <div class="form-row full">
         <div class="form-group">
           <label class="form-label required">회원</label>
           <select class="form-select" id="ns-member" onchange="onScheduleMemberChange()">
             <option value="">회원 선택</option>
           </select>
         </div>
-        <div class="form-group">
-          <label class="form-label required">계약</label>
-          <select class="form-select" id="ns-contract">
-            <option value="">계약 선택</option>
-          </select>
-        </div>
+      </div>
+      <div id="ns-auto-info" style="display:none;background:var(--surface);padding:10px 14px;margin-bottom:12px;font-size:13px;line-height:1.8;">
       </div>
       <div class="form-row">
-        <div class="form-group">
-          <label class="form-label required">강사</label>
-          <select class="form-select" id="ns-instructor">
-            <option value="">강사 선택</option>
-          </select>
-        </div>
         <div class="form-group">
           <label class="form-label required">날짜</label>
           <input class="form-input" id="ns-date" type="date">
         </div>
-      </div>
-      <div class="form-row">
         <div class="form-group">
           <label class="form-label required">시간</label>
           <select class="form-select" id="ns-time">
@@ -1048,12 +1038,6 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
             <option>09:00</option><option>10:00</option><option>11:00</option><option>12:00</option>
             <option>13:00</option><option>14:00</option><option>15:00</option><option>16:00</option>
             <option>17:00</option><option>18:00</option><option>19:00</option><option>20:00</option><option>21:00</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">유형</label>
-          <select class="form-select" id="ns-type">
-            <option value="회원예약">회원예약</option>
           </select>
         </div>
       </div>
@@ -2704,22 +2688,30 @@ async function addBlockedDate() {
 
 // ── SCHEDULE ──
 async function openNewScheduleModal() {
-  // 회원/강사 목록 로드
-  const [mRes, iRes] = await Promise.all([
+  // 진행중 계약이 있는 회원만 로드
+  const [mRes, cRes] = await Promise.all([
     fetch(`${API}/api/members`),
-    fetch(`${API}/api/instructors`)
+    fetch(`${API}/api/contracts`)
   ]);
   const mData = await mRes.json();
-  const iData = await iRes.json();
+  const cData = await cRes.json();
+
+  // 진행중 계약 회원 ID 목록
+  const activeContracts = (cData.contracts||[]).filter(c => c.status === '진행중');
+  const activeMemberIds = new Set(activeContracts.map(c => c.memberId));
+
+  // 계약 데이터 캐시 (회원ID → 계약)
+  window._scheduleContracts = activeContracts;
 
   const memberSel = document.getElementById('ns-member');
   memberSel.innerHTML = '<option value="">회원 선택</option>' +
-    (mData.members||[]).map(m => `<option value="${m.id}">${m.name}</option>`).join('');
+    (mData.members||[])
+      .filter(m => activeMemberIds.has(m.id))
+      .map(m => `<option value="${m.id}">${m.name}</option>`).join('');
 
-  const instrSel = document.getElementById('ns-instructor');
-  instrSel.innerHTML = '<option value="">강사 선택</option>' +
-    (iData.instructors||[]).filter(i=>i.isActive).map(i => `<option value="${i.id}">${i.name} (Lv.${i.level})</option>`).join('');
-
+  document.getElementById('ns-contract').value = '';
+  document.getElementById('ns-instructor').value = '';
+  document.getElementById('ns-auto-info').style.display = 'none';
   document.getElementById('ns-date').value = new Date().toISOString().split('T')[0];
   document.getElementById('ns-recurring').checked = false;
   document.getElementById('ns-recurring-detail').style.display = 'none';
@@ -2747,13 +2739,54 @@ function openNewScheduleWithDate(date, time) {
 
 async function onScheduleMemberChange() {
   const memberId = document.getElementById('ns-member').value;
-  if (!memberId) return;
-  const res = await fetch(`${API}/api/contracts?memberId=${memberId}`);
-  const data = await res.json();
-  const contracts = (data.contracts||[]).filter(c => c.status === '진행중');
-  const sel = document.getElementById('ns-contract');
-  sel.innerHTML = '<option value="">계약 선택</option>' +
-    contracts.map(c => `<option value="${c.id}" data-end="${c.endDate}">${c.title} (~${c.endDate})</option>`).join('');
+  if (!memberId) {
+    document.getElementById('ns-auto-info').style.display = 'none';
+    return;
+  }
+
+  // 캐시에서 해당 회원의 진행중 계약 찾기
+  const contracts = (window._scheduleContracts||[]).filter(c => c.memberId === memberId);
+  if (!contracts.length) {
+    document.getElementById('ns-auto-info').innerHTML = '⚠️ 진행중인 계약이 없습니다.';
+    document.getElementById('ns-auto-info').style.display = 'block';
+    return;
+  }
+
+  const contract = contracts[0]; // 첫 번째 진행중 계약
+  document.getElementById('ns-contract').value = contract.id;
+
+  // 계약의 프로그램에서 강사 조회
+  let instructorName = '—';
+  let instructorId = '';
+  if (contract.programId) {
+    try {
+      const pRes = await fetch(`${API}/api/programs`);
+      const pData = await pRes.json();
+      const program = (pData.all||[]).find(p => p.id === contract.programId);
+      if (program?.instructorId) {
+        instructorId = program.instructorId;
+        instructorName = program.instructor || program.instructorId;
+      }
+    } catch(e) {}
+  }
+  document.getElementById('ns-instructor').value = instructorId;
+
+  // 자동 입력 정보 표시
+  document.getElementById('ns-auto-info').innerHTML = `
+    <div>📋 계약: <b>${contract.title}</b></div>
+    <div>🎯 강사: <b>${instructorName}</b></div>
+    <div>📊 잔여: <b>${contract.remainingSessions}회</b> (~${contract.endDate})</div>
+  `;
+  document.getElementById('ns-auto-info').style.display = 'block';
+
+  // 정기일정 요일 자동 업데이트
+  const date = document.getElementById('ns-date').value;
+  if (date) {
+    const dayMap = ['일','월','화','수','목','금','토'];
+    const day = dayMap[new Date(date).getDay()];
+    const sel = document.getElementById('ns-recurring-day');
+    for (let opt of sel.options) { if (opt.value === day) { sel.value = day; break; } }
+  }
 }
 
 function toggleRecurring() {
@@ -2780,13 +2813,16 @@ async function saveSchedule() {
   const isRecurring = document.getElementById('ns-recurring').checked;
   const recurringDay = document.getElementById('ns-recurring-day').value;
 
-  if (!memberId || !instructorId || !date || !time) {
-    showToast('회원, 강사, 날짜, 시간을 모두 선택해주세요', 'error'); return;
+  if (!memberId || !date || !time) {
+    showToast('회원, 날짜, 시간을 모두 선택해주세요', 'error'); return;
+  }
+  if (!contractId) {
+    showToast('진행중인 계약이 없습니다', 'error'); return;
   }
 
   const memberName = document.getElementById('ns-member').options[document.getElementById('ns-member').selectedIndex].text;
-  const contractSel = document.getElementById('ns-contract');
-  const contractEndDate = contractSel.options[contractSel.selectedIndex]?.dataset?.end || '';
+  const contract = (window._scheduleContracts||[]).find(c => c.id === contractId);
+  const contractEndDate = contract?.endDate || '';
 
   showToast('예약 등록 중...', '');
 
