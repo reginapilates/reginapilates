@@ -231,8 +231,15 @@ body {
 <!-- 컨트롤 바 -->
 <div class="control-bar">
   <label>INSTRUCTOR</label>
-  <select id="instructor-select" onchange="filterByInstructor()">
+  <select id="instructor-select" onchange="renderViewer()">
     <option value="">전체 강사</option>
+  </select>
+  <label style="margin-left:16px">TYPE</label>
+  <select id="type-select" onchange="renderViewer()">
+    <option value="">전체 타입</option>
+    <option value="1:1">Private 1:1</option>
+    <option value="1:2">Duet 1:2</option>
+    <option value="1:3">Triple 1:3</option>
   </select>
   <span class="loading-msg" id="loading-msg">불러오는 중...</span>
   <button class="btn-print" onclick="window.print()">🖨️ 인쇄 / PDF 저장</button>
@@ -278,9 +285,7 @@ async function loadData() {
   }
 }
 
-function filterByInstructor() {
-  renderViewer();
-}
+
 
 function fmt(n) {
   return n ? parseInt(n).toLocaleString() : '0';
@@ -288,44 +293,50 @@ function fmt(n) {
 
 function renderViewer() {
   const instrId = document.getElementById('instructor-select').value;
+  const typeFilter = document.getElementById('type-select').value;
+
   const instrName = instrId
     ? allInstructors.find(i => i.id === instrId)?.name || ''
     : '';
 
-  // 강사별 필터링
+  const typeNames = { '1:1': 'Private Lesson', '1:2': 'Duet Lesson', '1:3': 'Triple Lesson' };
+  const typeOrder = { '1:1': 0, '1:2': 1, '1:3': 2 };
+
+  // 필터링
   let programs = allPrograms.filter(p => p.isActive);
-  if (instrId) {
-    programs = programs.filter(p => p.instructorId === instrId);
-  }
+  if (instrId) programs = programs.filter(p => p.instructorId === instrId);
+  if (typeFilter) programs = programs.filter(p => p.type === typeFilter);
 
   if (!programs.length) {
     document.getElementById('viewer').innerHTML = '<div class="empty-state">표시할 프로그램이 없습니다.</div>';
     return;
   }
 
-  // 강사별로 그룹핑
-  const groups = {};
-  programs.forEach(p => {
-    const key = p.instructorId || 'unknown';
-    if (!groups[key]) groups[key] = [];
-    groups[key].push(p);
-  });
-
-  // 각 그룹은 타입(1:1, 1:2, 1:3)별로 정렬
-  const typeOrder = { '1:1': 0, '1:2': 1, '1:3': 2 };
+  // 제목
+  const titleParts = [];
+  if (instrName) titleParts.push(instrName);
+  if (typeFilter) titleParts.push(typeNames[typeFilter] || typeFilter);
+  const docTitle = titleParts.length ? titleParts.join(' · ') + ' Lesson' : 'Program & Price';
 
   let html = `
     <div class="doc-header">
       <div class="doc-logo">Regina Pilates · Classic Pilates Studio</div>
-      <div class="doc-title">${instrName ? instrName + ' Lesson' : 'Program & Price'}</div>
+      <div class="doc-title">${docTitle}</div>
       <div class="doc-subtitle">VAT 포함 금액입니다</div>
     </div>
   `;
 
-  Object.entries(groups).forEach(([instrId, progs]) => {
-    const instr = allInstructors.find(i => i.id === instrId);
+  // 강사 → 타입 순으로 그룹핑
+  const instrGroups = {};
+  programs.forEach(p => {
+    const key = p.instructorId || 'unknown';
+    if (!instrGroups[key]) instrGroups[key] = [];
+    instrGroups[key].push(p);
+  });
+
+  Object.entries(instrGroups).forEach(([iId, progs]) => {
+    const instr = allInstructors.find(i => i.id === iId);
     const instrDisplayName = instr?.name || '강사';
-    const pricePerSession = progs[0]?.pricePerSession || 0;
 
     // 타입별 그룹
     const typeGroups = {};
@@ -338,11 +349,8 @@ function renderViewer() {
     Object.entries(typeGroups)
       .sort(([a], [b]) => (typeOrder[a]||9) - (typeOrder[b]||9))
       .forEach(([type, typeProgs]) => {
-        const typeName = type === '1:1' ? 'Private Lesson' :
-          type === '1:2' ? 'Duet Lesson' : 'Triple Lesson';
+        const typeName = typeNames[type] || type;
         const basePrice = typeProgs[0]?.pricePerSession || 0;
-
-        // 세션 수 기준 정렬
         const sorted = [...typeProgs].sort((a, b) => a.sessions - b.sessions);
 
         html += `
@@ -368,7 +376,6 @@ function renderViewer() {
                   const finalPrice = p.finalPrice || totalPrice;
                   const perSession = p.sessions > 0 ? Math.floor(finalPrice / p.sessions / 100) * 100 : 0;
                   const duration = p.duration ? `${p.duration}개월` : '—';
-
                   return `<tr>
                     <td class="td-sessions">${p.sessions}</td>
                     <td class="td-price">${fmt(totalPrice)}</td>
@@ -380,8 +387,7 @@ function renderViewer() {
                 }).join('')}
               </tbody>
             </table>
-          </div>
-        `;
+          </div>`;
       });
   });
 
