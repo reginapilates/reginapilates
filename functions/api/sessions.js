@@ -59,7 +59,7 @@ export async function onRequest(context) {
         date: page.properties.Date?.date?.start || '',
         condition: page.properties.Condition?.select?.name || '',
         memo: page.properties.Memo?.rich_text?.[0]?.plain_text || '',
-        attended: page.properties.Attended?.checkbox || false,
+        attended: page.properties.AttendanceStatus?.select?.name === '참석' || false,
         attendanceStatus: page.properties.AttendanceStatus?.select?.name || '',
         time: page.properties.Time?.select?.name || '',
         instructorId: page.properties.Instructor?.relation?.[0]?.id || '',
@@ -94,7 +94,7 @@ export async function onRequest(context) {
             Condition: (sessionData.condition && sessionData.condition !== '—') 
               ? { select: { name: sessionData.condition } } : undefined,
             Memo: { rich_text: [{ text: { content: sessionData.memo || '' } }] },
-            Attended: { checkbox: body.attendanceStatus === '참석' },
+            // Attended 필드 제거 (AttendanceStatus로 대체)
             AttendanceStatus: body.attendanceStatus ? { select: { name: body.attendanceStatus } } : undefined,
             Time: body.time ? { select: { name: body.time } } : undefined,
             Instructor: body.instructorId ? { relation: [{ id: body.instructorId }] } : undefined,
