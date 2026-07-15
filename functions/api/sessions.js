@@ -60,6 +60,9 @@ export async function onRequest(context) {
         condition: page.properties.Condition?.select?.name || '',
         memo: page.properties.Memo?.rich_text?.[0]?.plain_text || '',
         attended: page.properties.Attended?.checkbox || false,
+        attendanceStatus: page.properties.AttendanceStatus?.select?.name || '',
+        time: page.properties.Time?.select?.name || '',
+        instructorId: page.properties.Instructor?.relation?.[0]?.id || '',
       }));
 
       return new Response(JSON.stringify({ sessions }), { headers });
@@ -90,7 +93,10 @@ export async function onRequest(context) {
             Date: { date: { start: sessionData.date || new Date().toISOString().split('T')[0] } },
             Condition: sessionData.condition ? { select: { name: sessionData.condition } } : undefined,
             Memo: { rich_text: [{ text: { content: sessionData.memo || '' } }] },
-            Attended: { checkbox: true },
+            Attended: { checkbox: body.attendanceStatus === '참석' },
+            AttendanceStatus: body.attendanceStatus ? { select: { name: body.attendanceStatus } } : undefined,
+            Time: body.time ? { select: { name: body.time } } : undefined,
+            Instructor: body.instructorId ? { relation: [{ id: body.instructorId }] } : undefined,
           },
         }),
       });
