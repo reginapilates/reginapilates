@@ -31,7 +31,6 @@ export async function onRequest(context) {
       );
 
       const data = await response.json();
-
       if (!response.ok) {
         return new Response(JSON.stringify({ error: data.message || 'Notion API error', data }), { status: 500, headers });
       }
@@ -46,11 +45,22 @@ export async function onRequest(context) {
         address: page.properties.Address?.rich_text?.[0]?.plain_text || '',
         height: page.properties.Height?.number || null,
         weight: page.properties.Weight?.number || null,
-        pilatesExp: page.properties.PilatesExp?.select?.name || '',
-        painHistory: page.properties.PainHistory?.rich_text?.[0]?.plain_text || '',
+        jobType: page.properties.JobType?.select?.name || '',
+        pilatesExpType: page.properties.PilatesExpType?.select?.name || '',
+        pilatesExpCount: page.properties.PilatesExpCount?.number || null,
+        exerciseExp: page.properties.ExerciseExp?.rich_text?.[0]?.plain_text || '',
+        pilatesCert: page.properties.PilatesCert?.checkbox || false,
+        pilatesCertOrg: page.properties.PilatesCertOrg?.rich_text?.[0]?.plain_text || '',
+        pilatesCertYears: page.properties.PilatesCertYears?.number || null,
+        stopReasons: page.properties.StopReasons?.select?.name || '',
+        exerciseGoals: page.properties.ExerciseGoals?.multi_select?.map(s => s.name).join(', ') || '',
         surgery: page.properties.Surgery?.checkbox || false,
         surgeryDetail: page.properties.SurgeryDetail?.rich_text?.[0]?.plain_text || '',
+        medicalHistory: page.properties.MedicalHistory?.multi_select?.map(s => s.name).join(', ') || '',
+        painAreas: page.properties.PainAreas?.multi_select?.map(s => s.name).join(', ') || '',
         visitSource: page.properties.VisitSource?.select?.name || '',
+        availableTime: page.properties.AvailableTime?.select?.name || '',
+        availableDays: page.properties.AvailableDays?.multi_select?.map(s => s.name).join(', ') || '',
         marketingConsent: page.properties.MarketingConsent?.checkbox || false,
         adConsent: page.properties.AdConsent?.checkbox || false,
         createdAt: page.properties.CreatedAt?.date?.start || '',
@@ -67,6 +77,11 @@ export async function onRequest(context) {
 
     if (method === 'POST') {
       const body = await request.json();
+
+      // 다중선택 값을 배열로 변환
+      const toMultiSelect = (str) => str
+        ? str.split(',').map(s => s.trim()).filter(Boolean).map(name => ({ name }))
+        : [];
 
       const response = await fetch('https://api.notion.com/v1/pages', {
         method: 'POST',
@@ -85,11 +100,22 @@ export async function onRequest(context) {
             Address: { rich_text: [{ text: { content: body.address || '' } }] },
             Height: body.height ? { number: body.height } : undefined,
             Weight: body.weight ? { number: body.weight } : undefined,
-            PilatesExp: body.pilatesExp ? { select: { name: body.pilatesExp } } : undefined,
-            PainHistory: { rich_text: [{ text: { content: body.painHistory || '' } }] },
+            JobType: body.jobType ? { select: { name: body.jobType } } : undefined,
+            PilatesExpType: body.pilatesExpType ? { select: { name: body.pilatesExpType } } : undefined,
+            PilatesExpCount: body.pilatesExpCount ? { number: body.pilatesExpCount } : undefined,
+            ExerciseExp: { rich_text: [{ text: { content: body.exerciseExp || '' } }] },
+            PilatesCert: { checkbox: body.pilatesCert || false },
+            PilatesCertOrg: { rich_text: [{ text: { content: body.pilatesCertOrg || '' } }] },
+            PilatesCertYears: body.pilatesCertYears ? { number: body.pilatesCertYears } : undefined,
+            StopReasons: body.stopReasons ? { select: { name: body.stopReasons } } : undefined,
+            ExerciseGoals: { multi_select: toMultiSelect(body.exerciseGoals) },
             Surgery: { checkbox: body.surgery || false },
             SurgeryDetail: { rich_text: [{ text: { content: body.surgeryDetail || '' } }] },
+            MedicalHistory: { multi_select: toMultiSelect(body.medicalHistory) },
+            PainAreas: { multi_select: toMultiSelect(body.painAreas) },
             VisitSource: body.visitSource ? { select: { name: body.visitSource } } : undefined,
+            AvailableTime: body.availableTime ? { select: { name: body.availableTime } } : undefined,
+            AvailableDays: { multi_select: toMultiSelect(body.availableDays) },
             MarketingConsent: { checkbox: body.marketingConsent || false },
             AdConsent: { checkbox: body.adConsent || false },
             CreatedAt: { date: { start: new Date().toISOString().split('T')[0] } },
