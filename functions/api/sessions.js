@@ -91,7 +91,8 @@ export async function onRequest(context) {
             Member: memberId ? { relation: [{ id: memberId }] } : undefined,
             SessionNo: { number: sessionNo },
             Date: { date: { start: sessionData.date || new Date().toISOString().split('T')[0] } },
-            Condition: sessionData.condition ? { select: { name: sessionData.condition } } : undefined,
+            Condition: (sessionData.condition && sessionData.condition !== '—') 
+              ? { select: { name: sessionData.condition } } : undefined,
             Memo: { rich_text: [{ text: { content: sessionData.memo || '' } }] },
             Attended: { checkbox: body.attendanceStatus === '참석' },
             AttendanceStatus: body.attendanceStatus ? { select: { name: body.attendanceStatus } } : undefined,
@@ -103,8 +104,17 @@ export async function onRequest(context) {
 
       const sessionData2 = await sessionRes.json();
 
-      // 2. 계약의 잔여 횟수 차감
-      if (contractId && body.remainingSessions !== undefined) {
+      // 세션 생성 실패 시 에러 반환
+      if (!sessionRes.ok) {
+        return new Response(JSON.stringify({ 
+          error: sessionData2.message || 'Session creation failed',
+          details: sessionData2
+        }), { status: 500, headers });
+      }
+
+      // 2. 계약의 잔여 횟수 차감 (참석/노쇼만)
+      const shouldDeduct = body.attendanceStatus === '참석' || body.attendanceStatus === '노쇼';
+      if (shouldDeduct && contractId && body.remainingSessions !== undefined) {
         await fetch(`https://api.notion.com/v1/pages/${contractId}`, {
           method: 'PATCH',
           headers: {
@@ -114,7 +124,7 @@ export async function onRequest(context) {
           },
           body: JSON.stringify({
             properties: {
-              RemainingSessions: { number: body.remainingSessions - 1 },
+              RemainingSessions: { number: Math.max(0, body.remainingSessions - 1) },
             },
           }),
         });
