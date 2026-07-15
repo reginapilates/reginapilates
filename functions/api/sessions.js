@@ -94,19 +94,7 @@ export async function onRequest(context) {
       const existingData = await existingRes.json();
       const sessionNo = (existingData.results?.length || 0) + 1;
 
-      // 2. DB에서 현재 잔여횟수 조회
-      let currentRemaining = body.remainingSessions;
-      if (contractId) {
-        const contractRes = await fetch(`https://api.notion.com/v1/pages/${contractId}`, {
-          headers: {
-            'Authorization': `Bearer ${env.NOTION_API_KEY}`,
-            'Notion-Version': '2022-06-28',
-          },
-        });
-        const contractData = await contractRes.json();
-        const dbRemaining = contractData.properties?.RemainingSessions?.number;
-        if (dbRemaining !== undefined) currentRemaining = dbRemaining;
-      }
+      // 잔여횟수는 Sessions DB 개수로 자동 계산되므로 별도 조회 불필요
 
       const title = `${memberName} #${sessionNo}`;
 
@@ -145,28 +133,11 @@ export async function onRequest(context) {
         }), { status: 500, headers });
       }
 
-      // 4. 잔여 횟수 차감 (DB 기준, 참석/노쇼만)
-      const shouldDeduct = body.attendanceStatus === '참석' || body.attendanceStatus === '노쇼';
-      if (shouldDeduct && contractId && currentRemaining !== undefined) {
-        await fetch(`https://api.notion.com/v1/pages/${contractId}`, {
-          method: 'PATCH',
-          headers: {
-            'Authorization': `Bearer ${env.NOTION_API_KEY}`,
-            'Notion-Version': '2022-06-28',
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            properties: {
-              RemainingSessions: { number: Math.max(0, currentRemaining - 1) },
-            },
-          }),
-        });
-      }
+      // RemainingSessions 필드 업데이트 불필요 - Sessions DB 개수로 자동 계산됨
 
       return new Response(JSON.stringify({
         id: sessionData2.id,
         sessionNo,
-        remainingSessions: Math.max(0, (currentRemaining || 0) - (shouldDeduct ? 1 : 0)),
         success: true
       }), { headers });
     }

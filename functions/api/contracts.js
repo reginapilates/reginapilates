@@ -101,7 +101,7 @@ export async function onRequest(context) {
             Member: contractData.memberId ? { relation: [{ id: contractData.memberId }] } : undefined,
             Program: contractData.programId ? { relation: [{ id: contractData.programId }] } : undefined,
             Sessions: { number: contractData.sessions || 0 },
-            RemainingSessions: { number: contractData.sessions || 0 },
+            // RemainingSessions 제거 - Sessions DB 개수로 계산
             TotalAmount: { number: contractData.totalAmount || 0 },
             PaymentMethod: contractData.paymentMethod ? { select: { name: contractData.paymentMethod } } : undefined,
             StartDate: contractData.startDate ? { date: { start: contractData.startDate } } : undefined,
@@ -161,7 +161,7 @@ export async function onRequest(context) {
 
       const properties = {};
       if (body.status) properties.Status = { select: { name: body.status } };
-      if (body.remainingSessions !== undefined) properties.RemainingSessions = { number: body.remainingSessions };
+      // RemainingSessions 직접 업데이트 제거 - Sessions DB 기준
       if (body.pauseDate) properties.PauseDate = { date: { start: body.pauseDate } };
       else if (body.pauseDate === null) properties.PauseDate = { date: null };
       if (body.resumeDate) properties.ResumeDate = { date: { start: body.resumeDate } };
