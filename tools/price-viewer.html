@@ -213,11 +213,16 @@ body {
 }
 
 /* ── PRINT ── */
+* { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+
 @media print {
   .control-bar { display: none !important; }
   .viewer { margin-top: 0; padding: 40px 36px; }
   body { background: #fff; }
   .price-table tr:hover td { background: transparent; }
+  .section-header { background: var(--dark) !important; color: #fff !important; }
+  .price-table th { background: var(--surface) !important; }
+  .td-discount { color: var(--red) !important; }
 }
 </style>
 </head>
