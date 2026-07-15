@@ -342,75 +342,175 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
 
 <!-- MODAL: 신규 회원 -->
 <div class="modal-overlay" id="modal-new-member" style="display:none">
-  <div class="modal">
+  <div class="modal" style="max-width:720px">
     <div class="modal-header">
-      <div class="modal-title">신규 회원 등록</div>
+      <div class="modal-title">신규 회원 등록 — Client Profile</div>
       <button class="modal-close" onclick="closeModal('modal-new-member')">×</button>
     </div>
     <div class="modal-body">
-      <div class="form-section">기본 정보</div>
+
+      <div class="form-section">■ 프로필</div>
       <div class="form-row">
-        <div class="form-group"><label class="form-label required">이름</label><input class="form-input" id="nm-name" placeholder="홍길동"></div>
-        <div class="form-group"><label class="form-label">연락처</label><input class="form-input" id="nm-phone" placeholder="010-0000-0000" oninput="formatPhone(this)" maxlength="13"></div>
+        <div class="form-group"><label class="form-label required">성명</label><input class="form-input" id="nm-name" placeholder="홍길동"></div>
+        <div class="form-group"><label class="form-label">생년월일</label><input class="form-input" id="nm-birth" type="date"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">주소</label><input class="form-input" id="nm-address" placeholder="주소"></div>
+        <div class="form-group"><label class="form-label">헨드폰</label><input class="form-input" id="nm-phone" placeholder="010-0000-0000" oninput="formatPhone(this)" maxlength="13"></div>
       </div>
       <div class="form-row">
         <div class="form-group"><label class="form-label">이메일</label><input class="form-input" id="nm-email" type="email" placeholder="example@email.com"></div>
-        <div class="form-group"><label class="form-label">생년월일</label><input class="form-input" id="nm-birth" type="date"></div>
+        <div class="form-group">
+          <label class="form-label">직업 유형</label>
+          <select class="form-select" id="nm-jobtype">
+            <option value="">선택</option>
+            <option>사무직</option><option>학생</option><option>운동선수</option><option>주부</option><option>기타</option>
+          </select>
+        </div>
       </div>
-      <div class="form-row full">
-        <div class="form-group"><label class="form-label">주소</label><input class="form-input" id="nm-address" placeholder="주소"></div>
-      </div>
-      <div class="form-section">신체 정보</div>
       <div class="form-row">
         <div class="form-group"><label class="form-label">신장 (cm)</label><input class="form-input" id="nm-height" type="number" placeholder="165"></div>
         <div class="form-group"><label class="form-label">체중 (kg)</label><input class="form-input" id="nm-weight" type="number" placeholder="55"></div>
       </div>
+
+      <div class="form-section">■ 필라테스·운동 경험</div>
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">필라테스 경험</label>
-          <select class="form-select" id="nm-exp">
+          <select class="form-select" id="nm-pilates-type">
             <option value="">선택</option>
-            <option>없음</option><option>6개월 미만</option><option>6개월~1년</option><option>1년 이상</option>
+            <option>없음</option><option>개인</option><option>그룹</option>
           </select>
         </div>
         <div class="form-group">
-          <label class="form-label">방문 경로</label>
-          <select class="form-select" id="nm-source">
+          <label class="form-label">경험 횟수 (회)</label>
+          <input class="form-input" id="nm-pilates-count" type="number" placeholder="0">
+        </div>
+      </div>
+      <div class="form-row full">
+        <div class="form-group"><label class="form-label">운동 경험 (종목)</label><input class="form-input" id="nm-exercise-exp" placeholder="요가, 수영, 헬스 등"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">필라테스 자격증</label>
+          <select class="form-select" id="nm-cert" onchange="toggleCert()">
+            <option value="false">없음</option><option value="true">있음</option>
+          </select>
+        </div>
+        <div class="form-group" id="nm-cert-detail-group" style="display:none">
+          <label class="form-label">교육기관</label>
+          <input class="form-input" id="nm-cert-org" placeholder="교육기관명">
+        </div>
+      </div>
+      <div class="form-row" id="nm-cert-years-group" style="display:none">
+        <div class="form-group">
+          <label class="form-label">교육이수 (년)</label>
+          <input class="form-input" id="nm-cert-years" type="number" placeholder="1">
+        </div>
+      </div>
+      <div class="form-row full">
+        <div class="form-group">
+          <label class="form-label">운동 중단 이유</label>
+          <select class="form-select" id="nm-stop-reason">
             <option value="">선택</option>
-            <option>인스타그램</option><option>지인 소개</option><option>네이버</option><option>기타</option>
+            <option>효과없음</option><option>시간없음</option><option>강사수준</option><option>힘들어서</option><option>기타</option>
           </select>
         </div>
       </div>
       <div class="form-row full">
-        <div class="form-group"><label class="form-label">통증/병력</label><textarea class="form-textarea" id="nm-pain" placeholder="허리 디스크, 무릎 통증 등 특이사항"></textarea></div>
+        <div class="form-group">
+          <label class="form-label">운동 목적 (복수선택)</label>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;" id="nm-goals">
+            <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" value="체형교정"> 체형교정</label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" value="통증완화"> 통증완화</label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" value="체력증진"> 체력증진</label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" value="자세교정"> 자세교정</label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" value="근력증가"> 근력증가</label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" value="다이어트"> 다이어트</label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" value="스트레스해소"> 스트레스해소</label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" value="유연성증가"> 유연성증가</label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" value="기타"> 기타</label>
+          </div>
+        </div>
       </div>
+
+      <div class="form-section">■ 통증·병력</div>
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">수술 여부</label>
           <select class="form-select" id="nm-surgery" onchange="toggleSurgery()">
-            <option value="false">없음</option><option value="true">있음</option>
+            <option value="false">없음 (No)</option><option value="true">있음</option>
           </select>
         </div>
         <div class="form-group" id="surgery-detail-group" style="display:none">
-          <label class="form-label">수술 내용</label>
-          <input class="form-input" id="nm-surgery-detail" placeholder="수술명 및 시기">
+          <label class="form-label">수술명 / 수술시기</label>
+          <input class="form-input" id="nm-surgery-detail" placeholder="예: 무릎 십자인대 / 2022년">
         </div>
       </div>
-      <div class="form-section">마케팅 동의</div>
-      <div class="checkbox-row">
-        <input type="checkbox" id="nm-marketing">
-        <label class="checkbox-label" for="nm-marketing">
-          수업 안내 정보 수신 동의 (선택)
-          <small>수업 일정, 프로그램 변경 등을 카카오톡/문자로 받습니다. 거부하셔도 서비스 이용에 불이익이 없습니다.</small>
-        </label>
+      <div class="form-row full">
+        <div class="form-group">
+          <label class="form-label">병력 (복수선택)</label>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;" id="nm-medical">
+            <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" value="없음"> 없음(No)</label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" value="고혈압"> 고혈압</label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" value="저혈압"> 저혈압</label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" value="디스크"> 디스크</label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" value="척추측만"> 척추측만</label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" value="일자목·거북목"> 일자목·거북목</label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" value="골다공증"> 골다공증</label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" value="관절염"> 관절염</label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" value="편두통"> 편두통</label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" value="기타"> 기타</label>
+          </div>
+        </div>
       </div>
-      <div class="checkbox-row">
-        <input type="checkbox" id="nm-ad">
-        <label class="checkbox-label" for="nm-ad">
-          광고성 정보 수신 동의 (선택)
-          <small>재등록 안내, 이벤트 정보 등을 카카오톡/문자로 받습니다. 거부하셔도 서비스 이용에 불이익이 없습니다.</small>
-        </label>
+      <div class="form-row full">
+        <div class="form-group">
+          <label class="form-label">통증 부위 (복수선택)</label>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;" id="nm-pain">
+            <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" value="없음"> 없음(No)</label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" value="목·어깨"> 목·어깨</label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" value="팔꿈치·손목"> 팔꿈치·손목</label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" value="허리"> 허리</label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" value="골반"> 골반</label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" value="무릎"> 무릎</label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" value="발목"> 발목</label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" value="기타"> 기타</label>
+          </div>
+        </div>
       </div>
+
+      <div class="form-section">■ 방문 경로 및 운동 가능 시간</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">방문 경로</label>
+          <select class="form-select" id="nm-source">
+            <option value="">선택</option>
+            <option>인스타그램</option><option>지인소개</option><option>네이버</option>
+            <option>간판</option><option>전단지</option><option>블로그</option><option>기타</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">운동 가능 시간</label>
+          <select class="form-select" id="nm-avail-time">
+            <option value="">선택</option>
+            <option>AM</option><option>PM</option><option>AM·PM 모두</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row full">
+        <div class="form-group">
+          <label class="form-label">운동 가능 요일 (복수선택)</label>
+          <div style="display:flex;gap:12px;margin-top:4px;" id="nm-avail-days">
+            <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" value="월"> 월</label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" value="화"> 화</label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" value="수"> 수</label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" value="목"> 목</label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" value="금"> 금</label>
+          </div>
+        </div>
+      </div>
+
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('modal-new-member')">취소</button>
@@ -784,13 +884,30 @@ async function loadDashboard() {
 }
 
 // ── MEMBERS ──
+let allContractsByMember = {}; // 회원ID → 계약 목록 캐시
+let allSessionsByMember = {};  // 회원ID → 마지막 세션 날짜 캐시
+
 async function loadMembers() {
   const tbody = document.getElementById('member-table-body');
   tbody.innerHTML = '<tr><td colspan="7" class="loading">불러오는 중...</td></tr>';
   try {
-    const res = await fetch(`${API}/api/members`);
-    const data = await res.json();
-    allMembers = data.members || [];
+    // 회원 + 전체 계약 동시 로드
+    const [membersRes, contractsRes] = await Promise.all([
+      fetch(`${API}/api/members`),
+      fetch(`${API}/api/contracts`),
+    ]);
+    const membersData = await membersRes.json();
+    const contractsData = await contractsRes.json();
+
+    allMembers = membersData.members || [];
+
+    // 회원별 계약 인덱싱
+    allContractsByMember = {};
+    (contractsData.contracts || []).forEach(c => {
+      if (!allContractsByMember[c.memberId]) allContractsByMember[c.memberId] = [];
+      allContractsByMember[c.memberId].push(c);
+    });
+
     renderMemberTable();
   } catch(e) {
     tbody.innerHTML = '<tr><td colspan="7" class="empty-state">불러오기 실패</td></tr>';
@@ -800,7 +917,7 @@ async function loadMembers() {
 function renderMemberTable() {
   const search = document.getElementById('member-search')?.value || '';
   let members = allMembers.filter(m =>
-    m.name.includes(search) || m.phone.includes(search)
+    m.name.includes(search) || (m.phone||'').includes(search)
   );
 
   const tbody = document.getElementById('member-table-body');
@@ -809,17 +926,41 @@ function renderMemberTable() {
     return;
   }
 
-  tbody.innerHTML = members.map(m => `
+  tbody.innerHTML = members.map(m => {
+    const contracts = allContractsByMember[m.id] || [];
+    const activeContract = contracts.find(c => c.status === '진행중');
+    const progName = activeContract?.title?.split(' - ').slice(1).join(' - ') || '—';
+    const remaining = activeContract ? activeContract.remainingSessions + '회' : '—';
+    const total = activeContract?.sessions || 0;
+    const done = total - (activeContract?.remainingSessions || 0);
+    const pct = total > 0 ? Math.round(done / total * 100) : 0;
+    const progressBar = activeContract
+      ? `<div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>`
+      : '—';
+
+    // 상태 배지
+    let badge = '<span class="badge badge-active">활성</span>';
+    if (!activeContract && contracts.length > 0) badge = '<span class="badge badge-muted">완료</span>';
+    if (!contracts.length) badge = '<span class="badge badge-muted">미계약</span>';
+
+    // 리마케팅 알림
+    const alertInfo = allAlerts.find(a => a.memberId === m.id);
+    if (alertInfo) {
+      const isRed = alertInfo.alertTypes.includes('long_absence_60');
+      badge = `<span class="badge ${isRed ? 'badge-danger' : 'badge-warning'}">${isRed ? '장기미출석' : '알림'}</span>`;
+    }
+
+    return `
     <tr onclick="openMember('${m.id}')">
       <td><b>${m.name}</b></td>
       <td>${m.phone || '—'}</td>
+      <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${progName}</td>
+      <td>${remaining}</td>
+      <td>${progressBar}</td>
       <td>—</td>
-      <td>—</td>
-      <td>—</td>
-      <td>—</td>
-      <td><span class="badge badge-active">활성</span></td>
-    </tr>
-  `).join('');
+      <td>${badge}</td>
+    </tr>`;
+  }).join('');
 }
 
 function filterMembers() { renderMemberTable(); }
@@ -1078,6 +1219,19 @@ function toggleSurgery() {
   document.getElementById('surgery-detail-group').style.display = val === 'true' ? 'block' : 'none';
 }
 
+function toggleCert() {
+  const val = document.getElementById('nm-cert').value;
+  const show = val === 'true';
+  document.getElementById('nm-cert-detail-group').style.display = show ? 'block' : 'none';
+  document.getElementById('nm-cert-years-group').style.display = show ? 'grid' : 'none';
+}
+
+// 체크박스 그룹에서 선택된 값 가져오기
+function getChecked(groupId) {
+  return Array.from(document.querySelectorAll(`#${groupId} input[type=checkbox]:checked`))
+    .map(cb => cb.value).join(', ');
+}
+
 async function saveMember() {
   const name = document.getElementById('nm-name').value.trim();
   if (!name) { showToast('이름을 입력해주세요', 'error'); return; }
@@ -1089,13 +1243,24 @@ async function saveMember() {
     address: document.getElementById('nm-address').value,
     height: parseFloat(document.getElementById('nm-height').value)||null,
     weight: parseFloat(document.getElementById('nm-weight').value)||null,
-    pilatesExp: document.getElementById('nm-exp').value,
-    visitSource: document.getElementById('nm-source').value,
-    painHistory: document.getElementById('nm-pain').value,
+    jobType: document.getElementById('nm-jobtype').value,
+    pilatesExpType: document.getElementById('nm-pilates-type').value,
+    pilatesExpCount: parseInt(document.getElementById('nm-pilates-count').value)||null,
+    exerciseExp: document.getElementById('nm-exercise-exp').value,
+    pilatesCert: document.getElementById('nm-cert').value === 'true',
+    pilatesCertOrg: document.getElementById('nm-cert-org').value,
+    pilatesCertYears: parseInt(document.getElementById('nm-cert-years').value)||null,
+    stopReasons: document.getElementById('nm-stop-reason').value,
+    exerciseGoals: getChecked('nm-goals'),
     surgery: document.getElementById('nm-surgery').value === 'true',
     surgeryDetail: document.getElementById('nm-surgery-detail').value,
-    marketingConsent: document.getElementById('nm-marketing').checked,
-    adConsent: document.getElementById('nm-ad').checked,
+    medicalHistory: getChecked('nm-medical'),
+    painAreas: getChecked('nm-pain'),
+    visitSource: document.getElementById('nm-source').value,
+    availableTime: document.getElementById('nm-avail-time').value,
+    availableDays: getChecked('nm-avail-days'),
+    marketingConsent: false,
+    adConsent: false,
   };
   try {
     const res = await fetch(`${API}/api/members`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
