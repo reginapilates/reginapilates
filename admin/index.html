@@ -342,6 +342,7 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
           <div class="detail-name" id="detail-name"></div>
           <div class="detail-meta" id="detail-meta"></div>
         </div>
+        <button class="btn btn-secondary" id="member-edit-btn" onclick="openEditMemberModal(currentMember)" style="margin-right:8px">✏️ 수정</button>
         <button class="btn btn-primary" onclick="openNewContractModal()">+ 새 계약</button>
       </div>
       <div class="tabs">
@@ -594,6 +595,29 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
             <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" value="금"> 금</label>
           </div>
         </div>
+      </div>
+
+      <div class="form-section">■ 동의 사항</div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="nm-privacy">
+        <label class="checkbox-label" for="nm-privacy">
+          <b>[필수]</b> 개인정보 수집·이용에 동의합니다.
+          <small>이름, 성별, 생년월일, 주소, 연락처 등을 회원관리 목적으로 수집하며 계약 유효기간 이후 1년까지 보유합니다.</small>
+        </label>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="nm-marketing">
+        <label class="checkbox-label" for="nm-marketing">
+          [선택] 수업 안내 정보 수신에 동의합니다.
+          <small>수업 일정, 프로그램 변경 등을 카카오톡/문자로 받습니다.</small>
+        </label>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="nm-ad">
+        <label class="checkbox-label" for="nm-ad">
+          [선택] 광고성 정보 수신에 동의합니다.
+          <small>재등록 안내, 이벤트 정보 등을 카카오톡/문자로 받습니다.</small>
+        </label>
       </div>
 
     </div>
@@ -1339,6 +1363,9 @@ async function openMember(id) {
 
   document.getElementById('detail-name').textContent = currentMember.name;
   document.getElementById('detail-meta').textContent = `${currentMember.phone || ''} ${currentMember.email ? '· ' + currentMember.email : ''}`;
+  // 수정 버튼 업데이트
+  const editBtn = document.getElementById('member-edit-btn');
+  if (editBtn) editBtn.onclick = () => openEditMemberModal(currentMember);
 
   renderProfile();
   await loadMemberContracts();
@@ -1608,6 +1635,105 @@ async function saveProgram() {
   } catch(e) { showToast('저장 실패: ' + e.message, 'error'); console.error(e); }
 }
 
+// ── EDIT MEMBER ──
+function openEditMemberModal(m) {
+  if (!m) return;
+  // 신규 회원 모달 재활용 - 값 채워넣기
+  document.getElementById('nm-name').value = m.name || '';
+  document.getElementById('nm-phone').value = m.phone || '';
+  document.getElementById('nm-email').value = m.email || '';
+  document.getElementById('nm-birth').value = m.birthDate || '';
+  document.getElementById('nm-address').value = m.address || '';
+  document.getElementById('nm-height').value = m.height || '';
+  document.getElementById('nm-weight').value = m.weight || '';
+  document.getElementById('nm-jobtype').value = m.jobType || '';
+  document.getElementById('nm-pilates-type').value = m.pilatesExpType || '';
+  document.getElementById('nm-pilates-count').value = m.pilatesExpCount || '';
+  document.getElementById('nm-exercise-exp').value = m.exerciseExp || '';
+  document.getElementById('nm-cert').value = m.pilatesCert ? 'true' : 'false';
+  document.getElementById('nm-cert-org').value = m.pilatesCertOrg || '';
+  document.getElementById('nm-cert-years').value = m.pilatesCertYears || '';
+  document.getElementById('nm-stop-reason').value = m.stopReasons || '';
+  document.getElementById('nm-surgery').value = m.surgery ? 'true' : 'false';
+  document.getElementById('nm-surgery-detail').value = m.surgeryDetail || '';
+  document.getElementById('nm-source').value = m.visitSource || '';
+  document.getElementById('nm-avail-time').value = m.availableTime || '';
+  document.getElementById('nm-marketing').checked = m.marketingConsent || false;
+  document.getElementById('nm-ad').checked = m.adConsent || false;
+  document.getElementById('nm-privacy').checked = true;
+
+  toggleCert();
+  toggleSurgery();
+
+  // 체크박스 그룹 복원
+  const setChecked = (groupId, values) => {
+    const vals = (values || '').split(', ').filter(Boolean);
+    document.querySelectorAll(`#${groupId} input[type=checkbox]`).forEach(cb => {
+      cb.checked = vals.includes(cb.value);
+    });
+  };
+  setChecked('nm-goals', m.exerciseGoals);
+  setChecked('nm-medical', m.medicalHistory);
+  setChecked('nm-pain', m.painAreas);
+  setChecked('nm-avail-days', m.availableDays);
+
+  // 모달 제목 변경 + 저장 버튼을 수정으로
+  document.querySelector('#modal-new-member .modal-title').textContent = '회원 정보 수정';
+  const saveBtn = document.querySelector('#modal-new-member .modal-footer .btn-primary');
+  saveBtn.textContent = '수정';
+  saveBtn.onclick = () => updateMember(m.id);
+
+  document.getElementById('modal-new-member').style.display = 'flex';
+}
+
+async function updateMember(id) {
+  const body = {
+    name: document.getElementById('nm-name').value.trim(),
+    phone: document.getElementById('nm-phone').value,
+    email: document.getElementById('nm-email').value,
+    birthDate: document.getElementById('nm-birth').value,
+    address: document.getElementById('nm-address').value,
+    height: parseFloat(document.getElementById('nm-height').value)||null,
+    weight: parseFloat(document.getElementById('nm-weight').value)||null,
+    jobType: document.getElementById('nm-jobtype').value,
+    pilatesExpType: document.getElementById('nm-pilates-type').value,
+    pilatesExpCount: parseInt(document.getElementById('nm-pilates-count').value)||null,
+    exerciseExp: document.getElementById('nm-exercise-exp').value,
+    pilatesCert: document.getElementById('nm-cert').value === 'true',
+    pilatesCertOrg: document.getElementById('nm-cert-org').value,
+    pilatesCertYears: parseInt(document.getElementById('nm-cert-years').value)||null,
+    stopReasons: document.getElementById('nm-stop-reason').value,
+    surgery: document.getElementById('nm-surgery').value === 'true',
+    surgeryDetail: document.getElementById('nm-surgery-detail').value,
+    medicalHistory: getChecked('nm-medical'),
+    painAreas: getChecked('nm-pain'),
+    exerciseGoals: getChecked('nm-goals'),
+    visitSource: document.getElementById('nm-source').value,
+    availableTime: document.getElementById('nm-avail-time').value,
+    availableDays: getChecked('nm-avail-days'),
+    marketingConsent: document.getElementById('nm-marketing').checked,
+    adConsent: document.getElementById('nm-ad').checked,
+  };
+  try {
+    const res = await fetch(`${API}/api/members?id=${id}`, {
+      method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (res.ok) {
+      closeModal('modal-new-member');
+      // 모달 제목/버튼 원복
+      document.querySelector('#modal-new-member .modal-title').textContent = '신규 회원 등록 — Client Profile';
+      const saveBtn = document.querySelector('#modal-new-member .modal-footer .btn-primary');
+      saveBtn.textContent = '등록';
+      saveBtn.onclick = saveMember;
+      showToast('회원 정보가 수정되었습니다', 'success');
+      // 현재 회원 데이터 업데이트
+      Object.assign(currentMember, body);
+      renderProfile();
+    } else showToast('수정 실패: ' + (data.error||'오류'), 'error');
+  } catch(e) { showToast('수정 실패', 'error'); }
+}
+
 // ── NEW MEMBER ──
 function toggleSurgery() {
   const val = document.getElementById('nm-surgery').value;
@@ -1654,9 +1780,15 @@ async function saveMember() {
     visitSource: document.getElementById('nm-source').value,
     availableTime: document.getElementById('nm-avail-time').value,
     availableDays: getChecked('nm-avail-days'),
-    marketingConsent: false,
-    adConsent: false,
+    marketingConsent: document.getElementById('nm-marketing').checked,
+    adConsent: document.getElementById('nm-ad').checked,
+    privacyConsent: document.getElementById('nm-privacy').checked,
   };
+
+  if (!body.privacyConsent) {
+    showToast('개인정보 수집·이용 동의가 필요합니다', 'error');
+    return;
+  }
   try {
     const res = await fetch(`${API}/api/members`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
     const data = await res.json();
