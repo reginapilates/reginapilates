@@ -37,21 +37,46 @@ export async function onRequest(context) {
       }
 
       const results = data.results || [];
-      const programs = results.map(page => ({
-        id: page.id,
-        name: page.properties.Name?.title?.[0]?.plain_text || '',
-        type: page.properties.Type?.select?.name || '',
-        instructor: page.properties.Instructor?.rich_text?.[0]?.plain_text || '',
-        sessions: page.properties.Sessions?.number || 0,
-        pricePerSession: page.properties.PricePerSession?.number || 0,
-        totalPrice: page.properties.TotalPrice?.formula?.number ||
-          page.properties.TotalPrice?.number || 0,
-        discount: page.properties.Discount?.number || 0,
-        finalPrice: page.properties.FinalPrice?.formula?.number ||
-          page.properties.FinalPrice?.number || 0,
-        duration: page.properties.Duration?.number || null,
-        isActive: page.properties.IsActive?.checkbox || false,
-      }));
+
+      // 강사 ID 목록 수집 → 이름 조회
+      const instructorIds = [...new Set(results
+        .map(p => p.properties.Instructor?.relation?.[0]?.id)
+        .filter(Boolean)
+      )];
+
+      const instructorMap = {};
+      for (const id of instructorIds) {
+        try {
+          const iRes = await fetch(`https://api.notion.com/v1/pages/${id}`, {
+            headers: {
+              'Authorization': `Bearer ${env.NOTION_API_KEY}`,
+              'Notion-Version': '2022-06-28',
+            },
+          });
+          const iData = await iRes.json();
+          instructorMap[id] = iData.properties?.Name?.title?.[0]?.plain_text || '';
+        } catch(e) {}
+      }
+
+      const programs = results.map(page => {
+        const instructorId = page.properties.Instructor?.relation?.[0]?.id || '';
+        return {
+          id: page.id,
+          name: page.properties.Name?.title?.[0]?.plain_text || '',
+          type: page.properties.Type?.select?.name || '',
+          instructorId,
+          instructor: instructorMap[instructorId] || '',
+          sessions: page.properties.Sessions?.number || 0,
+          pricePerSession: page.properties.PricePerSession?.number || 0,
+          totalPrice: page.properties.TotalPrice?.formula?.number ||
+            page.properties.TotalPrice?.number || 0,
+          discount: page.properties.Discount?.number || 0,
+          finalPrice: page.properties.FinalPrice?.formula?.number ||
+            page.properties.FinalPrice?.number || 0,
+          duration: page.properties.Duration?.number || null,
+          isActive: page.properties.IsActive?.checkbox || false,
+        };
+      });
 
       const activePrograms = programs.filter(p => p.isActive);
       return new Response(JSON.stringify({ programs: activePrograms, all: programs }), { headers });
@@ -73,7 +98,7 @@ export async function onRequest(context) {
           properties: {
             Name: { title: [{ text: { content: body.name } }] },
             Type: body.type ? { select: { name: body.type } } : undefined,
-            Instructor: { rich_text: [{ text: { content: body.instructor || '' } }] },
+            Instructor: body.instructorId ? { relation: [{ id: body.instructorId }] } : undefined,
             Sessions: { number: body.sessions || 0 },
             PricePerSession: { number: body.pricePerSession || 0 },
             Discount: { number: body.discount || 0 },
@@ -109,7 +134,7 @@ export async function onRequest(context) {
           properties: {
             Name: { title: [{ text: { content: body.name } }] },
             Type: body.type ? { select: { name: body.type } } : undefined,
-            Instructor: { rich_text: [{ text: { content: body.instructor || '' } }] },
+            Instructor: body.instructorId ? { relation: [{ id: body.instructorId }] } : undefined,
             Sessions: { number: body.sessions || 0 },
             PricePerSession: { number: body.pricePerSession || 0 },
             Discount: { number: body.discount || 0 },
