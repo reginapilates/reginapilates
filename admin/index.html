@@ -1457,19 +1457,52 @@ async function loadMemberSessions() {
   const data = await res.json();
   const sessions = data.sessions || [];
 
+  // 강사 이름 조회
+  const instrMap = {};
+  allInstructors.forEach(i => instrMap[i.id] = i.name);
+
+  // 계약 정보 조회 (총 횟수)
+  const contractMap = {};
+  if (allContracts?.length) {
+    allContracts.forEach(c => contractMap[c.id] = c);
+  }
+
+  // 세션 번호 순 정렬
+  const sortedSessions = [...sessions].sort((a, b) => (a.sessionNo||0) - (b.sessionNo||0));
+  const totalSessions = sortedSessions.length;
+
   document.getElementById('tab-sessions').innerHTML = sessions.length === 0
     ? '<div class="empty-state"><p>세션 기록이 없습니다</p></div>'
-    : `<div class="session-list">${sessions.map(s => `
+    : `<div class="session-list">${sortedSessions.map((s, idx) => {
+        const statusColor = s.attendanceStatus === '참석' ? 'var(--success)' :
+          s.attendanceStatus === '노쇼' ? 'var(--danger)' : 'var(--text-muted)';
+        const instrName = instrMap[s.instructorId] || '';
+        const contract = contractMap[s.contractId];
+        const totalContractSessions = contract?.sessions || 0;
+        const seqNo = idx + 1;
+
+        return `
         <div class="session-item">
-          <div class="session-no">#${s.sessionNo}</div>
-          <div class="session-info">
-            <div class="session-date">${s.date}</div>
-            <div class="session-condition">
-              <span class="condition-dot cond-${s.condition}"></span>${s.condition||'—'}
-              ${s.memo ? ' · ' + s.memo : ''}
-            </div>
+          <div class="session-no" style="text-align:center;min-width:44px;">
+            <div style="font-family:Outfit,sans-serif;font-weight:300;font-size:18px;color:var(--accent)">#${s.sessionNo||seqNo}</div>
+            ${totalContractSessions ? `<div style="font-size:10px;color:var(--text-muted)">${seqNo}/${totalContractSessions}</div>` : ''}
           </div>
-        </div>`).join('')}</div>`;
+          <div class="session-info" style="flex:1">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              <div class="session-date">${s.date}</div>
+              ${s.time ? `<span style="font-size:12px;color:var(--text-muted)">${s.time}</span>` : ''}
+              ${s.attendanceStatus ? `<span style="font-size:11px;color:${statusColor};font-weight:700">${s.attendanceStatus}</span>` : ''}
+            </div>
+            <div class="session-condition" style="margin-top:2px;">
+              ${s.condition && s.condition !== '—' ? `<span class="condition-dot cond-${s.condition}"></span>${s.condition}` : ''}
+              ${instrName ? `<span style="margin-left:4px;color:var(--text-muted)">· ${instrName} 강사</span>` : ''}
+              ${contract ? `<span style="margin-left:4px;color:var(--text-muted)">· ${contract.title} (${contract.startDate||''}~${contract.endDate||''})</span>` : ''}
+            </div>
+            ${s.memo && s.memo !== 'NO-SHOW' ? `<div style="font-size:12px;color:var(--text-muted);margin-top:2px">📝 ${s.memo}</div>` : ''}
+            ${s.memo === 'NO-SHOW' ? `<div style="font-size:12px;color:var(--danger);margin-top:2px">❌ NO-SHOW</div>` : ''}
+          </div>
+        </div>`;
+      }).join('')}</div>`;
 }
 
 function openSessionModal(contractId, remaining, nextNo) {
