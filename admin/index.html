@@ -2297,12 +2297,14 @@ function formatPhone(input) {
 let calCurrentDate = new Date();
 let allInstructors = [];
 let allSchedules = [];
-let calFilterInstructors = []; // 필터링할 강사 ID (빈 배열 = 전체)
+let calFilterInstructors = [];
+let calDataLoaded = false; // 전체 데이터 로드 여부
 
 // ── CALENDAR INIT ──
 function calToday() { calCurrentDate = new Date(); renderCalendar(); }
 function calPrev() { calCurrentDate.setDate(calCurrentDate.getDate() - 7); renderCalendar(); }
 function calNext() { calCurrentDate.setDate(calCurrentDate.getDate() + 7); renderCalendar(); }
+function calReload() { calDataLoaded = false; loadCalendar(); }
 
 function getWeekDates(base) {
   const day = base.getDay();
@@ -2316,19 +2318,28 @@ function getWeekDates(base) {
   });
 }
 
-async function loadCalendar() {
-  const dates = getWeekDates(calCurrentDate);
-  const startDate = dates[0].toISOString().split('T')[0];
-  const endDate = dates[4].toISOString().split('T')[0];
+async function loadCalendar(forceReload = false) {
+  // 이미 로드됐으면 렌더링만
+  if (calDataLoaded && !forceReload) {
+    renderCalendar();
+    return;
+  }
 
-  const [instrRes, schRes] = await Promise.all([
-    fetch(`${API}/api/instructors`),
-    fetch(`${API}/api/schedules?startDate=${startDate}&endDate=${endDate}`)
-  ]);
-  const instrData = await instrRes.json();
-  const schData = await schRes.json();
-  allInstructors = instrData.instructors || [];
-  allSchedules = schData.schedules || [];
+  try {
+    const [instrRes, schRes] = await Promise.all([
+      fetch(`${API}/api/instructors`),
+      fetch(`${API}/api/schedules`)  // 날짜 필터 없이 전체 로드
+    ]);
+    const instrData = await instrRes.json();
+    const schData = await schRes.json();
+    allInstructors = instrData.instructors || [];
+    allSchedules = schData.schedules || [];
+    calDataLoaded = true;
+    console.log('Calendar data loaded:', allSchedules.length, 'schedules');
+  } catch(e) {
+    console.error('Calendar load error:', e);
+  }
+
   renderCalendar();
 }
 
@@ -2755,6 +2766,7 @@ async function saveSchedule() {
     if (res.ok) {
       closeModal('modal-new-schedule');
       showToast(`예약 ${data.count}개 등록 완료`, 'success');
+      calDataLoaded = false;
       loadCalendar();
     } else showToast('등록 실패: ' + (data.error||'오류'), 'error');
   } catch(e) { showToast('등록 실패: ' + e.message, 'error'); }
@@ -2796,6 +2808,7 @@ async function updateSchedule() {
     if (res.ok) {
       closeModal('modal-schedule-detail');
       showToast('수정되었습니다', 'success');
+      calDataLoaded = false;
       loadCalendar();
     } else { const d = await res.json(); showToast('수정 실패: ' + (d.error||'오류'), 'error'); }
   } catch(e) { showToast('수정 실패', 'error'); }
@@ -2809,6 +2822,7 @@ async function deleteSchedule() {
     if (res.ok) {
       closeModal('modal-schedule-detail');
       showToast('삭제되었습니다', 'success');
+      calDataLoaded = false;
       loadCalendar();
     } else { const d = await res.json(); showToast('삭제 실패: ' + (d.error||'오류'), 'error'); }
   } catch(e) { showToast('삭제 실패', 'error'); }
