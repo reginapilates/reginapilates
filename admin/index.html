@@ -2446,6 +2446,7 @@ function renderCalendar() {
       const dateStr = toLocalDateStr(d);
       const slots = allSchedules.filter(s =>
         s.time === time && s.date === dateStr &&
+        s.status !== '취소' &&
         (filteredInstrs.length === 0 || filteredInstrs.some(fi => fi.id === s.instructorId))
       );
 
@@ -2454,19 +2455,26 @@ function renderCalendar() {
         const c = LEVEL_COLORS[instr?.level] || { bg:'#F2F3F4', border:'#AAB7B8', text:'#555' };
 
         let bg = c.bg, border = c.border, textColor = c.text;
+        let extraStyle = '';
         if (s.type === '예약불가') { bg='#FDEDEC'; border='#E74C3C'; textColor='#922B21'; }
-        else if (s.status === '노쇼') { bg='#FEF9E7'; border='#E67E22'; textColor='#A04000'; }
-        else if (s.status === '취소') { bg='#F2F3F4'; border='#AAB7B8'; textColor='#888'; }
+        else if (s.status === '참석') {
+          bg='#E8E8E8'; border='#999'; textColor='#666';
+        }
+        else if (s.status === '노쇼') {
+          bg='#E8E8E8'; border='#333'; textColor='#666';
+          extraStyle = 'text-decoration:line-through;text-decoration-color:#000;text-decoration-thickness:2px;';
+        }
+
 
         const memberName = s.name.split(' - ')[0] || s.name;
         const label = s.type === '예약불가' ? '🚫 불가' :
           s.type === '가용일정' ? `✓ ${instr?.name||''}` :
           `${memberName}${instr ? ' · '+instr.name : ''}`;
 
-        return `<div onclick="openScheduleDetail('${s.id}')" title="${s.name}"
+        return `<div onclick="openScheduleDetail('${s.id}')" title="${s.name} (${s.status||'확정'})"
           style="padding:3px 6px;font-size:11px;margin:1px;cursor:pointer;
           background:${bg};border-left:3px solid ${border};color:${textColor};
-          white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+          white-space:nowrap;overflow:hidden;text-overflow:ellipsis;${extraStyle}">
           ${label}
         </div>`;
       }).join('');
