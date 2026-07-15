@@ -2317,9 +2317,13 @@ function getWeekDates(base) {
 }
 
 async function loadCalendar() {
+  const dates = getWeekDates(calCurrentDate);
+  const startDate = dates[0].toISOString().split('T')[0];
+  const endDate = dates[4].toISOString().split('T')[0];
+
   const [instrRes, schRes] = await Promise.all([
     fetch(`${API}/api/instructors`),
-    fetch(`${API}/api/schedules?startDate=${getWeekDates(calCurrentDate)[0].toISOString().split('T')[0]}&endDate=${getWeekDates(calCurrentDate)[4].toISOString().split('T')[0]}`)
+    fetch(`${API}/api/schedules?startDate=${startDate}&endDate=${endDate}`)
   ]);
   const instrData = await instrRes.json();
   const schData = await schRes.json();
@@ -2328,8 +2332,25 @@ async function loadCalendar() {
   renderCalendar();
 }
 
+// 강사 레벨별 색상
+const LEVEL_COLORS = {
+  '1': { bg:'#D5F5E3', border:'#27AE60', text:'#1D8348' },  // 초록
+  '2': { bg:'#D6EAF8', border:'#2980B9', text:'#1A5276' },  // 파랑
+  '3': { bg:'#E8DAEF', border:'#8E44AD', text:'#6C3483' },  // 보라
+  '4': { bg:'#FDEBD0', border:'#E67E22', text:'#A04000' },  // 주황
+  '5': { bg:'#FADBD8', border:'#E74C3C', text:'#922B21' },  // 빨강
+};
+
+function getInstructorColor(instructorId) {
+  const instr = allInstructors.find(i => i.id === instructorId);
+  return LEVEL_COLORS[instr?.level] || { bg:'#F2F3F4', border:'#AAB7B8', text:'#555' };
+}
+
 function renderCalendar() {
   const dates = getWeekDates(calCurrentDate);
+  const dayNames = ['월','화','수','목','금'];
+  const today = new Date().toISOString().split('T')[0];
+
   const startStr = dates[0].toLocaleDateString('ko-KR', {month:'long', day:'numeric'});
   const endStr = dates[4].toLocaleDateString('ko-KR', {month:'long', day:'numeric'});
   const titleStr = `${calCurrentDate.getFullYear()}년 ${startStr} ~ ${endStr}`;
@@ -2339,56 +2360,78 @@ function renderCalendar() {
     if (el) el.textContent = titleStr;
   });
 
-  // 강사 필터 버튼
+  // 강사 범례 (필터 겸용)
+  const activeInstrs = allInstructors.filter(i => i.isActive);
   ['instructor-filter','instructor-filter2'].forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
     el.innerHTML = `<span class="instructor-badge ${calFilterInstructors.length===0?'active':''}" onclick="setCalFilter(null)">전체</span>` +
-      allInstructors.filter(i => i.isActive).map(i =>
-        `<span class="instructor-badge ${calFilterInstructors.includes(i.id)?'active':''}" onclick="setCalFilter('${i.id}')">${i.name}</span>`
-      ).join('');
+      activeInstrs.map(i => {
+        const c = LEVEL_COLORS[i.level] || {};
+        const isActive = calFilterInstructors.includes(i.id);
+        return `<span class="instructor-badge ${isActive?'active':''}"
+          style="${isActive ? `background:${c.border};color:#fff;border-color:${c.border}` : `background:${c.bg};color:${c.text};border-color:${c.border}`}"
+          onclick="setCalFilter('${i.id}')">${i.name} <small>Lv.${i.level}</small></span>`;
+      }).join('');
   });
 
   const times = ['09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00','21:00'];
-  const dayNames = ['월','화','수','목','금'];
+
+  // 날짜별 컬럼 헤더
+  const thead = `<tr>
+    <th style="width:56px;min-width:56px;">시간</th>
+    ${dates.map((d, i) => {
+      const dateStr = d.toISOString().split('T')[0];
+      const isToday = dateStr === today;
+      return `<th style="${isToday ? 'background:#F0F0F0;font-weight:700;' : ''}">
+        <span style="font-size:11px;color:var(--text-muted)">${dayNames[i]}</span><br>
+        <span style="${isToday ? 'color:var(--accent);font-weight:700' : ''}">${d.getMonth()+1}/${d.getDate()}</span>
+      </th>`;
+    }).join('')}
+  </tr>`;
 
   // 필터링된 강사
   const filteredInstrs = calFilterInstructors.length > 0
-    ? allInstructors.filter(i => calFilterInstructors.includes(i.id))
-    : allInstructors.filter(i => i.isActive);
-
-  const thead = `<tr>
-    <th style="width:60px">시간</th>
-    ${filteredInstrs.map(i => `<th>${i.name}<br><small style="color:var(--text-muted)">Lv.${i.level}</small></th>`).join('')}
-  </tr>`;
+    ? activeInstrs.filter(i => calFilterInstructors.includes(i.id))
+    : activeInstrs;
 
   const tbody = times.map(time => {
-    const cells = filteredInstrs.map(instr => {
+    const cells = dates.map(d => {
+      const dateStr = d.toISOString().split('T')[0];
       const slots = allSchedules.filter(s =>
-        s.time === time && s.instructorId === instr.id
+        s.time === time && s.date === dateStr &&
+        (filteredInstrs.length === 0 || filteredInstrs.some(fi => fi.id === s.instructorId))
       );
+
       const blocks = slots.map(s => {
-        let cls = 'reserved';
-        if (s.type === '가용일정') cls = 'available';
-        if (s.type === '예약불가') cls = 'blocked';
-        if (s.status === '노쇼') cls = 'noshow';
-        const label = s.type === '가용일정' ? '가용' :
-          s.type === '예약불가' ? '불가' :
-          (s.name.split(' - ')[0] || s.name);
-        return `<div class="cal-block ${cls}" onclick="openScheduleDetail('${s.id}')" title="${s.name}">${label}</div>`;
+        const instr = allInstructors.find(i => i.id === s.instructorId);
+        const c = LEVEL_COLORS[instr?.level] || { bg:'#F2F3F4', border:'#AAB7B8', text:'#555' };
+
+        let bg = c.bg, border = c.border, textColor = c.text;
+        if (s.type === '예약불가') { bg='#FDEDEC'; border='#E74C3C'; textColor='#922B21'; }
+        else if (s.status === '노쇼') { bg='#FEF9E7'; border='#E67E22'; textColor='#A04000'; }
+        else if (s.status === '취소') { bg='#F2F3F4'; border='#AAB7B8'; textColor='#888'; }
+
+        const memberName = s.name.split(' - ')[0] || s.name;
+        const label = s.type === '예약불가' ? '🚫 불가' :
+          s.type === '가용일정' ? `✓ ${instr?.name||''}` :
+          `${memberName}${instr ? ' · '+instr.name : ''}`;
+
+        return `<div onclick="openScheduleDetail('${s.id}')" title="${s.name}"
+          style="padding:3px 6px;font-size:11px;margin:1px;cursor:pointer;
+          background:${bg};border-left:3px solid ${border};color:${textColor};
+          white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+          ${label}
+        </div>`;
       }).join('');
 
-      const dateStr = dates.find(d => {
-        // 날짜 매칭은 실제 schedule.date로
-        return slots.some(s => s.date === d.toISOString().split('T')[0]);
-      });
-
-      // 빈 슬롯 클릭 → 예약 추가
-      const today = new Date().toISOString().split('T')[0];
-      return `<td><div class="cal-slot" onclick="openNewScheduleWithSlot('${instr.id}','${time}')">${blocks || ''}</div></td>`;
+      return `<td style="padding:0;vertical-align:top;min-width:130px;">
+        <div style="min-height:38px;cursor:pointer;" onclick="openNewScheduleWithDate('${dateStr}','${time}')">${blocks}</div>
+      </td>`;
     }).join('');
 
-    return `<tr><td class="cal-time">${time}</td>${cells}</tr>`;
+    const isHour = true;
+    return `<tr><td class="cal-time" style="font-size:11px;padding:4px 6px;">${time}</td>${cells}</tr>`;
   }).join('');
 
   ['cal-head','cal-head2'].forEach(id => {
@@ -2633,6 +2676,18 @@ function openNewScheduleWithSlot(instructorId, time) {
   openNewScheduleModal().then(() => {
     document.getElementById('ns-instructor').value = instructorId;
     document.getElementById('ns-time').value = time;
+  });
+}
+
+function openNewScheduleWithDate(date, time) {
+  openNewScheduleModal().then(() => {
+    document.getElementById('ns-date').value = date;
+    document.getElementById('ns-time').value = time;
+    // 날짜 요일 자동 선택
+    const dayMap = ['일','월','화','수','목','금','토'];
+    const day = dayMap[new Date(date).getDay()];
+    const sel = document.getElementById('ns-recurring-day');
+    for (let opt of sel.options) { if (opt.value === day) { sel.value = day; break; } }
   });
 }
 
