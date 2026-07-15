@@ -1366,6 +1366,7 @@ async function saveContract() {
   const signedAt = new Date().toISOString().split('T')[0];
   const marketingConsent = false;
   const adConsent = false;
+  const privacyConsent = document.getElementById('nc-agree-info').checked;
 
   // 1. 먼저 Notion에 계약 저장
   const body = {
@@ -1416,6 +1417,7 @@ async function saveContract() {
       signedAt,
       marketingConsent,
       adConsent,
+      privacyConsent,
       note,
       sigData,
     });
@@ -1496,6 +1498,7 @@ async function viewContractData(c) {
     endDate: c.endDate || '—',
     signedAt: c.signedAt || '—',
     marketingConsent: false, adConsent: false,
+    privacyConsent: true,
     note: c.note || '', sigData,
   });
 }
@@ -1632,7 +1635,7 @@ function showContractPrint(data) {
 
   <p><b>7. 개인정보 수집 동의서</b><br>
   · 개인정보 보호법 제15조(개인정보의 수집·이용) 제1항 및 제2항에 따라, 회원가입 시 이름, 성별, 생년월일, 주소, 연락처 등의 개인정보를 회원관리(공지사항, 이벤트 안내문자 및 전화연락 등) 목적으로 수집함을 안내드리며, 계약 유효기간 이후 1년까지 해당 정보를 보유함에 동의합니다.<br>
-  &nbsp;&nbsp;□ 동의함 &nbsp;&nbsp; □ 동의하지 않음</p>
+  &nbsp;&nbsp;${data.privacyConsent ? '■' : '□'} 동의함 &nbsp;&nbsp; ${data.privacyConsent ? '□' : '■'} 동의하지 않음</p>
 </div>
 
 <hr class="thin">
@@ -1705,6 +1708,7 @@ function previewContractPDF() {
     signedAt: new Date().toISOString().split('T')[0],
     marketingConsent: false,
     adConsent: false,
+    privacyConsent: document.getElementById('nc-agree-info')?.checked || false,
     note: document.getElementById('nc-note').value,
     sigData,
   });
