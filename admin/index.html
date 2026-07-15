@@ -2307,20 +2307,25 @@ function calNext() { calCurrentDate.setDate(calCurrentDate.getDate() + 7); rende
 function calReload() { calDataLoaded = false; loadCalendar(); }
 
 function getWeekDates(base) {
-  // 로컬 시간 기준 (timezone 문제 방지)
-  const localDate = new Date(base.getFullYear(), base.getMonth(), base.getDate());
-  const day = localDate.getDay(); // 0=일, 1=월, ..., 6=토
-  const diff = day === 0 ? -6 : 1 - day; // 월요일로 이동
-  const mon = new Date(localDate);
-  mon.setDate(localDate.getDate() + diff);
+  // 오늘 날짜를 로컬 기준으로 계산
+  const y = base.getFullYear();
+  const mo = base.getMonth();
+  const da = base.getDate();
+  const day = new Date(y, mo, da).getDay(); // 0=일
+  const diff = day === 0 ? -6 : 1 - day;
+  
   return Array.from({length: 5}, (_, i) => {
-    const d = new Date(mon);
-    d.setDate(mon.getDate() + i);
+    const d = new Date(y, mo, da + diff + i);
+    const dy = d.getFullYear();
+    const dm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    d.dateStr = `${dy}-${dm}-${dd}`;
     return d;
   });
 }
 
 function toLocalDateStr(d) {
+  if (d.dateStr) return d.dateStr;
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
@@ -2369,7 +2374,8 @@ function getInstructorColor(instructorId) {
 function renderCalendar() {
   const dates = getWeekDates(calCurrentDate);
   const dayNames = ['월','화','수','목','금'];
-  const today = new Date().toISOString().split('T')[0];
+  const _now = new Date();
+  const today = `${_now.getFullYear()}-${String(_now.getMonth()+1).padStart(2,'0')}-${String(_now.getDate()).padStart(2,'0')}`;
 
   const startStr = dates[0].toLocaleDateString('ko-KR', {month:'long', day:'numeric'});
   const endStr = dates[4].toLocaleDateString('ko-KR', {month:'long', day:'numeric'});
