@@ -188,6 +188,25 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
 /* ── LOADING ── */
 .loading{text-align:center;padding:40px;color:var(--text-muted);font-size:13px;}
 
+/* ── CALENDAR ── */
+.calendar-nav{display:flex;align-items:center;gap:12px;margin-bottom:20px;}
+.calendar-nav button{background:none;border:1px solid var(--border);padding:6px 12px;cursor:pointer;font-family:'Nanum Gothic',sans-serif;font-size:13px;}
+.calendar-nav button:hover{border-color:var(--accent);}
+.calendar-title{font-family:'Outfit',sans-serif;font-weight:300;font-size:18px;}
+.calendar-grid{display:grid;overflow-x:auto;}
+.cal-table{width:100%;border-collapse:collapse;min-width:600px;}
+.cal-table th{padding:8px 10px;text-align:center;font-size:11px;color:var(--text-muted);background:var(--surface);border:1px solid var(--border);font-weight:400;}
+.cal-table td{padding:2px;border:1px solid var(--border);vertical-align:top;height:44px;min-width:120px;}
+.cal-time{padding:8px 10px;font-size:11px;color:var(--text-muted);background:var(--surface);border:1px solid var(--border);text-align:center;white-space:nowrap;width:60px;}
+.cal-slot{width:100%;height:100%;min-height:40px;cursor:pointer;position:relative;}
+.cal-slot:hover{background:var(--surface);}
+.cal-block{padding:4px 6px;font-size:11px;border-radius:2px;margin:2px;cursor:pointer;}
+.cal-block.reserved{background:#EBF5FB;color:var(--info);border-left:3px solid var(--info);}
+.cal-block.available{background:#EAFAF1;color:var(--success);border-left:3px solid var(--success);}
+.cal-block.blocked{background:#FDEDEC;color:var(--danger);border-left:3px solid var(--danger);}
+.cal-block.noshow{background:#FEF9E7;color:var(--warning);border-left:3px solid var(--warning);}
+.instructor-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;font-size:11px;background:var(--surface);border:1px solid var(--border);margin-right:6px;margin-bottom:6px;cursor:pointer;}
+.instructor-badge.active{background:var(--text);color:var(--white);border-color:var(--text);}
 /* ── TOAST ── */
 .toast{position:fixed;bottom:24px;right:24px;padding:14px 20px;background:var(--text);color:var(--white);font-size:13px;z-index:999;transform:translateY(100px);opacity:0;transition:all 0.3s;}
 .toast.show{transform:translateY(0);opacity:1;}
@@ -233,6 +252,14 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
         계약 관리
       </div>
+      <div class="nav-item" onclick="showPage('schedule')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        예약 캘린더
+      </div>
+      <div class="nav-item" onclick="showPage('instructors')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+        강사 관리
+      </div>
     </nav>
     <div class="sidebar-bottom">
       <button class="logout-btn" onclick="doLogout()">로그아웃</button>
@@ -255,6 +282,23 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
         <div class="stat-card"><div class="stat-label">이번달 신규</div><div class="stat-value" id="stat-new">—</div></div>
       </div>
       <div id="alert-list"></div>
+
+      <!-- 주간 캘린더 -->
+      <div style="margin-top:24px;">
+        <div class="calendar-nav">
+          <button onclick="calPrev()">◀</button>
+          <div class="calendar-title" id="cal-title"></div>
+          <button onclick="calNext()">▶</button>
+          <button onclick="calToday()" style="margin-left:8px;">오늘</button>
+          <div style="margin-left:auto;display:flex;flex-wrap:wrap;gap:4px;" id="instructor-filter"></div>
+        </div>
+        <div class="calendar-grid">
+          <table class="cal-table" id="cal-table">
+            <thead id="cal-head"></thead>
+            <tbody id="cal-body"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
 
     <!-- MEMBERS -->
@@ -318,6 +362,43 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
         </thead>
         <tbody id="programs-table-body">
           <tr><td colspan="9" class="loading">불러오는 중...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- SCHEDULE -->
+    <div class="page" id="page-schedule">
+      <div class="page-header">
+        <div class="page-title">예약 캘린더</div>
+        <button class="btn btn-primary" onclick="openNewScheduleModal()">+ 예약 추가</button>
+      </div>
+      <div class="calendar-nav">
+        <button onclick="calPrev()">◀</button>
+        <div class="calendar-title" id="cal-title2"></div>
+        <button onclick="calNext()">▶</button>
+        <button onclick="calToday()" style="margin-left:8px;">오늘</button>
+        <div style="margin-left:auto;display:flex;flex-wrap:wrap;gap:4px;" id="instructor-filter2"></div>
+      </div>
+      <div class="calendar-grid">
+        <table class="cal-table" id="cal-table2">
+          <thead id="cal-head2"></thead>
+          <tbody id="cal-body2"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- INSTRUCTORS -->
+    <div class="page" id="page-instructors">
+      <div class="page-header">
+        <div class="page-title">강사 관리</div>
+        <button class="btn btn-primary" onclick="openNewInstructorModal()">+ 강사 등록</button>
+      </div>
+      <table class="member-table">
+        <thead>
+          <tr><th>이름</th><th>연락처</th><th>이메일</th><th>레벨</th><th>상태</th><th>가용일정</th><th>관리</th></tr>
+        </thead>
+        <tbody id="instructors-table-body">
+          <tr><td colspan="7" class="loading">불러오는 중...</td></tr>
         </tbody>
       </table>
     </div>
@@ -780,6 +861,266 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
   </div>
 </div>
 
+<!-- MODAL: 강사 등록 -->
+<div class="modal-overlay" id="modal-new-instructor" style="display:none">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <div class="modal-title">강사 등록</div>
+      <button class="modal-close" onclick="closeModal('modal-new-instructor')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row full">
+        <div class="form-group"><label class="form-label required">이름</label><input class="form-input" id="ni-name" placeholder="홍길동"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">연락처</label><input class="form-input" id="ni-phone" placeholder="010-0000-0000" oninput="formatPhone(this)" maxlength="13"></div>
+        <div class="form-group"><label class="form-label">이메일</label><input class="form-input" id="ni-email" type="email" placeholder="instructor@email.com"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">레벨</label>
+          <select class="form-select" id="ni-level">
+            <option value="">선택</option>
+            <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">상태</label>
+          <select class="form-select" id="ni-active">
+            <option value="true">활성</option><option value="false">비활성</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-new-instructor')">취소</button>
+      <button class="btn btn-primary" onclick="saveInstructor()">등록</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: 강사 수정 -->
+<div class="modal-overlay" id="modal-edit-instructor" style="display:none">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <div class="modal-title">강사 수정</div>
+      <button class="modal-close" onclick="closeModal('modal-edit-instructor')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="ei-id">
+      <div class="form-row full">
+        <div class="form-group"><label class="form-label required">이름</label><input class="form-input" id="ei-name"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">연락처</label><input class="form-input" id="ei-phone" oninput="formatPhone(this)" maxlength="13"></div>
+        <div class="form-group"><label class="form-label">이메일</label><input class="form-input" id="ei-email" type="email"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">레벨</label>
+          <select class="form-select" id="ei-level">
+            <option value="">선택</option>
+            <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">상태</label>
+          <select class="form-select" id="ei-active">
+            <option value="true">활성</option><option value="false">비활성</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-edit-instructor')">취소</button>
+      <button class="btn btn-primary" onclick="updateInstructor()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: 강사 가용일정 -->
+<div class="modal-overlay" id="modal-instructor-schedule" style="display:none">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-header">
+      <div class="modal-title" id="is-title">가용 일정 등록</div>
+      <button class="modal-close" onclick="closeModal('modal-instructor-schedule')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="is-instructor-id">
+      <div class="form-section">정기 가용 일정</div>
+      <div class="form-row full">
+        <div class="form-group">
+          <label class="form-label">가능 요일 (복수선택)</label>
+          <div style="display:flex;gap:10px;margin-top:4px;" id="is-days">
+            <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" value="월"> 월</label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" value="화"> 화</label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" value="수"> 수</label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" value="목"> 목</label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" value="금"> 금</label>
+          </div>
+        </div>
+      </div>
+      <div class="form-row full">
+        <div class="form-group">
+          <label class="form-label">가능 시간 (복수선택)</label>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;" id="is-times">
+            ${['09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00','21:00'].map(t =>
+              `<label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="checkbox" value="${t}"> ${t}</label>`
+            ).join('')}
+          </div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">적용 시작일</label><input class="form-input" id="is-start" type="date"></div>
+        <div class="form-group"><label class="form-label">적용 종료일</label><input class="form-input" id="is-end" type="date"></div>
+      </div>
+      <div class="form-section">예약불가 일자 설정</div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">예약불가 날짜</label><input class="form-input" id="is-block-date" type="date"></div>
+        <div class="form-group">
+          <label class="form-label">시간 (비워두면 하루종일)</label>
+          <select class="form-select" id="is-block-time">
+            <option value="">하루종일</option>
+            <option>09:00</option><option>10:00</option><option>11:00</option><option>12:00</option>
+            <option>13:00</option><option>14:00</option><option>15:00</option><option>16:00</option>
+            <option>17:00</option><option>18:00</option><option>19:00</option><option>20:00</option><option>21:00</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn btn-secondary btn-sm" onclick="addBlockedDate()" style="margin-bottom:12px;">예약불가 추가</button>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-instructor-schedule')">닫기</button>
+      <button class="btn btn-primary" onclick="saveInstructorSchedule()">가용일정 저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: 예약 추가 -->
+<div class="modal-overlay" id="modal-new-schedule" style="display:none">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header">
+      <div class="modal-title">예약 추가</div>
+      <button class="modal-close" onclick="closeModal('modal-new-schedule')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label required">회원</label>
+          <select class="form-select" id="ns-member" onchange="onScheduleMemberChange()">
+            <option value="">회원 선택</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label required">계약</label>
+          <select class="form-select" id="ns-contract">
+            <option value="">계약 선택</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label required">강사</label>
+          <select class="form-select" id="ns-instructor">
+            <option value="">강사 선택</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label required">날짜</label>
+          <input class="form-input" id="ns-date" type="date">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label required">시간</label>
+          <select class="form-select" id="ns-time">
+            <option value="">시간 선택</option>
+            <option>09:00</option><option>10:00</option><option>11:00</option><option>12:00</option>
+            <option>13:00</option><option>14:00</option><option>15:00</option><option>16:00</option>
+            <option>17:00</option><option>18:00</option><option>19:00</option><option>20:00</option><option>21:00</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">유형</label>
+          <select class="form-select" id="ns-type">
+            <option value="회원예약">회원예약</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row full">
+        <div class="form-group" style="flex-direction:row;align-items:center;gap:10px;">
+          <input type="checkbox" id="ns-recurring" onchange="toggleRecurring()">
+          <label for="ns-recurring" style="font-size:13px;cursor:pointer">정기 일정으로 등록 (계약 기간 내 매주 반복)</label>
+        </div>
+      </div>
+      <div id="ns-recurring-detail" style="display:none">
+        <div class="form-row full">
+          <div class="form-group">
+            <label class="form-label">반복 요일</label>
+            <select class="form-select" id="ns-recurring-day">
+              <option value="월">월요일</option><option value="화">화요일</option>
+              <option value="수">수요일</option><option value="목">목요일</option><option value="금">금요일</option>
+            </select>
+          </div>
+        </div>
+        <div style="font-size:12px;color:var(--text-muted);padding:8px 12px;background:var(--surface);">
+          📅 선택한 계약의 종료일까지 매주 자동 등록됩니다.
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-new-schedule')">취소</button>
+      <button class="btn btn-primary" onclick="saveSchedule()">예약 등록</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: 예약 상세/수정 -->
+<div class="modal-overlay" id="modal-schedule-detail" style="display:none">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-header">
+      <div class="modal-title" id="sd-title">예약 상세</div>
+      <button class="modal-close" onclick="closeModal('modal-schedule-detail')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="sd-id">
+      <div id="sd-info" style="margin-bottom:16px;font-size:13px;line-height:2;"></div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">날짜 변경</label>
+          <input class="form-input" id="sd-date" type="date">
+        </div>
+        <div class="form-group">
+          <label class="form-label">시간 변경</label>
+          <select class="form-select" id="sd-time">
+            <option value="">시간 선택</option>
+            <option>09:00</option><option>10:00</option><option>11:00</option><option>12:00</option>
+            <option>13:00</option><option>14:00</option><option>15:00</option><option>16:00</option>
+            <option>17:00</option><option>18:00</option><option>19:00</option><option>20:00</option><option>21:00</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row full">
+        <div class="form-group">
+          <label class="form-label">출석 상태</label>
+          <select class="form-select" id="sd-status">
+            <option value="확정">확정</option>
+            <option value="참석">참석</option>
+            <option value="노쇼">노쇼</option>
+            <option value="취소">취소</option>
+            <option value="일정변경">일정변경</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger btn-sm" onclick="deleteSchedule()">삭제</button>
+      <button class="btn btn-secondary" onclick="closeModal('modal-schedule-detail')">닫기</button>
+      <button class="btn btn-primary" onclick="updateSchedule()">저장</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -823,6 +1164,8 @@ function showPage(page) {
   if (page === 'members') loadMembers();
   if (page === 'programs') loadPrograms();
   if (page === 'contracts') loadAllContracts();
+  if (page === 'schedule') { loadCalendar(); }
+  if (page === 'instructors') loadInstructors();
 }
 
 function showTab(tab, el) {
@@ -837,6 +1180,7 @@ function showTab(tab, el) {
 function initApp() {
   document.getElementById('today-date').textContent = new Date().toLocaleDateString('ko-KR', {year:'numeric',month:'long',day:'numeric',weekday:'long'});
   loadDashboard();
+  loadCalendar();
 }
 
 // ── DASHBOARD ──
@@ -1916,6 +2260,474 @@ function formatPhone(input) {
     input.value = v.slice(0,3) + '-' + v.slice(3,7) + '-' + v.slice(7,11);
   }
 }
+
+
+// ── CALENDAR STATE ──
+let calCurrentDate = new Date();
+let allInstructors = [];
+let allSchedules = [];
+let calFilterInstructors = []; // 필터링할 강사 ID (빈 배열 = 전체)
+
+// ── CALENDAR INIT ──
+function calToday() { calCurrentDate = new Date(); renderCalendar(); }
+function calPrev() { calCurrentDate.setDate(calCurrentDate.getDate() - 7); renderCalendar(); }
+function calNext() { calCurrentDate.setDate(calCurrentDate.getDate() + 7); renderCalendar(); }
+
+function getWeekDates(base) {
+  const day = base.getDay();
+  const diff = day === 0 ? -6 : 1 - day; // 월요일 시작
+  const mon = new Date(base);
+  mon.setDate(base.getDate() + diff);
+  return Array.from({length: 5}, (_, i) => {
+    const d = new Date(mon);
+    d.setDate(mon.getDate() + i);
+    return d;
+  });
+}
+
+async function loadCalendar() {
+  const [instrRes, schRes] = await Promise.all([
+    fetch(`${API}/api/instructors`),
+    fetch(`${API}/api/schedules?startDate=${getWeekDates(calCurrentDate)[0].toISOString().split('T')[0]}&endDate=${getWeekDates(calCurrentDate)[4].toISOString().split('T')[0]}`)
+  ]);
+  const instrData = await instrRes.json();
+  const schData = await schRes.json();
+  allInstructors = instrData.instructors || [];
+  allSchedules = schData.schedules || [];
+  renderCalendar();
+}
+
+function renderCalendar() {
+  const dates = getWeekDates(calCurrentDate);
+  const startStr = dates[0].toLocaleDateString('ko-KR', {month:'long', day:'numeric'});
+  const endStr = dates[4].toLocaleDateString('ko-KR', {month:'long', day:'numeric'});
+  const titleStr = `${calCurrentDate.getFullYear()}년 ${startStr} ~ ${endStr}`;
+
+  ['cal-title','cal-title2'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = titleStr;
+  });
+
+  // 강사 필터 버튼
+  ['instructor-filter','instructor-filter2'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.innerHTML = `<span class="instructor-badge ${calFilterInstructors.length===0?'active':''}" onclick="setCalFilter(null)">전체</span>` +
+      allInstructors.filter(i => i.isActive).map(i =>
+        `<span class="instructor-badge ${calFilterInstructors.includes(i.id)?'active':''}" onclick="setCalFilter('${i.id}')">${i.name}</span>`
+      ).join('');
+  });
+
+  const times = ['09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00','21:00'];
+  const dayNames = ['월','화','수','목','금'];
+
+  // 필터링된 강사
+  const filteredInstrs = calFilterInstructors.length > 0
+    ? allInstructors.filter(i => calFilterInstructors.includes(i.id))
+    : allInstructors.filter(i => i.isActive);
+
+  const thead = `<tr>
+    <th style="width:60px">시간</th>
+    ${filteredInstrs.map(i => `<th>${i.name}<br><small style="color:var(--text-muted)">Lv.${i.level}</small></th>`).join('')}
+  </tr>`;
+
+  const tbody = times.map(time => {
+    const cells = filteredInstrs.map(instr => {
+      const slots = allSchedules.filter(s =>
+        s.time === time && s.instructorId === instr.id
+      );
+      const blocks = slots.map(s => {
+        let cls = 'reserved';
+        if (s.type === '가용일정') cls = 'available';
+        if (s.type === '예약불가') cls = 'blocked';
+        if (s.status === '노쇼') cls = 'noshow';
+        const label = s.type === '가용일정' ? '가용' :
+          s.type === '예약불가' ? '불가' :
+          (s.name.split(' - ')[0] || s.name);
+        return `<div class="cal-block ${cls}" onclick="openScheduleDetail('${s.id}')" title="${s.name}">${label}</div>`;
+      }).join('');
+
+      const dateStr = dates.find(d => {
+        // 날짜 매칭은 실제 schedule.date로
+        return slots.some(s => s.date === d.toISOString().split('T')[0]);
+      });
+
+      // 빈 슬롯 클릭 → 예약 추가
+      const today = new Date().toISOString().split('T')[0];
+      return `<td><div class="cal-slot" onclick="openNewScheduleWithSlot('${instr.id}','${time}')">${blocks || ''}</div></td>`;
+    }).join('');
+
+    return `<tr><td class="cal-time">${time}</td>${cells}</tr>`;
+  }).join('');
+
+  ['cal-head','cal-head2'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = thead;
+  });
+  ['cal-body','cal-body2'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = tbody;
+  });
+}
+
+function setCalFilter(instructorId) {
+  if (!instructorId) {
+    calFilterInstructors = [];
+  } else {
+    const idx = calFilterInstructors.indexOf(instructorId);
+    if (idx >= 0) calFilterInstructors.splice(idx, 1);
+    else calFilterInstructors.push(instructorId);
+  }
+  renderCalendar();
+}
+
+// ── INSTRUCTORS ──
+async function loadInstructors() {
+  const tbody = document.getElementById('instructors-table-body');
+  try {
+    const res = await fetch(`${API}/api/instructors`);
+    const data = await res.json();
+    allInstructors = data.instructors || [];
+
+    if (!allInstructors.length) {
+      tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><p>등록된 강사가 없습니다</p></div></td></tr>';
+      return;
+    }
+
+    const levelColors = {'1':'#EBF5FB','2':'#EAFAF1','3':'#FEF9E7','4':'#FDEDEC','5':'#F4ECF7'};
+    tbody.innerHTML = allInstructors.map(i => `
+      <tr>
+        <td><b>${i.name}</b></td>
+        <td>${i.phone||'—'}</td>
+        <td>${i.email||'—'}</td>
+        <td><span class="badge" style="background:${levelColors[i.level]||'var(--surface)'}">Lv.${i.level||'—'}</span></td>
+        <td><span class="badge ${i.isActive?'badge-active':'badge-muted'}">${i.isActive?'활성':'비활성'}</span></td>
+        <td><button class="btn btn-secondary btn-sm" onclick="openInstructorSchedule('${i.id}','${i.name}')">일정 설정</button></td>
+        <td>
+          <button class="btn btn-secondary btn-sm" onclick="openEditInstructorModal(${JSON.stringify(i).replace(/"/g,'&quot;')})">수정</button>
+          <button class="btn btn-sm" style="background:#FDEDEC;color:var(--danger);border:1px solid #F5B7B1;margin-left:4px" onclick="deleteInstructor('${i.id}','${i.name}')">삭제</button>
+        </td>
+      </tr>
+    `).join('');
+  } catch(e) {
+    tbody.innerHTML = '<tr><td colspan="7" class="loading">불러오기 실패</td></tr>';
+  }
+}
+
+function openNewInstructorModal() {
+  document.getElementById('ni-name').value = '';
+  document.getElementById('ni-phone').value = '';
+  document.getElementById('ni-email').value = '';
+  document.getElementById('ni-level').value = '';
+  document.getElementById('ni-active').value = 'true';
+  document.getElementById('modal-new-instructor').style.display = 'flex';
+}
+
+async function saveInstructor() {
+  const name = document.getElementById('ni-name').value.trim();
+  if (!name) { showToast('이름을 입력해주세요', 'error'); return; }
+  const body = {
+    name,
+    phone: document.getElementById('ni-phone').value,
+    email: document.getElementById('ni-email').value,
+    level: document.getElementById('ni-level').value,
+    isActive: document.getElementById('ni-active').value === 'true',
+  };
+  try {
+    const res = await fetch(`${API}/api/instructors`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+    const data = await res.json();
+    if (res.ok) { closeModal('modal-new-instructor'); showToast('강사가 등록되었습니다', 'success'); loadInstructors(); }
+    else showToast('등록 실패: ' + (data.error||'오류'), 'error');
+  } catch(e) { showToast('등록 실패: ' + e.message, 'error'); }
+}
+
+function openEditInstructorModal(i) {
+  document.getElementById('ei-id').value = i.id;
+  document.getElementById('ei-name').value = i.name;
+  document.getElementById('ei-phone').value = i.phone||'';
+  document.getElementById('ei-email').value = i.email||'';
+  document.getElementById('ei-level').value = i.level||'';
+  document.getElementById('ei-active').value = i.isActive ? 'true' : 'false';
+  document.getElementById('modal-edit-instructor').style.display = 'flex';
+}
+
+async function updateInstructor() {
+  const id = document.getElementById('ei-id').value;
+  const body = {
+    name: document.getElementById('ei-name').value,
+    phone: document.getElementById('ei-phone').value,
+    email: document.getElementById('ei-email').value,
+    level: document.getElementById('ei-level').value,
+    isActive: document.getElementById('ei-active').value === 'true',
+  };
+  try {
+    const res = await fetch(`${API}/api/instructors?id=${id}`, { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+    if (res.ok) { closeModal('modal-edit-instructor'); showToast('수정되었습니다', 'success'); loadInstructors(); }
+    else { const d = await res.json(); showToast('수정 실패: ' + (d.error||'오류'), 'error'); }
+  } catch(e) { showToast('수정 실패', 'error'); }
+}
+
+async function deleteInstructor(id, name) {
+  if (!confirm(`"${name}" 강사를 삭제하시겠습니까?`)) return;
+  try {
+    const res = await fetch(`${API}/api/instructors?id=${id}`, { method:'DELETE' });
+    if (res.ok) { showToast('삭제되었습니다', 'success'); loadInstructors(); }
+    else { const d = await res.json(); showToast('삭제 실패: ' + (d.error||'오류'), 'error'); }
+  } catch(e) { showToast('삭제 실패', 'error'); }
+}
+
+// ── INSTRUCTOR SCHEDULE ──
+function openInstructorSchedule(id, name) {
+  document.getElementById('is-instructor-id').value = id;
+  document.getElementById('is-title').textContent = `${name} — 가용 일정`;
+  document.getElementById('is-start').value = new Date().toISOString().split('T')[0];
+  // 종료일 기본값: 6개월 후
+  const end = new Date();
+  end.setMonth(end.getMonth() + 6);
+  document.getElementById('is-end').value = end.toISOString().split('T')[0];
+  document.getElementById('modal-instructor-schedule').style.display = 'flex';
+}
+
+async function saveInstructorSchedule() {
+  const instructorId = document.getElementById('is-instructor-id').value;
+  const instructorName = allInstructors.find(i => i.id === instructorId)?.name || '';
+  const startDate = document.getElementById('is-start').value;
+  const endDate = document.getElementById('is-end').value;
+
+  const days = Array.from(document.querySelectorAll('#is-days input:checked')).map(cb => cb.value);
+  const times = Array.from(document.querySelectorAll('#is-times input:checked')).map(cb => cb.value);
+
+  if (!days.length || !times.length) {
+    showToast('요일과 시간을 선택해주세요', 'error'); return;
+  }
+
+  showToast('가용일정 등록 중...', '');
+
+  let total = 0;
+  for (const day of days) {
+    for (const time of times) {
+      try {
+        const res = await fetch(`${API}/api/schedules`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            instructorId,
+            instructorName,
+            date: startDate,
+            time,
+            type: '가용일정',
+            isRecurring: true,
+            recurringDay: day,
+            contractEndDate: endDate,
+            title: `${instructorName} 가용 - ${day} ${time}`,
+          })
+        });
+        const data = await res.json();
+        total += data.count || 0;
+      } catch(e) {}
+    }
+  }
+
+  closeModal('modal-instructor-schedule');
+  showToast(`가용일정 ${total}개 등록 완료`, 'success');
+  loadCalendar();
+}
+
+async function addBlockedDate() {
+  const instructorId = document.getElementById('is-instructor-id').value;
+  const instructorName = allInstructors.find(i => i.id === instructorId)?.name || '';
+  const date = document.getElementById('is-block-date').value;
+  const time = document.getElementById('is-block-time').value;
+
+  if (!date) { showToast('날짜를 입력해주세요', 'error'); return; }
+
+  const body = {
+    instructorId,
+    date,
+    time: time || '09:00',
+    type: '예약불가',
+    isRecurring: false,
+    title: `${instructorName} 예약불가 - ${date}${time?' '+time:''}`,
+  };
+
+  if (!time) {
+    // 하루종일 — 모든 시간대 등록
+    const allTimes = ['09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00','21:00'];
+    for (const t of allTimes) {
+      await fetch(`${API}/api/schedules`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ ...body, time: t, title: `${instructorName} 예약불가 - ${date} ${t}` })
+      });
+    }
+  } else {
+    await fetch(`${API}/api/schedules`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(body)
+    });
+  }
+
+  showToast('예약불가 일정이 추가되었습니다', 'success');
+  document.getElementById('is-block-date').value = '';
+  document.getElementById('is-block-time').value = '';
+  loadCalendar();
+}
+
+// ── SCHEDULE ──
+async function openNewScheduleModal() {
+  // 회원/강사 목록 로드
+  const [mRes, iRes] = await Promise.all([
+    fetch(`${API}/api/members`),
+    fetch(`${API}/api/instructors`)
+  ]);
+  const mData = await mRes.json();
+  const iData = await iRes.json();
+
+  const memberSel = document.getElementById('ns-member');
+  memberSel.innerHTML = '<option value="">회원 선택</option>' +
+    (mData.members||[]).map(m => `<option value="${m.id}">${m.name}</option>`).join('');
+
+  const instrSel = document.getElementById('ns-instructor');
+  instrSel.innerHTML = '<option value="">강사 선택</option>' +
+    (iData.instructors||[]).filter(i=>i.isActive).map(i => `<option value="${i.id}">${i.name} (Lv.${i.level})</option>`).join('');
+
+  document.getElementById('ns-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('ns-recurring').checked = false;
+  document.getElementById('ns-recurring-detail').style.display = 'none';
+  document.getElementById('modal-new-schedule').style.display = 'flex';
+}
+
+function openNewScheduleWithSlot(instructorId, time) {
+  openNewScheduleModal().then(() => {
+    document.getElementById('ns-instructor').value = instructorId;
+    document.getElementById('ns-time').value = time;
+  });
+}
+
+async function onScheduleMemberChange() {
+  const memberId = document.getElementById('ns-member').value;
+  if (!memberId) return;
+  const res = await fetch(`${API}/api/contracts?memberId=${memberId}`);
+  const data = await res.json();
+  const contracts = (data.contracts||[]).filter(c => c.status === '진행중');
+  const sel = document.getElementById('ns-contract');
+  sel.innerHTML = '<option value="">계약 선택</option>' +
+    contracts.map(c => `<option value="${c.id}" data-end="${c.endDate}">${c.title} (~${c.endDate})</option>`).join('');
+}
+
+function toggleRecurring() {
+  const checked = document.getElementById('ns-recurring').checked;
+  document.getElementById('ns-recurring-detail').style.display = checked ? 'block' : 'none';
+  if (checked) {
+    // 날짜의 요일 자동 선택
+    const date = document.getElementById('ns-date').value;
+    if (date) {
+      const dayMap = ['일','월','화','수','목','금','토'];
+      const day = dayMap[new Date(date).getDay()];
+      const sel = document.getElementById('ns-recurring-day');
+      for (let opt of sel.options) { if (opt.value === day) { sel.value = day; break; } }
+    }
+  }
+}
+
+async function saveSchedule() {
+  const memberId = document.getElementById('ns-member').value;
+  const contractId = document.getElementById('ns-contract').value;
+  const instructorId = document.getElementById('ns-instructor').value;
+  const date = document.getElementById('ns-date').value;
+  const time = document.getElementById('ns-time').value;
+  const isRecurring = document.getElementById('ns-recurring').checked;
+  const recurringDay = document.getElementById('ns-recurring-day').value;
+
+  if (!memberId || !instructorId || !date || !time) {
+    showToast('회원, 강사, 날짜, 시간을 모두 선택해주세요', 'error'); return;
+  }
+
+  const memberName = document.getElementById('ns-member').options[document.getElementById('ns-member').selectedIndex].text;
+  const contractSel = document.getElementById('ns-contract');
+  const contractEndDate = contractSel.options[contractSel.selectedIndex]?.dataset?.end || '';
+
+  showToast('예약 등록 중...', '');
+
+  const body = {
+    memberId, contractId, instructorId,
+    memberName,
+    date, time,
+    type: '회원예약',
+    isRecurring,
+    recurringDay: isRecurring ? recurringDay : '',
+    contractEndDate: isRecurring ? contractEndDate : '',
+    status: '확정',
+  };
+
+  try {
+    const res = await fetch(`${API}/api/schedules`, {
+      method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (res.ok) {
+      closeModal('modal-new-schedule');
+      showToast(`예약 ${data.count}개 등록 완료`, 'success');
+      loadCalendar();
+    } else showToast('등록 실패: ' + (data.error||'오류'), 'error');
+  } catch(e) { showToast('등록 실패: ' + e.message, 'error'); }
+}
+
+async function openScheduleDetail(id) {
+  const s = allSchedules.find(s => s.id === id);
+  if (!s) return;
+
+  document.getElementById('sd-id').value = id;
+  document.getElementById('sd-title').textContent = s.name;
+  document.getElementById('sd-date').value = s.date;
+  document.getElementById('sd-time').value = s.time;
+  document.getElementById('sd-status').value = s.status || '확정';
+
+  const instr = allInstructors.find(i => i.id === s.instructorId);
+  document.getElementById('sd-info').innerHTML = `
+    <div>📅 날짜: <b>${s.date}</b></div>
+    <div>⏰ 시간: <b>${s.time}</b></div>
+    <div>👤 강사: <b>${instr?.name || '—'}</b></div>
+    <div>🏷️ 유형: <b>${s.type}</b></div>
+    <div>📋 상태: <b>${s.status}</b></div>
+  `;
+
+  document.getElementById('modal-schedule-detail').style.display = 'flex';
+}
+
+async function updateSchedule() {
+  const id = document.getElementById('sd-id').value;
+  const body = {
+    date: document.getElementById('sd-date').value,
+    time: document.getElementById('sd-time').value,
+    status: document.getElementById('sd-status').value,
+  };
+  try {
+    const res = await fetch(`${API}/api/schedules?id=${id}`, {
+      method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body)
+    });
+    if (res.ok) {
+      closeModal('modal-schedule-detail');
+      showToast('수정되었습니다', 'success');
+      loadCalendar();
+    } else { const d = await res.json(); showToast('수정 실패: ' + (d.error||'오류'), 'error'); }
+  } catch(e) { showToast('수정 실패', 'error'); }
+}
+
+async function deleteSchedule() {
+  const id = document.getElementById('sd-id').value;
+  if (!confirm('이 예약을 삭제하시겠습니까?')) return;
+  try {
+    const res = await fetch(`${API}/api/schedules?id=${id}`, { method: 'DELETE' });
+    if (res.ok) {
+      closeModal('modal-schedule-detail');
+      showToast('삭제되었습니다', 'success');
+      loadCalendar();
+    } else { const d = await res.json(); showToast('삭제 실패: ' + (d.error||'오류'), 'error'); }
+  } catch(e) { showToast('삭제 실패', 'error'); }
+}
+
 
 // ── TOAST ──
 function showToast(msg, type='') {
