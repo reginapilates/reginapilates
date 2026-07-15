@@ -260,6 +260,10 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
         강사 관리
       </div>
+      <div class="nav-item" onclick="showPage('sessions-log')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>
+        세션 로그
+      </div>
       <a class="nav-item" href="/tools/price-viewer" target="_blank" style="text-decoration:none;">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
         레슨비 안내 ↗
@@ -404,6 +408,29 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
         </thead>
         <tbody id="instructors-table-body">
           <tr><td colspan="7" class="loading">불러오는 중...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- SESSIONS LOG -->
+    <div class="page" id="page-sessions-log">
+      <div class="page-header">
+        <div class="page-title">세션 로그</div>
+      </div>
+      <div class="toolbar">
+        <input class="search-input" id="session-member-search" placeholder="회원 이름 검색..." oninput="filterSessionLog()">
+        <div class="filter-tabs">
+          <div class="filter-tab active" onclick="setSessionFilter('all',this)">전체</div>
+          <div class="filter-tab" onclick="setSessionFilter('참석',this)">참석</div>
+          <div class="filter-tab" onclick="setSessionFilter('노쇼',this)">노쇼</div>
+        </div>
+      </div>
+      <table class="member-table">
+        <thead>
+          <tr><th>회차</th><th>회원</th><th>날짜</th><th>시간</th><th>강사</th><th>컨디션</th><th>출석</th><th>메모</th></tr>
+        </thead>
+        <tbody id="sessions-log-body">
+          <tr><td colspan="8" class="loading">불러오는 중...</td></tr>
         </tbody>
       </table>
     </div>
@@ -1208,6 +1235,7 @@ function showPage(page) {
   if (page === 'contracts') loadAllContracts();
   if (page === 'schedule') { loadCalendar(); }
   if (page === 'instructors') loadInstructors();
+  if (page === 'sessions-log') loadSessionsLog();
 }
 
 function showTab(tab, el) {
@@ -2295,6 +2323,89 @@ async function resumeContract(contractId) {
     showToast('세션이 재개되었습니다', 'success');
     await loadMemberContracts();
   } catch(e) { showToast('실패: ' + e.message, 'error'); }
+}
+
+// ── SESSIONS LOG ──
+let allSessionsLog = [];
+let sessionLogFilter = 'all';
+
+async function loadSessionsLog() {
+  const tbody = document.getElementById('sessions-log-body');
+  tbody.innerHTML = '<tr><td colspan="8" class="loading">불러오는 중...</td></tr>';
+
+  try {
+    const [sRes, mRes] = await Promise.all([
+      fetch(`${API}/api/sessions`),
+      fetch(`${API}/api/members`),
+    ]);
+    const sData = await sRes.json();
+    const mData = await mRes.json();
+
+    // 강사/회원 맵
+    const memberMap = {};
+    (mData.members||[]).forEach(m => memberMap[m.id] = m.name);
+    const instrMap = {};
+    allInstructors.forEach(i => instrMap[i.id] = i.name);
+
+    allSessionsLog = (sData.sessions||[]).map(s => ({
+      ...s,
+      memberName: memberMap[s.memberId] || s.name?.split(' #')[0] || '—',
+      instructorName: instrMap[s.instructorId] || '—',
+    }));
+
+    // 날짜 최신순 정렬
+    allSessionsLog.sort((a, b) => (b.date||'').localeCompare(a.date||''));
+
+    renderSessionLog();
+  } catch(e) {
+    tbody.innerHTML = '<tr><td colspan="8" class="empty-state">불러오기 실패</td></tr>';
+  }
+}
+
+function renderSessionLog() {
+  const search = document.getElementById('session-member-search')?.value || '';
+  let sessions = allSessionsLog;
+
+  if (search) sessions = sessions.filter(s => s.memberName.includes(search));
+  if (sessionLogFilter !== 'all') sessions = sessions.filter(s => s.attendanceStatus === sessionLogFilter);
+
+  const tbody = document.getElementById('sessions-log-body');
+  if (!sessions.length) {
+    tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><p>세션 기록이 없습니다</p></div></td></tr>';
+    return;
+  }
+
+  const condColors = { '최상':'#27AE60','좋음':'#2ECC71','보통':'#F1C40F','피로':'#E67E22','통증':'#E74C3C' };
+  const statusColors = { '참석':'var(--success)', '노쇼':'var(--danger)' };
+
+  tbody.innerHTML = sessions.map(s => `
+    <tr>
+      <td style="text-align:center;font-family:Outfit,sans-serif;font-size:16px;color:var(--accent)">#${s.sessionNo||'—'}</td>
+      <td><b>${s.memberName}</b></td>
+      <td>${s.date||'—'}</td>
+      <td>${s.time||'—'}</td>
+      <td>${s.instructorName}</td>
+      <td>
+        ${s.condition && s.condition !== '—'
+          ? `<span style="display:inline-flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:${condColors[s.condition]||'#ccc'};display:inline-block"></span>${s.condition}</span>`
+          : '—'}
+      </td>
+      <td>
+        ${s.attendanceStatus
+          ? `<span style="color:${statusColors[s.attendanceStatus]||'var(--text-muted)'};font-weight:700;font-size:12px">${s.attendanceStatus}</span>`
+          : '—'}
+      </td>
+      <td style="font-size:12px;color:var(--text-muted)">${s.memo && s.memo !== 'NO-SHOW' ? s.memo : ''}</td>
+    </tr>
+  `).join('');
+}
+
+function filterSessionLog() { renderSessionLog(); }
+function setSessionFilter(f, el) {
+  sessionLogFilter = f;
+  document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderSessionLog();
 }
 
 // ── PROGRAM EDIT/DELETE ──
