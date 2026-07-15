@@ -1,7 +1,5 @@
 // functions/api/schedules.js
 
-const TIMES = ['09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00','21:00'];
-
 export async function onRequest(context) {
   const { request, env } = context;
   const method = request.method;
@@ -16,7 +14,6 @@ export async function onRequest(context) {
   if (method === 'OPTIONS') return new Response(null, { headers });
 
   try {
-    // GET — 일정 조회
     if (method === 'GET') {
       const url = new URL(request.url);
       const startDate = url.searchParams.get('startDate');
@@ -24,33 +21,13 @@ export async function onRequest(context) {
       const instructorId = url.searchParams.get('instructorId');
       const memberId = url.searchParams.get('memberId');
 
-      // 기본 범위: 오늘 기준 1개월 전 ~ 3개월 후
-      const today = new Date();
-      const rangeStart = startDate || (() => {
-        const d = new Date(today); d.setMonth(d.getMonth() - 1); return d.toISOString().split('T')[0];
-      })();
-      const rangeEnd = endDate || (() => {
-        const d = new Date(today); d.setMonth(d.getMonth() + 3); return d.toISOString().split('T')[0];
-      })();
-
-      // Notion 날짜 필터 + 강사/회원 필터 조합
-      const filters = [
-        { property: 'Date', date: { on_or_after: rangeStart } },
-        { property: 'Date', date: { on_or_before: rangeEnd } },
-      ];
-      if (instructorId) filters.push({ property: 'Instructor', relation: { contains: instructorId } });
-      if (memberId) filters.push({ property: 'Member', relation: { contains: memberId } });
-
-      const filter = { and: filters };
-
-      // 페이지네이션으로 전체 결과 가져오기
+      // 날짜 필터 없이 전체 가져오기 (페이지네이션)
       let allResults = [];
       let hasMore = true;
       let startCursor = undefined;
 
       while (hasMore) {
         const body = {
-          filter,
           sorts: [
             { property: 'Date', direction: 'ascending' },
             { property: 'Time', direction: 'ascending' },
@@ -94,49 +71,38 @@ export async function onRequest(context) {
         status: page.properties.Status?.select?.name || '',
       }));
 
-      // 날짜 문자열 비교로 한번 더 필터링 (Notion 필터 보완)
-      schedules = schedules.filter(s => s.date >= rangeStart && s.date <= rangeEnd);
-      // 프론트에서 요청한 특정 주간 필터 (캘린더 뷰용)
-      if (startDate && endDate) {
-        schedules = schedules.filter(s => s.date >= startDate && s.date <= endDate);
-      }
+      // JS로 필터링
+      if (startDate) schedules = schedules.filter(s => s.date >= startDate);
+      if (endDate) schedules = schedules.filter(s => s.date <= endDate);
+      if (instructorId) schedules = schedules.filter(s => s.instructorId === instructorId);
+      if (memberId) schedules = schedules.filter(s => s.memberId === memberId);
 
-      return new Response(JSON.stringify({ schedules }), { headers });
+      return new Response(JSON.stringify({ schedules, total: schedules.length }), { headers });
     }
 
-    // POST — 예약 등록 (정기일정 포함)
+    // POST — 예약 등록
     if (method === 'POST') {
       const body = await request.json();
       const created = [];
 
       if (body.isRecurring && body.contractEndDate) {
-        // 정기 일정 — 계약 종료일까지 매주 생성
         const dayMap = { 월: 1, 화: 2, 수: 3, 목: 4, 금: 5 };
         const targetDay = dayMap[body.recurringDay];
-        const start = new Date(body.date);
         const end = new Date(body.contractEndDate);
 
-        let current = new Date(start);
-        // 첫 날짜가 해당 요일이 되도록 조정
+        let current = new Date(body.date);
         while (current.getDay() !== targetDay) {
           current.setDate(current.getDate() + 1);
         }
 
         while (current <= end) {
           const dateStr = current.toISOString().split('T')[0];
-          const memberName = body.memberName || '';
-          const title = `${memberName} - ${dateStr} ${body.time}`;
-
-          const res = await createSchedule(env, {
-            ...body,
-            date: dateStr,
-            title,
-          });
+          const title = `${body.memberName || ''} - ${dateStr} ${body.time}`;
+          const res = await createSchedule(env, { ...body, date: dateStr, title });
           if (res.id) created.push(res.id);
           current.setDate(current.getDate() + 7);
         }
       } else {
-        // 단일 일정
         const title = `${body.memberName || body.instructorName || ''} - ${body.date} ${body.time}`;
         const res = await createSchedule(env, { ...body, title });
         if (res.id) created.push(res.id);
@@ -145,7 +111,7 @@ export async function onRequest(context) {
       return new Response(JSON.stringify({ created, count: created.length, success: true }), { headers });
     }
 
-    // PUT — 일정 수정 (상태변경, 날짜/시간 변경)
+    // PUT — 일정 수정
     if (method === 'PUT') {
       const url = new URL(request.url);
       const id = url.searchParams.get('id');
