@@ -2902,8 +2902,8 @@ async function updateSchedule() {
         const condition = document.getElementById('sd-condition').value;
         const memo = document.getElementById('sd-memo').value;
 
-        // 세션 생성
-        await fetch(`${API}/api/sessions`, {
+        // 세션 생성 (scheduleId로 중복 방지)
+        const sessionRes = await fetch(`${API}/api/sessions`, {
           method: 'POST',
           headers: {'Content-Type':'application/json'},
           body: JSON.stringify({
@@ -2911,17 +2911,18 @@ async function updateSchedule() {
             memberId,
             contractId,
             instructorId,
+            scheduleId: id,  // Schedule ID로 중복 체크
             sessionNo,
             date,
             time,
-            condition: status === '참석' ? condition : '—',
+            condition: status === '참석' ? condition : '',
             memo: status === '노쇼' ? 'NO-SHOW' : memo,
             attendanceStatus: status,
-            remainingSessions: contract.remainingSessions,
           })
         });
-
-        showToast(`${status} 처리 완료 · 잔여 ${contract.remainingSessions - 1}회`, 'success');
+        const sessionResult = await sessionRes.json();
+        const isUpdate = sessionResult.updated;
+        showToast(`${status} 처리 완료${isUpdate ? ' (기존 세션 업데이트)' : ''}`, 'success');
       }
     } catch(e) {
       console.error('세션 생성 실패:', e);
