@@ -1545,7 +1545,7 @@ async function saveProgram() {
   const body = {
     name: document.getElementById('np-name').value,
     type: document.getElementById('np-type').value,
-    instructor: document.getElementById('np-instructor').value,
+    instructorId: document.getElementById('np-instructor').value,
     sessions: parseInt(document.getElementById('np-sessions').value)||0,
     pricePerSession: parseInt(document.getElementById('np-price').value)||0,
     discount: parseInt(document.getElementById('np-discount').value)||0,
@@ -2117,7 +2117,7 @@ async function openEditProgramModal(p) {
   document.getElementById('ep-id').value = p.id;
   document.getElementById('ep-name').value = p.name;
   document.getElementById('ep-type').value = p.type || '1:1';
-  await loadInstructorOptions('ep-instructor', p.instructor || '');
+  await loadInstructorOptions('ep-instructor', p.instructorId || p.instructor || '');
   document.getElementById('ep-sessions').value = p.sessions || '';
   document.getElementById('ep-price').value = p.pricePerSession || '';
   document.getElementById('ep-discount').value = p.discount || 0;
@@ -2141,7 +2141,7 @@ async function updateProgram() {
   const body = {
     name: document.getElementById('ep-name').value,
     type: document.getElementById('ep-type').value,
-    instructor: document.getElementById('ep-instructor').value,
+    instructorId: document.getElementById('ep-instructor').value,
     sessions: parseInt(document.getElementById('ep-sessions').value)||0,
     pricePerSession: parseInt(document.getElementById('ep-price').value)||0,
     discount: parseInt(document.getElementById('ep-discount').value)||0,
@@ -2267,7 +2267,7 @@ async function loadInstructorOptions(selectId, selectedValue) {
     }
     sel.innerHTML = '<option value="">강사 선택</option>' +
       allInstructors.filter(i => i.isActive).map(i =>
-        `<option value="${i.name}" ${i.name === selectedValue ? 'selected' : ''}>${i.name} (Lv.${i.level})</option>`
+        `<option value="${i.id}" data-name="${i.name}" ${i.id === selectedValue || i.name === selectedValue ? 'selected' : ''}>${i.name} (Lv.${i.level})</option>`
       ).join('');
   } catch(e) {
     sel.innerHTML = '<option value="">불러오기 실패</option>';
