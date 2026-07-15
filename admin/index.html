@@ -2412,36 +2412,95 @@ async function renderSessionLog() {
       const member = allMembersForLog.find(m => m.id === memberId);
 
       if (activeContracts.length > 0) {
+        // 해당 회원의 예약 일정 조회
+        const schRes = await fetch(`${API}/api/schedules?memberId=${memberId}`);
+        const schData = await schRes.json();
+        const today = new Date();
+        const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+
+        // 오늘 이후 예약 (취소 제외, 날짜순)
+        const upcomingSchedules = (schData.schedules||[])
+          .filter(s => s.date >= todayStr && s.status !== '취소')
+          .sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
+
+        // 오늘 이전 미처리 예약 (노쇼/참석 안된것)
+        const pendingSchedules = (schData.schedules||[])
+          .filter(s => s.date < todayStr && s.status === '확정')
+          .sort((a, b) => b.date.localeCompare(a.date));
+
+        const allPending = [...pendingSchedules, ...upcomingSchedules];
+        const instrMap2 = {};
+        allInstructors.forEach(i => instrMap2[i.id] = i.name);
+
         summaryEl.style.display = 'block';
         summaryEl.innerHTML = activeContracts.map(c => {
-          const pct = c.sessions > 0 ? Math.round(c.usedSessions / c.sessions * 100) : 0;
+          const pct = c.sessions > 0 ? Math.round((c.usedSessions||0) / c.sessions * 100) : 0;
+          const contractSchedules = allPending.filter(s => s.contractId === c.id);
+
           return `
-          <div style="background:var(--white);border:1px solid var(--border);padding:16px 20px;display:flex;align-items:center;gap:24px;flex-wrap:wrap;">
-            <div>
-              <div style="font-size:11px;color:var(--text-muted);margin-bottom:2px">프로그램</div>
-              <div style="font-size:14px;font-weight:700">${c.title}</div>
-            </div>
-            <div>
-              <div style="font-size:11px;color:var(--text-muted);margin-bottom:2px">기간</div>
-              <div style="font-size:13px">${c.startDate||''} ~ ${c.endDate||''}</div>
-            </div>
-            <div>
-              <div style="font-size:11px;color:var(--text-muted);margin-bottom:2px">세션 현황</div>
-              <div style="font-size:13px"><b>${c.usedSessions||0}</b> / ${c.sessions}회 완료</div>
-            </div>
-            <div>
-              <div style="font-size:11px;color:var(--text-muted);margin-bottom:2px">잔여 세션</div>
-              <div style="font-size:18px;font-family:Outfit,sans-serif;font-weight:300;color:var(--accent)"><b>${c.remainingSessions}</b>회</div>
-            </div>
-            <div style="flex:1;min-width:120px;">
-              <div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden;">
-                <div style="height:100%;width:${pct}%;background:var(--accent);transition:width 0.3s"></div>
+          <div style="background:var(--white);border:1px solid var(--border);margin-bottom:12px;">
+            <!-- 계약 요약 -->
+            <div style="padding:14px 20px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;border-bottom:1px solid var(--border);">
+              <div>
+                <div style="font-size:11px;color:var(--text-muted)">프로그램</div>
+                <div style="font-size:14px;font-weight:700">${c.title}</div>
+                <div style="font-size:11px;color:var(--text-muted)">${c.startDate||''} ~ ${c.endDate||''}</div>
               </div>
-              <div style="font-size:11px;color:var(--text-muted);margin-top:4px">${pct}% 완료</div>
-            </div>
-            <div style="display:flex;gap:8px;margin-left:auto;">
+              <div style="text-align:center;">
+                <div style="font-size:11px;color:var(--text-muted)">완료</div>
+                <div style="font-size:20px;font-family:Outfit,sans-serif;font-weight:300">${c.usedSessions||0}<span style="font-size:12px;color:var(--text-muted)">/${c.sessions}회</span></div>
+              </div>
+              <div style="text-align:center;">
+                <div style="font-size:11px;color:var(--text-muted)">잔여</div>
+                <div style="font-size:20px;font-family:Outfit,sans-serif;font-weight:300;color:var(--accent)">${c.remainingSessions}<span style="font-size:12px">회</span></div>
+              </div>
+              <div style="flex:1;min-width:100px;">
+                <div style="height:5px;background:var(--border);border-radius:3px;overflow:hidden;">
+                  <div style="height:100%;width:${pct}%;background:var(--accent)"></div>
+                </div>
+                <div style="font-size:10px;color:var(--text-muted);margin-top:3px">${pct}% 완료</div>
+              </div>
               <button class="btn btn-secondary btn-sm" onclick="openNewScheduleForMember('${memberId}','${c.id}')">+ 예약 추가</button>
-              <button class="btn btn-primary btn-sm" onclick="goToCalendarForMember('${memberId}')">📅 캘린더에서 출석 처리</button>
+            </div>
+
+            <!-- 예약 일정 리스트 -->
+            <div style="padding:12px 20px;">
+              <div style="font-size:11px;color:var(--text-muted);letter-spacing:0.05em;margin-bottom:8px;">예약 일정</div>
+              ${contractSchedules.length === 0
+                ? `<div style="font-size:13px;color:var(--text-muted);padding:8px 0;">예약된 일정이 없습니다.</div>`
+                : contractSchedules.map(s => {
+                    const isPast = s.date < todayStr;
+                    const isToday = s.date === todayStr;
+                    const instrName = instrMap2[s.instructorId] || '—';
+                    const statusColor = s.status === '참석' ? 'var(--success)' :
+                      s.status === '노쇼' ? 'var(--danger)' :
+                      isToday ? 'var(--accent)' : 'var(--text-muted)';
+                    const bgColor = isToday ? '#FFF8F0' : 'transparent';
+
+                    return `
+                    <div style="display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:2px;background:${bgColor};border-bottom:1px solid var(--border);">
+                      <div style="min-width:80px;">
+                        <span style="font-size:13px;font-weight:700;${isToday?'color:var(--accent)':''}">${s.date}</span>
+                        ${isToday ? '<span style="font-size:10px;background:var(--accent);color:#fff;padding:1px 5px;margin-left:4px;">오늘</span>' : ''}
+                      </div>
+                      <div style="min-width:48px;font-size:13px;color:var(--text-muted)">${s.time||'—'}</div>
+                      <div style="flex:1;font-size:13px;">${instrName}</div>
+                      <div style="min-width:48px;">
+                        <span style="font-size:12px;font-weight:700;color:${statusColor}">${s.status||'확정'}</span>
+                      </div>
+                      ${s.status === '확정' ? `
+                      <div style="display:flex;gap:6px;">
+                        <button class="btn btn-sm" style="background:#EAFAF1;color:var(--success);border:1px solid #A9DFBF;padding:4px 10px;"
+                          onclick="quickStatusChange('${s.id}','참석','${memberId}')">참석</button>
+                        <button class="btn btn-sm" style="background:#FDEDEC;color:var(--danger);border:1px solid #F5B7B1;padding:4px 10px;"
+                          onclick="quickStatusChange('${s.id}','노쇼','${memberId}')">노쇼</button>
+                        <button class="btn btn-sm" style="background:var(--surface);color:var(--text-muted);border:1px solid var(--border);padding:4px 10px;"
+                          onclick="quickStatusChange('${s.id}','취소','${memberId}')">취소</button>
+                      </div>` : `
+                      <div style="font-size:11px;color:var(--text-muted)">처리완료</div>`}
+                    </div>`;
+                  }).join('')
+              }
             </div>
           </div>`;
         }).join('');
@@ -2487,6 +2546,54 @@ async function openNewScheduleForMember(memberId, contractId) {
     sel.value = memberId;
     await onScheduleMemberChange();
   }
+}
+
+async function quickStatusChange(scheduleId, status, memberId) {
+  // 1. 스케줄 상태 업데이트
+  try {
+    await fetch(`${API}/api/schedules?id=${scheduleId}`, {
+      method: 'PUT',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ status })
+    });
+  } catch(e) { showToast('상태 변경 실패', 'error'); return; }
+
+  // 2. 참석/노쇼면 세션 생성
+  if (status === '참석' || status === '노쇼') {
+    const schedule = allSchedules.find(s => s.id === scheduleId);
+    if (schedule) {
+      const member = allMembersForLog.find(m => m.id === memberId);
+      try {
+        await fetch(`${API}/api/sessions`, {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({
+            memberName: member?.name || '',
+            memberId,
+            contractId: schedule.contractId,
+            instructorId: schedule.instructorId,
+            scheduleId,
+            date: schedule.date,
+            time: schedule.time,
+            condition: status === '참석' ? '보통' : '',
+            memo: status === '노쇼' ? 'NO-SHOW' : '',
+            attendanceStatus: status,
+          })
+        });
+      } catch(e) { console.error('세션 생성 실패', e); }
+    }
+  }
+
+  showToast(`${status} 처리 완료`, 'success');
+  // 새로고침
+  calDataLoaded = false;
+  await loadCalendar();
+  await renderSessionLog();
+  // 계약 요약 재로드
+  slSelectedMemberId = memberId;
+  const sel = document.getElementById('sl-member-select');
+  if (sel) sel.value = memberId;
+  await renderSessionLog();
 }
 
 function goToCalendarForMember(memberId) {
