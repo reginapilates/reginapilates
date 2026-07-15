@@ -71,11 +71,46 @@ export async function onRequest(context) {
     // POST — 새 세션 기록 (출석 체크)
     if (method === 'POST') {
       const body = await request.json();
-      const { memberName, sessionNo, contractId, memberId, ...sessionData } = body;
+      const { memberName, contractId, memberId } = body;
+
+      // 1. DB에서 현재 세션 수 조회 → 회차 계산
+      const existingRes = await fetch(
+        `https://api.notion.com/v1/databases/${env.NOTION_SESSIONS_DB_ID}/query`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${env.NOTION_API_KEY}`,
+            'Notion-Version': '2022-06-28',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            filter: contractId ? {
+              property: 'Contract',
+              relation: { contains: contractId }
+            } : undefined,
+          }),
+        }
+      );
+      const existingData = await existingRes.json();
+      const sessionNo = (existingData.results?.length || 0) + 1;
+
+      // 2. DB에서 현재 잔여횟수 조회
+      let currentRemaining = body.remainingSessions;
+      if (contractId) {
+        const contractRes = await fetch(`https://api.notion.com/v1/pages/${contractId}`, {
+          headers: {
+            'Authorization': `Bearer ${env.NOTION_API_KEY}`,
+            'Notion-Version': '2022-06-28',
+          },
+        });
+        const contractData = await contractRes.json();
+        const dbRemaining = contractData.properties?.RemainingSessions?.number;
+        if (dbRemaining !== undefined) currentRemaining = dbRemaining;
+      }
 
       const title = `${memberName} #${sessionNo}`;
 
-      // 1. 세션 생성
+      // 3. 세션 생성
       const sessionRes = await fetch('https://api.notion.com/v1/pages', {
         method: 'POST',
         headers: {
@@ -90,11 +125,10 @@ export async function onRequest(context) {
             Contract: contractId ? { relation: [{ id: contractId }] } : undefined,
             Member: memberId ? { relation: [{ id: memberId }] } : undefined,
             SessionNo: { number: sessionNo },
-            Date: { date: { start: sessionData.date || new Date().toISOString().split('T')[0] } },
-            Condition: (sessionData.condition && sessionData.condition !== '—') 
-              ? { select: { name: sessionData.condition } } : undefined,
-            Memo: { rich_text: [{ text: { content: sessionData.memo || '' } }] },
-            // Attended 필드 제거 (AttendanceStatus로 대체)
+            Date: { date: { start: body.date || new Date().toISOString().split('T')[0] } },
+            Condition: (body.condition && body.condition !== '—')
+              ? { select: { name: body.condition } } : undefined,
+            Memo: { rich_text: [{ text: { content: body.memo || '' } }] },
             AttendanceStatus: body.attendanceStatus ? { select: { name: body.attendanceStatus } } : undefined,
             Time: body.time ? { select: { name: body.time } } : undefined,
             Instructor: body.instructorId ? { relation: [{ id: body.instructorId }] } : undefined,
@@ -104,17 +138,16 @@ export async function onRequest(context) {
 
       const sessionData2 = await sessionRes.json();
 
-      // 세션 생성 실패 시 에러 반환
       if (!sessionRes.ok) {
-        return new Response(JSON.stringify({ 
+        return new Response(JSON.stringify({
           error: sessionData2.message || 'Session creation failed',
           details: sessionData2
         }), { status: 500, headers });
       }
 
-      // 2. 계약의 잔여 횟수 차감 (참석/노쇼만)
+      // 4. 잔여 횟수 차감 (DB 기준, 참석/노쇼만)
       const shouldDeduct = body.attendanceStatus === '참석' || body.attendanceStatus === '노쇼';
-      if (shouldDeduct && contractId && body.remainingSessions !== undefined) {
+      if (shouldDeduct && contractId && currentRemaining !== undefined) {
         await fetch(`https://api.notion.com/v1/pages/${contractId}`, {
           method: 'PATCH',
           headers: {
@@ -124,13 +157,18 @@ export async function onRequest(context) {
           },
           body: JSON.stringify({
             properties: {
-              RemainingSessions: { number: Math.max(0, body.remainingSessions - 1) },
+              RemainingSessions: { number: Math.max(0, currentRemaining - 1) },
             },
           }),
         });
       }
 
-      return new Response(JSON.stringify({ id: sessionData2.id, success: true }), { headers });
+      return new Response(JSON.stringify({
+        id: sessionData2.id,
+        sessionNo,
+        remainingSessions: Math.max(0, (currentRemaining || 0) - (shouldDeduct ? 1 : 0)),
+        success: true
+      }), { headers });
     }
 
     // PUT — 세션 수정 (컨디션/메모 업데이트)
