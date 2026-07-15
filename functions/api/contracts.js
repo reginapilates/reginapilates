@@ -44,13 +44,12 @@ export async function onRequest(context) {
         return new Response(JSON.stringify({ error: data.message }), { status: 500, headers });
       }
 
-      const contracts = (data.results || []).map(page => ({
+      const rawContracts = (data.results || []).map(page => ({
         id: page.id,
         title: page.properties.Name?.title?.[0]?.plain_text || '',
         memberId: page.properties.Member?.relation?.[0]?.id || '',
         programId: page.properties.Program?.relation?.[0]?.id || '',
         sessions: page.properties.Sessions?.number || 0,
-        remainingSessions: page.properties.RemainingSessions?.number || 0,
         totalAmount: page.properties.TotalAmount?.number || 0,
         paymentMethod: page.properties.PaymentMethod?.select?.name || '',
         startDate: page.properties.StartDate?.date?.start || '',
@@ -64,6 +63,37 @@ export async function onRequest(context) {
         pauseDate: page.properties.PauseDate?.date?.start || '',
         resumeDate: page.properties.ResumeDate?.date?.start || '',
         note: page.properties.Note?.rich_text?.[0]?.plain_text || '',
+      }));
+
+      // Sessions DB에서 각 계약의 실제 세션 수 조회
+      const sessionCountMap = {};
+      for (const c of rawContracts) {
+        try {
+          const sRes = await fetch(
+            `https://api.notion.com/v1/databases/${env.NOTION_SESSIONS_DB_ID}/query`,
+            {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${env.NOTION_API_KEY}`,
+                'Notion-Version': '2022-06-28',
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                filter: { property: 'Contract', relation: { contains: c.id } },
+              }),
+            }
+          );
+          const sData = await sRes.json();
+          sessionCountMap[c.id] = (sData.results || []).length;
+        } catch(e) {
+          sessionCountMap[c.id] = 0;
+        }
+      }
+
+      const contracts = rawContracts.map(c => ({
+        ...c,
+        usedSessions: sessionCountMap[c.id] || 0,
+        remainingSessions: Math.max(0, c.sessions - (sessionCountMap[c.id] || 0)),
       }));
 
       return new Response(JSON.stringify({ contracts }), { headers });
