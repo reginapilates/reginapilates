@@ -1094,7 +1094,11 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
     </div>
     <div class="modal-body">
       <input type="hidden" id="sd-id">
-      <div id="sd-info" style="margin-bottom:16px;font-size:13px;line-height:2;"></div>
+      <input type="hidden" id="sd-member-id">
+      <input type="hidden" id="sd-contract-id">
+      <input type="hidden" id="sd-instructor-id">
+      <input type="hidden" id="sd-session-created">
+      <div id="sd-info" style="margin-bottom:16px;font-size:13px;line-height:2;background:var(--surface);padding:12px;"></div>
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">날짜 변경</label>
@@ -1113,13 +1117,29 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
       <div class="form-row full">
         <div class="form-group">
           <label class="form-label">출석 상태</label>
-          <select class="form-select" id="sd-status">
-            <option value="확정">확정</option>
-            <option value="참석">참석</option>
-            <option value="노쇼">노쇼</option>
-            <option value="취소">취소</option>
-            <option value="일정변경">일정변경</option>
+          <select class="form-select" id="sd-status" onchange="onStatusChange()">
+            <option value="확정">확정 (수업 예정)</option>
+            <option value="참석">✅ 참석 (세션 차감)</option>
+            <option value="노쇼">❌ 노쇼 (세션 차감)</option>
+            <option value="취소">🚫 취소 (차감 없음)</option>
+            <option value="일정변경">🔄 일정변경</option>
           </select>
+        </div>
+      </div>
+      <div id="sd-condition-row" style="display:none">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">컨디션</label>
+            <select class="form-select" id="sd-condition">
+              <option>최상</option><option>좋음</option><option selected>보통</option><option>피로</option><option>통증</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row full">
+          <div class="form-group">
+            <label class="form-label">메모</label>
+            <textarea class="form-textarea" id="sd-memo" style="min-height:60px" placeholder="수업 내용 또는 특이사항"></textarea>
+          </div>
         </div>
       </div>
     </div>
@@ -2792,41 +2812,126 @@ async function openScheduleDetail(id) {
   if (!s) return;
 
   document.getElementById('sd-id').value = id;
+  document.getElementById('sd-member-id').value = s.memberId || '';
+  document.getElementById('sd-contract-id').value = s.contractId || '';
+  document.getElementById('sd-instructor-id').value = s.instructorId || '';
+  document.getElementById('sd-session-created').value = '';
   document.getElementById('sd-title').textContent = s.name;
   document.getElementById('sd-date').value = s.date;
   document.getElementById('sd-time').value = s.time;
   document.getElementById('sd-status').value = s.status || '확정';
+  document.getElementById('sd-memo').value = '';
+  document.getElementById('sd-condition-row').style.display = 'none';
 
   const instr = allInstructors.find(i => i.id === s.instructorId);
+
+  // 회원/계약 정보 조회
+  let memberName = s.name.split(' - ')[0] || '—';
+  let remainingSessions = '—';
+  if (s.contractId) {
+    try {
+      const cRes = await fetch(`${API}/api/contracts?memberId=${s.memberId}`);
+      const cData = await cRes.json();
+      const contract = (cData.contracts||[]).find(c => c.id === s.contractId);
+      if (contract) remainingSessions = contract.remainingSessions + '회';
+    } catch(e) {}
+  }
+
   document.getElementById('sd-info').innerHTML = `
-    <div>📅 날짜: <b>${s.date}</b></div>
-    <div>⏰ 시간: <b>${s.time}</b></div>
-    <div>👤 강사: <b>${instr?.name || '—'}</b></div>
-    <div>🏷️ 유형: <b>${s.type}</b></div>
-    <div>📋 상태: <b>${s.status}</b></div>
+    <div>📅 <b>${s.date}</b> &nbsp; ⏰ <b>${s.time}</b></div>
+    <div>👤 회원: <b>${memberName}</b></div>
+    <div>🎯 강사: <b>${instr?.name || '—'}</b></div>
+    <div>📊 잔여 횟수: <b>${remainingSessions}</b></div>
+    <div>📋 현재 상태: <b>${s.status || '확정'}</b></div>
   `;
 
   document.getElementById('modal-schedule-detail').style.display = 'flex';
 }
 
+function onStatusChange() {
+  const status = document.getElementById('sd-status').value;
+  const condRow = document.getElementById('sd-condition-row');
+  condRow.style.display = (status === '참석') ? 'block' : 'none';
+}
+
 async function updateSchedule() {
   const id = document.getElementById('sd-id').value;
-  const body = {
-    date: document.getElementById('sd-date').value,
-    time: document.getElementById('sd-time').value,
-    status: document.getElementById('sd-status').value,
-  };
+  const status = document.getElementById('sd-status').value;
+  const date = document.getElementById('sd-date').value;
+  const time = document.getElementById('sd-time').value;
+  const memberId = document.getElementById('sd-member-id').value;
+  const contractId = document.getElementById('sd-contract-id').value;
+  const instructorId = document.getElementById('sd-instructor-id').value;
+
+  // 1. 스케줄 상태 업데이트
   try {
     const res = await fetch(`${API}/api/schedules?id=${id}`, {
-      method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body)
+      method: 'PUT', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ date, time, status })
     });
-    if (res.ok) {
-      closeModal('modal-schedule-detail');
-      showToast('수정되었습니다', 'success');
-      calDataLoaded = false;
-      loadCalendar();
-    } else { const d = await res.json(); showToast('수정 실패: ' + (d.error||'오류'), 'error'); }
-  } catch(e) { showToast('수정 실패', 'error'); }
+    if (!res.ok) {
+      const d = await res.json();
+      showToast('수정 실패: ' + (d.error||'오류'), 'error');
+      return;
+    }
+  } catch(e) { showToast('수정 실패', 'error'); return; }
+
+  // 2. 참석/노쇼일 경우 → 세션 자동 생성
+  if ((status === '참석' || status === '노쇼') && memberId && contractId) {
+    try {
+      // 현재 계약 잔여횟수 조회
+      const cRes = await fetch(`${API}/api/contracts?memberId=${memberId}`);
+      const cData = await cRes.json();
+      const contract = (cData.contracts||[]).find(c => c.id === contractId);
+
+      if (contract) {
+        // 기존 세션 수 조회 (회차 계산)
+        const sRes = await fetch(`${API}/api/sessions?contractId=${contractId}`);
+        const sData = await sRes.json();
+        const sessionNo = (sData.sessions||[]).length + 1;
+
+        const memberName = document.getElementById('sd-title').textContent.split(' - ')[0];
+        const condition = document.getElementById('sd-condition').value;
+        const memo = document.getElementById('sd-memo').value;
+
+        // 세션 생성
+        await fetch(`${API}/api/sessions`, {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({
+            memberName,
+            memberId,
+            contractId,
+            instructorId,
+            sessionNo,
+            date,
+            time,
+            condition: status === '참석' ? condition : '—',
+            memo: status === '노쇼' ? 'NO-SHOW' : memo,
+            attendanceStatus: status,
+            remainingSessions: contract.remainingSessions,
+          })
+        });
+
+        showToast(`${status} 처리 완료 · 잔여 ${contract.remainingSessions - 1}회`, 'success');
+      }
+    } catch(e) {
+      console.error('세션 생성 실패:', e);
+      showToast('출석 처리됐지만 세션 생성 실패', '');
+    }
+  } else {
+    showToast('수정되었습니다', 'success');
+  }
+
+  closeModal('modal-schedule-detail');
+  calDataLoaded = false;
+  loadCalendar();
+
+  // 회원 상세 페이지가 열려있으면 세션 새로고침
+  if (currentMember && memberId === currentMember.id) {
+    await loadMemberContracts();
+    await loadMemberSessions();
+  }
 }
 
 async function deleteSchedule() {
