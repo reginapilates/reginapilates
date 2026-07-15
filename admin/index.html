@@ -416,15 +416,28 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
     <div class="page" id="page-sessions-log">
       <div class="page-header">
         <div class="page-title">세션 로그</div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-secondary" onclick="openNewScheduleModal()">+ 예약 추가</button>
+        </div>
       </div>
-      <div class="toolbar">
-        <input class="search-input" id="session-member-search" placeholder="회원 이름 검색..." oninput="filterSessionLog()">
+
+      <!-- 회원 선택 영역 -->
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap;">
+        <select class="form-select" id="sl-member-select" onchange="onSlMemberChange()" style="max-width:200px;">
+          <option value="">회원 선택</option>
+        </select>
         <div class="filter-tabs">
           <div class="filter-tab active" onclick="setSessionFilter('all',this)">전체</div>
           <div class="filter-tab" onclick="setSessionFilter('참석',this)">참석</div>
           <div class="filter-tab" onclick="setSessionFilter('노쇼',this)">노쇼</div>
         </div>
+        <input class="search-input" id="session-member-search" placeholder="이름 검색..." oninput="filterSessionLog()" style="max-width:200px;">
       </div>
+
+      <!-- 선택 회원 계약 요약 -->
+      <div id="sl-contract-summary" style="display:none;margin-bottom:20px;"></div>
+
+      <!-- 세션 테이블 -->
       <table class="member-table">
         <thead>
           <tr><th>회차</th><th>회원</th><th>날짜</th><th>시간</th><th>강사</th><th>컨디션</th><th>출석</th><th>메모</th></tr>
@@ -2327,7 +2340,9 @@ async function resumeContract(contractId) {
 
 // ── SESSIONS LOG ──
 let allSessionsLog = [];
+let allMembersForLog = [];
 let sessionLogFilter = 'all';
+let slSelectedMemberId = '';
 
 async function loadSessionsLog() {
   const tbody = document.getElementById('sessions-log-body');
@@ -2341,9 +2356,11 @@ async function loadSessionsLog() {
     const sData = await sRes.json();
     const mData = await mRes.json();
 
+    allMembersForLog = mData.members || [];
+
     // 강사/회원 맵
     const memberMap = {};
-    (mData.members||[]).forEach(m => memberMap[m.id] = m.name);
+    allMembersForLog.forEach(m => memberMap[m.id] = m.name);
     const instrMap = {};
     allInstructors.forEach(i => instrMap[i.id] = i.name);
 
@@ -2352,22 +2369,87 @@ async function loadSessionsLog() {
       memberName: memberMap[s.memberId] || s.name?.split(' #')[0] || '—',
       instructorName: instrMap[s.instructorId] || '—',
     }));
-
-    // 날짜 최신순 정렬
     allSessionsLog.sort((a, b) => (b.date||'').localeCompare(a.date||''));
 
-    renderSessionLog();
+    // 회원 드롭다운 채우기
+    const sel = document.getElementById('sl-member-select');
+    if (sel) {
+      sel.innerHTML = '<option value="">전체 회원</option>' +
+        allMembersForLog.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
+      if (slSelectedMemberId) sel.value = slSelectedMemberId;
+    }
+
+    await renderSessionLog();
   } catch(e) {
     tbody.innerHTML = '<tr><td colspan="8" class="empty-state">불러오기 실패</td></tr>';
   }
 }
 
-function renderSessionLog() {
-  const search = document.getElementById('session-member-search')?.value || '';
-  let sessions = allSessionsLog;
+async function onSlMemberChange() {
+  slSelectedMemberId = document.getElementById('sl-member-select').value;
+  await renderSessionLog();
+}
 
+async function renderSessionLog() {
+  const search = document.getElementById('session-member-search')?.value || '';
+  const memberId = slSelectedMemberId;
+
+  let sessions = allSessionsLog;
+  if (memberId) sessions = sessions.filter(s => s.memberId === memberId);
   if (search) sessions = sessions.filter(s => s.memberName.includes(search));
   if (sessionLogFilter !== 'all') sessions = sessions.filter(s => s.attendanceStatus === sessionLogFilter);
+
+  // 선택 회원 계약 요약
+  const summaryEl = document.getElementById('sl-contract-summary');
+  if (memberId && summaryEl) {
+    try {
+      const cRes = await fetch(`${API}/api/contracts?memberId=${memberId}`);
+      const cData = await cRes.json();
+      const activeContracts = (cData.contracts||[]).filter(c => c.status === '진행중');
+      const member = allMembersForLog.find(m => m.id === memberId);
+
+      if (activeContracts.length > 0) {
+        summaryEl.style.display = 'block';
+        summaryEl.innerHTML = activeContracts.map(c => {
+          const pct = c.sessions > 0 ? Math.round(c.usedSessions / c.sessions * 100) : 0;
+          return `
+          <div style="background:var(--white);border:1px solid var(--border);padding:16px 20px;display:flex;align-items:center;gap:24px;flex-wrap:wrap;">
+            <div>
+              <div style="font-size:11px;color:var(--text-muted);margin-bottom:2px">프로그램</div>
+              <div style="font-size:14px;font-weight:700">${c.title}</div>
+            </div>
+            <div>
+              <div style="font-size:11px;color:var(--text-muted);margin-bottom:2px">기간</div>
+              <div style="font-size:13px">${c.startDate||''} ~ ${c.endDate||''}</div>
+            </div>
+            <div>
+              <div style="font-size:11px;color:var(--text-muted);margin-bottom:2px">세션 현황</div>
+              <div style="font-size:13px"><b>${c.usedSessions||0}</b> / ${c.sessions}회 완료</div>
+            </div>
+            <div>
+              <div style="font-size:11px;color:var(--text-muted);margin-bottom:2px">잔여 세션</div>
+              <div style="font-size:18px;font-family:Outfit,sans-serif;font-weight:300;color:var(--accent)"><b>${c.remainingSessions}</b>회</div>
+            </div>
+            <div style="flex:1;min-width:120px;">
+              <div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden;">
+                <div style="height:100%;width:${pct}%;background:var(--accent);transition:width 0.3s"></div>
+              </div>
+              <div style="font-size:11px;color:var(--text-muted);margin-top:4px">${pct}% 완료</div>
+            </div>
+            <div style="display:flex;gap:8px;margin-left:auto;">
+              <button class="btn btn-secondary btn-sm" onclick="openNewScheduleForMember('${memberId}','${c.id}')">+ 예약</button>
+              <button class="btn btn-secondary btn-sm" onclick="openQuickAttendance('${memberId}','${c.id}','${c.title}',${c.remainingSessions})">✅ 출석 기록</button>
+            </div>
+          </div>`;
+        }).join('');
+      } else {
+        summaryEl.style.display = 'block';
+        summaryEl.innerHTML = '<div style="padding:12px 16px;background:var(--surface);font-size:13px;color:var(--text-muted)">진행중인 계약이 없습니다.</div>';
+      }
+    } catch(e) { summaryEl.style.display = 'none'; }
+  } else if (summaryEl) {
+    summaryEl.style.display = 'none';
+  }
 
   const tbody = document.getElementById('sessions-log-body');
   if (!sessions.length) {
@@ -2376,7 +2458,7 @@ function renderSessionLog() {
   }
 
   const condColors = { '최상':'#27AE60','좋음':'#2ECC71','보통':'#F1C40F','피로':'#E67E22','통증':'#E74C3C' };
-  const statusColors = { '참석':'var(--success)', '노쇼':'var(--danger)' };
+  const statusColors = { '참석':'var(--success)','노쇼':'var(--danger)' };
 
   tbody.innerHTML = sessions.map(s => `
     <tr>
@@ -2385,19 +2467,51 @@ function renderSessionLog() {
       <td>${s.date||'—'}</td>
       <td>${s.time||'—'}</td>
       <td>${s.instructorName}</td>
-      <td>
-        ${s.condition && s.condition !== '—'
-          ? `<span style="display:inline-flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:${condColors[s.condition]||'#ccc'};display:inline-block"></span>${s.condition}</span>`
-          : '—'}
-      </td>
-      <td>
-        ${s.attendanceStatus
-          ? `<span style="color:${statusColors[s.attendanceStatus]||'var(--text-muted)'};font-weight:700;font-size:12px">${s.attendanceStatus}</span>`
-          : '—'}
-      </td>
+      <td>${s.condition && s.condition !== '—'
+        ? `<span style="display:inline-flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:${condColors[s.condition]||'#ccc'};display:inline-block"></span>${s.condition}</span>`
+        : '—'}</td>
+      <td><span style="color:${statusColors[s.attendanceStatus]||'var(--text-muted)'};font-weight:700;font-size:12px">${s.attendanceStatus||'—'}</span></td>
       <td style="font-size:12px;color:var(--text-muted)">${s.memo && s.memo !== 'NO-SHOW' ? s.memo : ''}</td>
     </tr>
   `).join('');
+}
+
+async function openNewScheduleForMember(memberId, contractId) {
+  await openNewScheduleModal();
+  // 회원 자동 선택
+  const sel = document.getElementById('ns-member');
+  if (sel) {
+    sel.value = memberId;
+    await onScheduleMemberChange();
+  }
+}
+
+async function openQuickAttendance(memberId, contractId, contractTitle, remaining) {
+  // 오늘 날짜로 빠른 출석 기록 - 세션 모달 활용
+  const today = new Date();
+  const y = today.getFullYear(), m = String(today.getMonth()+1).padStart(2,'0'), d = String(today.getDate()).padStart(2,'0');
+  const todayStr = `${y}-${m}-${d}`;
+
+  // 해당 회원/계약의 오늘 예약 찾기
+  const todaySchedule = allSchedules.find(s =>
+    s.memberId === memberId && s.contractId === contractId &&
+    s.date === todayStr && s.status !== '취소'
+  );
+
+  if (todaySchedule) {
+    openScheduleDetail(todaySchedule.id);
+  } else {
+    // 예약 없으면 직접 출석 모달
+    currentContract = { id: contractId, remaining, nextNo: 1 };
+    // 회원 정보 임시 설정
+    const member = allMembersForLog.find(m => m.id === memberId);
+    if (member) {
+      currentMember = member;
+      document.getElementById('sess-date').value = todayStr;
+      document.getElementById('sess-memo').value = '';
+      document.getElementById('modal-session').style.display = 'flex';
+    }
+  }
 }
 
 function filterSessionLog() { renderSessionLog(); }
