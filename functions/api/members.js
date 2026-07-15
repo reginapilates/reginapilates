@@ -130,9 +130,65 @@ export async function onRequest(context) {
       return new Response(JSON.stringify({ id: data.id, success: true }), { headers });
     }
 
+    // PUT — 회원 정보 수정
+    if (method === 'PUT') {
+      const url = new URL(request.url);
+      const id = url.searchParams.get('id');
+      if (!id) return new Response(JSON.stringify({ error: 'id required' }), { status: 400, headers });
+
+      const body = await request.json();
+      const toMultiSelect = (str) => str
+        ? str.split(',').map(s => s.trim()).filter(Boolean).map(name => ({ name }))
+        : [];
+
+      const res = await fetch(`https://api.notion.com/v1/pages/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${env.NOTION_API_KEY}`,
+          'Notion-Version': '2022-06-28',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          properties: {
+            Name: body.name ? { title: [{ text: { content: body.name } }] } : undefined,
+            Email: body.email ? { email: body.email } : undefined,
+            Phone: body.phone ? { phone_number: body.phone } : undefined,
+            BirthDate: body.birthDate ? { date: { start: body.birthDate } } : undefined,
+            Address: { rich_text: [{ text: { content: body.address || '' } }] },
+            Height: body.height ? { number: body.height } : undefined,
+            Weight: body.weight ? { number: body.weight } : undefined,
+            JobType: body.jobType ? { select: { name: body.jobType } } : undefined,
+            PilatesExpType: body.pilatesExpType ? { select: { name: body.pilatesExpType } } : undefined,
+            PilatesExpCount: body.pilatesExpCount ? { number: body.pilatesExpCount } : undefined,
+            ExerciseExp: { rich_text: [{ text: { content: body.exerciseExp || '' } }] },
+            PilatesCert: { checkbox: body.pilatesCert || false },
+            PilatesCertOrg: { rich_text: [{ text: { content: body.pilatesCertOrg || '' } }] },
+            PilatesCertYears: body.pilatesCertYears ? { number: body.pilatesCertYears } : undefined,
+            StopReasons: body.stopReasons ? { select: { name: body.stopReasons } } : undefined,
+            ExerciseGoals: { multi_select: toMultiSelect(body.exerciseGoals) },
+            Surgery: { checkbox: body.surgery || false },
+            SurgeryDetail: { rich_text: [{ text: { content: body.surgeryDetail || '' } }] },
+            MedicalHistory: { multi_select: toMultiSelect(body.medicalHistory) },
+            PainAreas: { multi_select: toMultiSelect(body.painAreas) },
+            VisitSource: body.visitSource ? { select: { name: body.visitSource } } : undefined,
+            AvailableTime: body.availableTime ? { select: { name: body.availableTime } } : undefined,
+            AvailableDays: { multi_select: toMultiSelect(body.availableDays) },
+            MarketingConsent: { checkbox: body.marketingConsent || false },
+            AdConsent: { checkbox: body.adConsent || false },
+          },
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) return new Response(JSON.stringify({ error: data.message }), { status: 500, headers });
+      return new Response(JSON.stringify({ success: true }), { headers });
+    }
+
     return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers });
 
   } catch (error) {
     return new Response(JSON.stringify({ error: error.message }), { status: 500, headers });
   }
 }
+
+// PUT handler added below existing onRequest
