@@ -73,7 +73,47 @@ export async function onRequest(context) {
       const body = await request.json();
       const { memberName, contractId, memberId } = body;
 
-      // 1. DB에서 현재 세션 수 조회 → 회차 계산
+      // 1. 이미 이 Schedule에 연결된 세션이 있는지 확인 (중복 방지)
+      const scheduleId = body.scheduleId;
+      if (scheduleId) {
+        const dupRes = await fetch(
+          `https://api.notion.com/v1/databases/${env.NOTION_SESSIONS_DB_ID}/query`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${env.NOTION_API_KEY}`,
+              'Notion-Version': '2022-06-28',
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              filter: { property: 'Schedule', relation: { contains: scheduleId } },
+            }),
+          }
+        );
+        const dupData = await dupRes.json();
+        if ((dupData.results || []).length > 0) {
+          // 이미 세션 있음 → 기존 세션 업데이트만
+          const existingSession = dupData.results[0];
+          await fetch(`https://api.notion.com/v1/pages/${existingSession.id}`, {
+            method: 'PATCH',
+            headers: {
+              'Authorization': `Bearer ${env.NOTION_API_KEY}`,
+              'Notion-Version': '2022-06-28',
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              properties: {
+                AttendanceStatus: body.attendanceStatus ? { select: { name: body.attendanceStatus } } : undefined,
+                Condition: (body.condition && body.condition !== '—') ? { select: { name: body.condition } } : undefined,
+                Memo: { rich_text: [{ text: { content: body.memo || '' } }] },
+              },
+            }),
+          });
+          return new Response(JSON.stringify({ id: existingSession.id, updated: true, success: true }), { headers });
+        }
+      }
+
+      // DB에서 현재 세션 수 조회 → 회차 계산
       const existingRes = await fetch(
         `https://api.notion.com/v1/databases/${env.NOTION_SESSIONS_DB_ID}/query`,
         {
@@ -120,6 +160,7 @@ export async function onRequest(context) {
             AttendanceStatus: body.attendanceStatus ? { select: { name: body.attendanceStatus } } : undefined,
             Time: body.time ? { select: { name: body.time } } : undefined,
             Instructor: body.instructorId ? { relation: [{ id: body.instructorId }] } : undefined,
+            Schedule: body.scheduleId ? { relation: [{ id: body.scheduleId }] } : undefined,
           },
         }),
       });
