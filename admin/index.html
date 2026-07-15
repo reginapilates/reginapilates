@@ -1390,24 +1390,36 @@ function renderProfile() {
   document.getElementById('tab-profile').innerHTML = `
     <div class="profile-grid">
       <div class="profile-section">
-        <div class="section-title">기본 정보</div>
+        <div class="section-title">■ 기본 정보</div>
         <div class="field-row"><span class="field-label">이름</span><span class="field-value">${m.name}</span></div>
+        <div class="field-row"><span class="field-label">생년월일</span><span class="field-value">${m.birthDate||'—'}</span></div>
         <div class="field-row"><span class="field-label">연락처</span><span class="field-value">${m.phone||'—'}</span></div>
         <div class="field-row"><span class="field-label">이메일</span><span class="field-value">${m.email||'—'}</span></div>
-        <div class="field-row"><span class="field-label">생년월일</span><span class="field-value">${m.birthDate||'—'}</span></div>
         <div class="field-row"><span class="field-label">주소</span><span class="field-value">${m.address||'—'}</span></div>
+        <div class="field-row"><span class="field-label">직업 유형</span><span class="field-value">${m.jobType||'—'}</span></div>
+        <div class="field-row"><span class="field-label">신장 / 체중</span><span class="field-value">${m.height?m.height+'cm':''} ${m.weight?'/ '+m.weight+'kg':''||'—'}</span></div>
         <div class="field-row"><span class="field-label">방문 경로</span><span class="field-value">${m.visitSource||'—'}</span></div>
-        <div class="field-row"><span class="field-label">마케팅 동의</span><span class="field-value">${m.marketingConsent?'동의':'미동의'}</span></div>
-        <div class="field-row"><span class="field-label">광고 수신</span><span class="field-value">${m.adConsent?'동의':'미동의'}</span></div>
+        <div class="field-row"><span class="field-label">등록일</span><span class="field-value">${m.createdAt||'—'}</span></div>
+        <div class="field-row"><span class="field-label">마케팅 동의</span><span class="field-value">${m.marketingConsent?'✅ 동의':'미동의'}</span></div>
+        <div class="field-row"><span class="field-label">광고 수신</span><span class="field-value">${m.adConsent?'✅ 동의':'미동의'}</span></div>
       </div>
       <div class="profile-section">
-        <div class="section-title">신체 / 운동 정보</div>
-        <div class="field-row"><span class="field-label">신장</span><span class="field-value">${m.height?m.height+'cm':'—'}</span></div>
-        <div class="field-row"><span class="field-label">체중</span><span class="field-value">${m.weight?m.weight+'kg':'—'}</span></div>
-        <div class="field-row"><span class="field-label">필라테스 경험</span><span class="field-value">${m.pilatesExp||'—'}</span></div>
-        <div class="field-row"><span class="field-label">통증/병력</span><span class="field-value">${m.painHistory||'—'}</span></div>
-        <div class="field-row"><span class="field-label">수술 여부</span><span class="field-value">${m.surgery?'있음 ('+m.surgeryDetail+')':'없음'}</span></div>
-        <div class="field-row"><span class="field-label">등록일</span><span class="field-value">${m.createdAt||'—'}</span></div>
+        <div class="section-title">■ 필라테스·운동 경험</div>
+        <div class="field-row"><span class="field-label">필라테스 경험</span><span class="field-value">${m.pilatesExpType||'—'} ${m.pilatesExpCount?m.pilatesExpCount+'회':''}</span></div>
+        <div class="field-row"><span class="field-label">운동 경험(종목)</span><span class="field-value">${m.exerciseExp||'—'}</span></div>
+        <div class="field-row"><span class="field-label">자격증</span><span class="field-value">${m.pilatesCert?'있음':'없음'}${m.pilatesCertOrg?' · '+m.pilatesCertOrg:''}${m.pilatesCertYears?' ('+m.pilatesCertYears+'년)':''}</span></div>
+        <div class="field-row"><span class="field-label">운동 중단 이유</span><span class="field-value">${m.stopReasons||'—'}</span></div>
+        <div class="field-row"><span class="field-label">운동 목적</span><span class="field-value">${m.exerciseGoals||'—'}</span></div>
+        <div class="field-row"><span class="field-label">운동 가능 요일</span><span class="field-value">${m.availableDays||'—'}</span></div>
+        <div class="field-row"><span class="field-label">운동 가능 시간</span><span class="field-value">${m.availableTime||'—'}</span></div>
+      </div>
+    </div>
+    <div class="profile-grid" style="margin-top:16px;">
+      <div class="profile-section">
+        <div class="section-title">■ 통증·병력</div>
+        <div class="field-row"><span class="field-label">수술 여부</span><span class="field-value">${m.surgery?'있음':'없음'}${m.surgeryDetail?' · '+m.surgeryDetail:''}</span></div>
+        <div class="field-row"><span class="field-label">병력</span><span class="field-value">${m.medicalHistory||'—'}</span></div>
+        <div class="field-row"><span class="field-label">통증 부위</span><span class="field-value">${m.painAreas||'—'}</span></div>
       </div>
     </div>
   `;
