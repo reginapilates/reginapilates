@@ -24,13 +24,24 @@ export async function onRequest(context) {
       const instructorId = url.searchParams.get('instructorId');
       const memberId = url.searchParams.get('memberId');
 
-      const filters = [];
-      if (startDate) filters.push({ property: 'Date', date: { on_or_after: startDate } });
-      if (endDate) filters.push({ property: 'Date', date: { on_or_before: endDate } });
+      // 기본 범위: 오늘 기준 1개월 전 ~ 3개월 후
+      const today = new Date();
+      const rangeStart = startDate || (() => {
+        const d = new Date(today); d.setMonth(d.getMonth() - 1); return d.toISOString().split('T')[0];
+      })();
+      const rangeEnd = endDate || (() => {
+        const d = new Date(today); d.setMonth(d.getMonth() + 3); return d.toISOString().split('T')[0];
+      })();
+
+      // Notion 날짜 필터 + 강사/회원 필터 조합
+      const filters = [
+        { property: 'Date', date: { on_or_after: rangeStart } },
+        { property: 'Date', date: { on_or_before: rangeEnd } },
+      ];
       if (instructorId) filters.push({ property: 'Instructor', relation: { contains: instructorId } });
       if (memberId) filters.push({ property: 'Member', relation: { contains: memberId } });
 
-      const filter = filters.length > 1 ? { and: filters } : filters.length === 1 ? filters[0] : undefined;
+      const filter = { and: filters };
 
       // 페이지네이션으로 전체 결과 가져오기
       let allResults = [];
@@ -69,7 +80,7 @@ export async function onRequest(context) {
         startCursor = data.next_cursor;
       }
 
-      const schedules = allResults.map(page => ({
+      let schedules = allResults.map(page => ({
         id: page.id,
         name: page.properties.Name?.title?.[0]?.plain_text || '',
         instructorId: page.properties.Instructor?.relation?.[0]?.id || '',
@@ -82,6 +93,13 @@ export async function onRequest(context) {
         recurringDay: page.properties.RecurringDay?.select?.name || '',
         status: page.properties.Status?.select?.name || '',
       }));
+
+      // 날짜 문자열 비교로 한번 더 필터링 (Notion 필터 보완)
+      schedules = schedules.filter(s => s.date >= rangeStart && s.date <= rangeEnd);
+      // 프론트에서 요청한 특정 주간 필터 (캘린더 뷰용)
+      if (startDate && endDate) {
+        schedules = schedules.filter(s => s.date >= startDate && s.date <= endDate);
+      }
 
       return new Response(JSON.stringify({ schedules }), { headers });
     }
