@@ -2307,15 +2307,24 @@ function calNext() { calCurrentDate.setDate(calCurrentDate.getDate() + 7); rende
 function calReload() { calDataLoaded = false; loadCalendar(); }
 
 function getWeekDates(base) {
-  const day = base.getDay();
-  const diff = day === 0 ? -6 : 1 - day; // 월요일 시작
-  const mon = new Date(base);
-  mon.setDate(base.getDate() + diff);
+  // 로컬 시간 기준 (timezone 문제 방지)
+  const localDate = new Date(base.getFullYear(), base.getMonth(), base.getDate());
+  const day = localDate.getDay(); // 0=일, 1=월, ..., 6=토
+  const diff = day === 0 ? -6 : 1 - day; // 월요일로 이동
+  const mon = new Date(localDate);
+  mon.setDate(localDate.getDate() + diff);
   return Array.from({length: 5}, (_, i) => {
     const d = new Date(mon);
     d.setDate(mon.getDate() + i);
     return d;
   });
+}
+
+function toLocalDateStr(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
 }
 
 async function loadCalendar(forceReload = false) {
@@ -2392,7 +2401,7 @@ function renderCalendar() {
   const thead = `<tr>
     <th style="width:56px;min-width:56px;">시간</th>
     ${dates.map((d, i) => {
-      const dateStr = d.toISOString().split('T')[0];
+      const dateStr = toLocalDateStr(d);
       const isToday = dateStr === today;
       return `<th style="${isToday ? 'background:#F0F0F0;font-weight:700;' : ''}">
         <span style="font-size:11px;color:var(--text-muted)">${dayNames[i]}</span><br>
@@ -2408,7 +2417,7 @@ function renderCalendar() {
 
   const tbody = times.map(time => {
     const cells = dates.map(d => {
-      const dateStr = d.toISOString().split('T')[0];
+      const dateStr = toLocalDateStr(d);
       const slots = allSchedules.filter(s =>
         s.time === time && s.date === dateStr &&
         (filteredInstrs.length === 0 || filteredInstrs.some(fi => fi.id === s.instructorId))
