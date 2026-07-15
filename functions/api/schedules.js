@@ -32,29 +32,44 @@ export async function onRequest(context) {
 
       const filter = filters.length > 1 ? { and: filters } : filters.length === 1 ? filters[0] : undefined;
 
-      const res = await fetch(
-        `https://api.notion.com/v1/databases/${env.NOTION_SCHEDULE_DB_ID}/query`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${env.NOTION_API_KEY}`,
-            'Notion-Version': '2022-06-28',
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            filter,
-            sorts: [
-              { property: 'Date', direction: 'ascending' },
-              { property: 'Time', direction: 'ascending' },
-            ],
-          }),
-        }
-      );
+      // 페이지네이션으로 전체 결과 가져오기
+      let allResults = [];
+      let hasMore = true;
+      let startCursor = undefined;
 
-      const data = await res.json();
-      if (!res.ok) return new Response(JSON.stringify({ error: data.message }), { status: 500, headers });
+      while (hasMore) {
+        const body = {
+          filter,
+          sorts: [
+            { property: 'Date', direction: 'ascending' },
+            { property: 'Time', direction: 'ascending' },
+          ],
+          page_size: 100,
+        };
+        if (startCursor) body.start_cursor = startCursor;
 
-      const schedules = (data.results || []).map(page => ({
+        const res = await fetch(
+          `https://api.notion.com/v1/databases/${env.NOTION_SCHEDULE_DB_ID}/query`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${env.NOTION_API_KEY}`,
+              'Notion-Version': '2022-06-28',
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(body),
+          }
+        );
+
+        const data = await res.json();
+        if (!res.ok) return new Response(JSON.stringify({ error: data.message }), { status: 500, headers });
+
+        allResults = allResults.concat(data.results || []);
+        hasMore = data.has_more || false;
+        startCursor = data.next_cursor;
+      }
+
+      const schedules = allResults.map(page => ({
         id: page.id,
         name: page.properties.Name?.title?.[0]?.plain_text || '',
         instructorId: page.properties.Instructor?.relation?.[0]?.id || '',
