@@ -311,7 +311,7 @@ async function confirmCancel() {
   if (!cancelScheduleId) return;
   try {
     const res = await fetch(`${API}/api/member-portal/cancel`, {
-      method: 'PUT',
+      method: 'POST',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({ scheduleId: cancelScheduleId, token, memberId })
     });
