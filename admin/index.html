@@ -244,11 +244,11 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
         회원 관리
       </div>
-      <div class="nav-item" onclick="showPage('programs')">
+      <div class="nav-item l1-only" onclick="showPage('programs')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 6h16M4 10h16M4 14h8M4 18h8"/></svg>
         프로그램
       </div>
-      <div class="nav-item" onclick="showPage('contracts')">
+      <div class="nav-item l1-only" onclick="showPage('contracts')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
         계약 관리
       </div>
@@ -256,7 +256,7 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
         예약 캘린더
       </div>
-      <div class="nav-item" onclick="showPage('instructors')">
+      <div class="nav-item l1-only" onclick="showPage('instructors')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
         강사 관리
       </div>
@@ -1350,16 +1350,16 @@ function showTab(tab, el) {
 
 // ── INIT ──
 function applyPermissions() {
-  if (ADMIN_LEVEL >= 1) return; // L1은 모든 권한
+  if (ADMIN_LEVEL === 1) return; // L1 원장은 모든 권한
 
-  // L2 강사: 일부 메뉴 숨기기
-  // 프로그램 관리 - 읽기만 (등록/수정/삭제 버튼 숨김)
-  // 강사 관리 - 숨김
-  // 회원 수정 버튼 숨김
+  // L2 강사: 프로그램/계약/강사 관리 메뉴 숨기기
+  document.querySelectorAll('.l1-only').forEach(el => {
+    el.style.display = 'none';
+  });
 
-  // 메뉴에서 강사관리 숨기기
-  document.querySelectorAll('.nav-item').forEach(el => {
-    if (el.textContent.includes('강사 관리')) el.style.display = 'none';
+  // 레슨비 안내도 숨기기
+  document.querySelectorAll('.nav-item, a.nav-item').forEach(el => {
+    if (el.textContent.includes('레슨비 안내')) el.style.display = 'none';
   });
 }
 
@@ -2266,6 +2266,10 @@ function showContractPrint(data) {
 
   const fmt = n => n ? parseInt(n).toLocaleString() : '0';
   const fmtFloor = n => n ? (Math.floor(parseInt(n) / 1000) * 1000).toLocaleString() : '0';
+  // L2는 계약서에서 개인정보 마스킹
+  const safePhone = ADMIN_LEVEL === 1 ? (data.phone||'') : maskPhone(data.phone);
+  const safeAddress = ADMIN_LEVEL === 1 ? (data.address||'') : maskText(data.address);
+  const safeBirth = ADMIN_LEVEL === 1 ? (data.birthDate||'') : (data.birthDate ? data.birthDate.slice(0,4)+'****' : '');
   const chk = b => b ? '■' : '□';
 
   const html = `<!DOCTYPE html>
@@ -2323,7 +2327,7 @@ function showContractPrint(data) {
   </tr>
   <tr>
     <td class="label">주&nbsp;&nbsp;소</td>
-    <td colspan="5" class="val-wrap">${data.address||''}</td>
+    <td colspan="5" class="val-wrap">${safeAddress}</td>
   </tr>
   <tr>
     <td class="label">프로그램</td>
