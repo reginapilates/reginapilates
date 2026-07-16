@@ -1482,7 +1482,7 @@ async function loadMemberContracts() {
         const pct = c.sessions > 0 ? Math.round((c.sessions - c.remainingSessions) / c.sessions * 100) : 0;
         const statusBadge = c.status === '진행중' ? 'badge-active' : c.status === '일시정지' ? 'badge-warning' : 'badge-muted';
         return `
-        <div class="contract-card">
+        <div class="contract-card" style="${c.status==='일시정지'?'border:2px solid var(--danger);background:#FDEDEC':c.status==='완료'||c.status==='만료'?'border:1px solid var(--border);opacity:0.7':''}">
           <div class="contract-card-header">
             <div class="contract-name">${c.title}</div>
             <span class="badge ${statusBadge}">${c.status}</span>
@@ -1494,7 +1494,6 @@ async function loadMemberContracts() {
             <span style="font-size:12px;color:var(--text-muted)">잔여 ${c.remainingSessions}회</span>
           </div>
           <div class="contract-actions">
-            <button class="btn btn-secondary btn-sm" ${c.status==='일시정지'?'disabled style="opacity:0.4;cursor:not-allowed"':''} onclick="${c.status!=='일시정지'?`openSessionModal('${c.id}',${c.remainingSessions},${c.sessions-c.remainingSessions+1})`:''}">출석 기록</button>
             <button class="btn btn-secondary btn-sm" onclick="viewContractData(${JSON.stringify(c).replace(/"/g,'&quot;')})">계약서 보기</button>
             ${c.driveLink ? `<a href="${c.driveLink}" target="_blank" class="btn btn-secondary btn-sm">🔗</a>` : ''}
             ${c.status==='진행중' ? `<button class="btn btn-secondary btn-sm" onclick="openPauseModal('${c.id}')">일시정지</button>` : ''}
@@ -2361,6 +2360,15 @@ async function loadSessionsLog() {
 
     allMembersForLog = mData.members || [];
 
+    // 진행중/일시정지 계약 있는 회원만 필터링
+    const [cRes2] = await Promise.all([fetch(`${API}/api/contracts`)]);
+    const cData2 = await cRes2.json();
+    const activeContracts2 = (cData2.contracts||[]).filter(c =>
+      c.status === '진행중' || c.status === '일시정지'
+    );
+    const activeMemberIds2 = new Set(activeContracts2.map(c => c.memberId));
+    const activeMembersForLog = allMembersForLog.filter(m => activeMemberIds2.has(m.id));
+
     // 강사/회원 맵
     const memberMap = {};
     allMembersForLog.forEach(m => memberMap[m.id] = m.name);
@@ -2374,12 +2382,20 @@ async function loadSessionsLog() {
     }));
     allSessionsLog.sort((a, b) => (b.date||'').localeCompare(a.date||''));
 
-    // 회원 드롭다운 채우기
+    // 회원 드롭다운 — 활성 계약 회원만
     const sel = document.getElementById('sl-member-select');
     if (sel) {
-      sel.innerHTML = '<option value="">전체 회원</option>' +
-        allMembersForLog.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
-      if (slSelectedMemberId) sel.value = slSelectedMemberId;
+      sel.innerHTML = '<option value="">회원 선택</option>' +
+        activeMembersForLog.map(m => {
+          const memberContracts = activeContracts2.filter(c => c.memberId === m.id);
+          const hasPaused = memberContracts.some(c => c.status === '일시정지');
+          return `<option value="${m.id}">${m.name}${hasPaused ? ' ⏸' : ''}</option>`;
+        }).join('');
+      if (slSelectedMemberId && activeMemberIds2.has(slSelectedMemberId)) {
+        sel.value = slSelectedMemberId;
+      } else {
+        slSelectedMemberId = '';
+      }
     }
 
     await renderSessionLog();
@@ -2408,7 +2424,7 @@ async function renderSessionLog() {
     try {
       const cRes = await fetch(`${API}/api/contracts?memberId=${memberId}`);
       const cData = await cRes.json();
-      const activeContracts = (cData.contracts||[]).filter(c => c.status === '진행중');
+      const activeContracts = (cData.contracts||[]).filter(c => c.status === '진행중' || c.status === '일시정지');
       const member = allMembersForLog.find(m => m.id === memberId);
 
       if (activeContracts.length > 0) {
@@ -2437,8 +2453,42 @@ async function renderSessionLog() {
           const pct = c.sessions > 0 ? Math.round((c.usedSessions||0) / c.sessions * 100) : 0;
           const contractSchedules = allPending.filter(s => s.contractId === c.id);
 
+          // 계약 상태 판단
+          const todayStr2 = todayStr;
+          const isExpired = c.endDate && c.endDate < todayStr2;
+          const isPaused = c.status === '일시정지';
+          const isWarning = isExpired || isPaused;
+          const warningMsg = isExpired ? `⚠️ 계약 종료 (${c.endDate})` :
+            isPaused ? `⏸ 일시정지 중 (재개: ${c.resumeDate||'미정'})` : '';
+
+          // 유효하지 않은 예약 자동 취소 (종료일 이후 또는 일시정지 기간)
+          const invalidSchedules = contractSchedules.filter(s => {
+            if (s.status !== '확정') return false;
+            if (isExpired && s.date > c.endDate) return true;
+            if (isPaused && c.pauseDate && c.resumeDate && s.date >= c.pauseDate && s.date <= c.resumeDate) return true;
+            return false;
+          });
+
+          if (invalidSchedules.length > 0) {
+            invalidSchedules.forEach(async s => {
+              try {
+                await fetch(`${API}/api/schedules?id=${s.id}`, {
+                  method: 'PUT',
+                  headers: {'Content-Type':'application/json'},
+                  body: JSON.stringify({ status: '취소' })
+                });
+              } catch(e) {}
+            });
+            if (invalidSchedules.length > 0) {
+              showToast(`${invalidSchedules.length}개의 유효하지 않은 예약이 취소되었습니다`, '');
+              calDataLoaded = false;
+            }
+          }
+
           return `
-          <div style="background:var(--white);border:1px solid var(--border);margin-bottom:12px;">
+          <div style="background:${isWarning?'#FDEDEC':'var(--white)'};border:${isWarning?'2px solid var(--danger)':'1px solid var(--border)'};margin-bottom:12px;">
+            <!-- 경고 배너 -->
+            ${isWarning ? `<div style="padding:8px 20px;background:var(--danger);color:#fff;font-size:12px;font-weight:700;">${warningMsg}</div>` : ''}
             <!-- 계약 요약 -->
             <div style="padding:14px 20px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;border-bottom:1px solid var(--border);">
               <div>
@@ -2490,10 +2540,11 @@ async function renderSessionLog() {
                       </div>
                       ${s.status === '확정' ? `
                       <div style="display:flex;gap:6px;">
+                        ${!isExpired && !isPaused ? `
                         <button class="btn btn-sm" style="background:#EAFAF1;color:var(--success);border:1px solid #A9DFBF;padding:4px 10px;"
                           onclick="quickStatusChange('${s.id}','참석','${memberId}')">참석</button>
                         <button class="btn btn-sm" style="background:#FDEDEC;color:var(--danger);border:1px solid #F5B7B1;padding:4px 10px;"
-                          onclick="quickStatusChange('${s.id}','노쇼','${memberId}')">노쇼</button>
+                          onclick="quickStatusChange('${s.id}','노쇼','${memberId}')">노쇼</button>` : ''}
                         <button class="btn btn-sm" style="background:var(--surface);color:var(--text-muted);border:1px solid var(--border);padding:4px 10px;"
                           onclick="quickStatusChange('${s.id}','취소','${memberId}')">취소</button>
                       </div>` : `
@@ -2506,7 +2557,7 @@ async function renderSessionLog() {
         }).join('');
       } else {
         summaryEl.style.display = 'block';
-        summaryEl.innerHTML = '<div style="padding:12px 16px;background:var(--surface);font-size:13px;color:var(--text-muted)">진행중인 계약이 없습니다.</div>';
+        summaryEl.innerHTML = '<div style="padding:12px 16px;background:var(--surface);font-size:13px;color:var(--text-muted)">활성 계약이 없습니다.</div>';
       }
     } catch(e) { summaryEl.style.display = 'none'; }
   } else if (summaryEl) {
