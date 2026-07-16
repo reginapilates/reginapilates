@@ -2542,9 +2542,9 @@ async function renderSessionLog() {
                       <div style="display:flex;gap:6px;">
                         ${!isExpired && !isPaused ? `
                         <button class="btn btn-sm" style="background:#EAFAF1;color:var(--success);border:1px solid #A9DFBF;padding:4px 10px;"
-                          onclick="quickStatusChange('${s.id}','참석','${memberId}')">참석</button>
+                          onclick="openAttendanceModal('${s.id}','참석','${memberId}')">참석</button>
                         <button class="btn btn-sm" style="background:#FDEDEC;color:var(--danger);border:1px solid #F5B7B1;padding:4px 10px;"
-                          onclick="quickStatusChange('${s.id}','노쇼','${memberId}')">노쇼</button>` : ''}
+                          onclick="openAttendanceModal('${s.id}','노쇼','${memberId}')">노쇼</button>` : ''}
                         <button class="btn btn-sm" style="background:var(--surface);color:var(--text-muted);border:1px solid var(--border);padding:4px 10px;"
                           onclick="quickStatusChange('${s.id}','취소','${memberId}')">취소</button>
                       </div>` : `
@@ -2597,6 +2597,44 @@ async function openNewScheduleForMember(memberId, contractId) {
     sel.value = memberId;
     await onScheduleMemberChange();
   }
+}
+
+// ── 출석 모달 (세션 로그에서) ──
+let _attendanceScheduleId = '';
+let _attendanceMemberId = '';
+let _attendanceStatus = '';
+
+function openAttendanceModal(scheduleId, status, memberId) {
+  _attendanceScheduleId = scheduleId;
+  _attendanceMemberId = memberId;
+  _attendanceStatus = status;
+
+  const s = allSchedules.find(s => s.id === scheduleId);
+  const instr = allInstructors.find(i => i.id === s?.instructorId);
+  const member = allMembersForLog.find(m => m.id === memberId);
+
+  // 기존 예약 상세 모달 활용
+  document.getElementById('sd-id').value = scheduleId;
+  document.getElementById('sd-member-id').value = memberId;
+  document.getElementById('sd-contract-id').value = s?.contractId || '';
+  document.getElementById('sd-instructor-id').value = s?.instructorId || '';
+  document.getElementById('sd-session-created').value = '';
+  document.getElementById('sd-title').textContent = `${member?.name||''} - ${s?.date||''} ${s?.time||''}`;
+  document.getElementById('sd-date').value = s?.date || '';
+  document.getElementById('sd-time').value = s?.time || '';
+  document.getElementById('sd-status').value = status;
+  document.getElementById('sd-memo').value = '';
+  document.getElementById('sd-condition').value = '보통';
+  document.getElementById('sd-condition-row').style.display = status === '참석' ? 'block' : 'none';
+
+  document.getElementById('sd-info').innerHTML = `
+    <div>📅 <b>${s?.date||''}</b> &nbsp; ⏰ <b>${s?.time||''}</b></div>
+    <div>👤 회원: <b>${member?.name||'—'}</b></div>
+    <div>🎯 강사: <b>${instr?.name||'—'}</b></div>
+    <div>📋 출석 상태: <b style="color:${status==='참석'?'var(--success)':'var(--danger)'}">${status}</b></div>
+  `;
+
+  document.getElementById('modal-schedule-detail').style.display = 'flex';
 }
 
 async function quickStatusChange(scheduleId, status, memberId) {
@@ -3526,6 +3564,11 @@ async function updateSchedule() {
   if (currentMember && memberId === currentMember.id) {
     await loadMemberContracts();
     await loadMemberSessions();
+  }
+
+  // 세션 로그 페이지가 열려있으면 새로고침
+  if (document.getElementById('page-sessions-log')?.classList.contains('active')) {
+    await loadSessionsLog();
   }
 }
 
