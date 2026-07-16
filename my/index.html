@@ -1,1 +1,340 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>REGINA PILATES — My Schedule</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500&family=Noto+Sans+KR:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#FAFAF7;
+  --surface:#F3F2EE;
+  --border:#E5E3DC;
+  --accent:#8E8276;
+  --accent-light:#C4BAB0;
+  --text:#1A1816;
+  --text-muted:#6B6560;
+  --dark:#1A1816;
+  --white:#FFFFFF;
+  --success:#27AE60;
+  --danger:#E74C3C;
+  --warning:#E67E22;
+}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
 
+/* ── AUTH ── */
+#auth-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+.auth-box{width:100%;max-width:380px;background:var(--white);border:1px solid var(--border);padding:40px 32px;}
+.auth-logo{font-family:'Outfit',sans-serif;font-weight:200;font-size:20px;letter-spacing:0.2em;text-align:center;margin-bottom:4px;}
+.auth-sub{font-size:12px;color:var(--text-muted);text-align:center;margin-bottom:32px;letter-spacing:0.05em;}
+.auth-label{font-size:11px;color:var(--text-muted);letter-spacing:0.05em;margin-bottom:6px;}
+.auth-input{width:100%;padding:12px 14px;border:1px solid var(--border);background:var(--bg);font-family:'Noto Sans KR',sans-serif;font-size:14px;color:var(--text);outline:none;margin-bottom:12px;}
+.auth-input:focus{border-color:var(--accent);}
+.auth-btn{width:100%;padding:13px;background:var(--dark);color:var(--white);border:none;font-family:'Noto Sans KR',sans-serif;font-size:14px;cursor:pointer;margin-top:4px;}
+.auth-btn:hover{background:var(--accent);}
+.auth-error{color:var(--danger);font-size:12px;margin-top:8px;text-align:center;display:none;}
+
+/* ── MAIN ── */
+#main-screen{display:none;max-width:480px;margin:0 auto;padding:0 0 80px;}
+
+/* ── HEADER ── */
+.portal-header{background:var(--dark);padding:24px 20px 20px;color:#fff;}
+.portal-logo{font-family:'Outfit',sans-serif;font-weight:200;font-size:13px;letter-spacing:0.2em;color:rgba(255,255,255,0.5);margin-bottom:8px;}
+.portal-name{font-family:'Outfit',sans-serif;font-weight:300;font-size:24px;}
+.portal-sub{font-size:12px;color:rgba(255,255,255,0.4);margin-top:2px;}
+
+/* ── CONTRACT CARD ── */
+.section{padding:20px;}
+.section-title{font-size:11px;letter-spacing:0.08em;color:var(--text-muted);text-transform:uppercase;margin-bottom:12px;}
+.contract-card{background:var(--white);border:1px solid var(--border);padding:18px;}
+.contract-name{font-size:14px;font-weight:500;margin-bottom:4px;}
+.contract-period{font-size:12px;color:var(--text-muted);margin-bottom:12px;}
+.session-info{display:flex;align-items:center;gap:16px;}
+.session-remaining{font-family:'Outfit',sans-serif;font-weight:200;font-size:42px;color:var(--accent);line-height:1;}
+.session-remaining small{font-size:14px;color:var(--text-muted);}
+.session-detail{flex:1;}
+.session-used{font-size:13px;color:var(--text-muted);margin-bottom:6px;}
+.progress-bar{height:4px;background:var(--border);overflow:hidden;}
+.progress-fill{height:100%;background:var(--accent);transition:width 0.5s;}
+.paused-badge{display:inline-block;padding:3px 8px;background:#FEF9E7;color:var(--warning);font-size:11px;margin-top:8px;}
+
+/* ── SCHEDULE ── */
+.schedule-list{display:flex;flex-direction:column;gap:8px;}
+.schedule-item{background:var(--white);border:1px solid var(--border);padding:14px 16px;display:flex;align-items:center;gap:12px;}
+.schedule-item.today{border-left:3px solid var(--accent);}
+.schedule-date-box{text-align:center;min-width:44px;}
+.schedule-month{font-size:10px;color:var(--text-muted);text-transform:uppercase;}
+.schedule-day{font-family:'Outfit',sans-serif;font-weight:300;font-size:24px;line-height:1;}
+.schedule-dow{font-size:10px;color:var(--text-muted);}
+.schedule-info{flex:1;}
+.schedule-time{font-size:14px;font-weight:500;}
+.schedule-instructor{font-size:12px;color:var(--text-muted);margin-top:2px;}
+.schedule-status{font-size:11px;font-weight:700;}
+.btn-cancel{padding:6px 12px;background:var(--surface);border:1px solid var(--border);font-family:'Noto Sans KR',sans-serif;font-size:11px;cursor:pointer;color:var(--text-muted);}
+.btn-cancel:hover{border-color:var(--danger);color:var(--danger);}
+.today-badge{display:inline-block;padding:2px 6px;background:var(--accent);color:#fff;font-size:10px;margin-left:6px;}
+.empty-state{text-align:center;padding:40px 20px;color:var(--text-muted);font-size:13px;}
+
+/* ── CANCEL CONFIRM ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;display:none;align-items:flex-end;justify-content:center;}
+.overlay.show{display:flex;}
+.confirm-box{background:var(--white);width:100%;max-width:480px;padding:24px;margin-bottom:0;}
+.confirm-title{font-size:16px;font-weight:500;margin-bottom:8px;}
+.confirm-msg{font-size:13px;color:var(--text-muted);margin-bottom:20px;line-height:1.6;}
+.confirm-btns{display:flex;gap:8px;}
+.confirm-btns button{flex:1;padding:12px;border:none;font-family:'Noto Sans KR',sans-serif;font-size:14px;cursor:pointer;}
+.btn-confirm-cancel{background:var(--surface);color:var(--text);}
+.btn-confirm-ok{background:var(--danger);color:#fff;}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--dark);color:#fff;padding:12px 20px;font-size:13px;z-index:200;opacity:0;transition:all 0.3s;white-space:nowrap;}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+.toast.success{background:var(--success);}
+.toast.error{background:var(--danger);}
+</style>
+</head>
+<body>
+
+<!-- 인증 화면 -->
+<div id="auth-screen">
+  <div class="auth-box">
+    <div class="auth-logo">REGINA PILATES</div>
+    <div class="auth-sub">MY SCHEDULE</div>
+    <div class="auth-label">연락처 (숫자만)</div>
+    <input class="auth-input" id="auth-phone" type="tel" placeholder="01000000000"
+      onkeydown="if(event.key==='Enter')doAuth()">
+    <button class="auth-btn" onclick="doAuth()">확인</button>
+    <div class="auth-error" id="auth-error"></div>
+  </div>
+</div>
+
+<!-- 메인 화면 -->
+<div id="main-screen">
+  <div class="portal-header">
+    <div class="portal-logo">REGINA PILATES</div>
+    <div class="portal-name" id="member-name"></div>
+    <div class="portal-sub">MY SCHEDULE</div>
+  </div>
+
+  <!-- 계약 현황 -->
+  <div class="section">
+    <div class="section-title">현재 계약</div>
+    <div id="contract-section"></div>
+  </div>
+
+  <!-- 예약 일정 -->
+  <div class="section" style="padding-top:0">
+    <div class="section-title">예약 일정</div>
+    <div id="schedule-section"><div class="empty-state">불러오는 중...</div></div>
+  </div>
+</div>
+
+<!-- 취소 확인 -->
+<div class="overlay" id="cancel-overlay">
+  <div class="confirm-box">
+    <div class="confirm-title">예약 취소</div>
+    <div class="confirm-msg" id="cancel-msg"></div>
+    <div class="confirm-btns">
+      <button class="btn-confirm-cancel" onclick="closeCancel()">닫기</button>
+      <button class="btn-confirm-ok" onclick="confirmCancel()">취소 확인</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = '..';
+let token = '';
+let memberId = '';
+let memberName = '';
+let cancelScheduleId = '';
+let portalData = null;
+
+// URL에서 토큰 추출
+const params = new URLSearchParams(window.location.search);
+token = params.get('token') || '';
+
+if (!token) {
+  document.getElementById('auth-error').textContent = '유효하지 않은 링크입니다.';
+  document.getElementById('auth-error').style.display = 'block';
+  document.querySelector('.auth-btn').disabled = true;
+}
+
+async function doAuth() {
+  const phone = document.getElementById('auth-phone').value.replace(/-/g, '').trim();
+  if (!phone) { showError('연락처를 입력해주세요'); return; }
+
+  try {
+    const res = await fetch(`${API}/api/member-portal/auth`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ token, phone })
+    });
+    const data = await res.json();
+
+    if (res.ok && data.success) {
+      memberId = data.memberId;
+      memberName = data.memberName;
+      document.getElementById('auth-screen').style.display = 'none';
+      document.getElementById('main-screen').style.display = 'block';
+      document.getElementById('member-name').textContent = memberName + ' 님';
+      loadPortalData();
+    } else {
+      showError(data.error || '인증에 실패했습니다');
+    }
+  } catch(e) {
+    showError('연결에 실패했습니다. 다시 시도해주세요.');
+  }
+}
+
+function showError(msg) {
+  const el = document.getElementById('auth-error');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+async function loadPortalData() {
+  try {
+    const res = await fetch(`${API}/api/member-portal?token=${token}&memberId=${memberId}`);
+    portalData = await res.json();
+
+    if (!res.ok) { showToast(portalData.error || '오류', 'error'); return; }
+
+    renderContracts();
+    renderSchedules();
+  } catch(e) {
+    showToast('데이터를 불러올 수 없습니다', 'error');
+  }
+}
+
+function renderContracts() {
+  const contracts = portalData.contracts || [];
+  const el = document.getElementById('contract-section');
+
+  if (!contracts.length) {
+    el.innerHTML = '<div class="empty-state">진행중인 계약이 없습니다</div>';
+    return;
+  }
+
+  el.innerHTML = contracts.map(c => {
+    const pct = c.sessions > 0 ? Math.round((c.usedSessions||0) / c.sessions * 100) : 0;
+    const isPaused = c.status === '일시정지';
+    return `
+    <div class="contract-card" style="${isPaused ? 'border-color:#E67E22' : ''}">
+      <div class="contract-name">${c.title.split(' - ').slice(1).join(' - ')}</div>
+      <div class="contract-period">${c.startDate} ~ ${c.endDate}</div>
+      <div class="session-info">
+        <div class="session-remaining">
+          ${c.remainingSessions}<small>회 남음</small>
+        </div>
+        <div class="session-detail">
+          <div class="session-used">${c.usedSessions||0}회 완료 / 총 ${c.sessions}회</div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width:${pct}%;background:${isPaused?'var(--warning)':'var(--accent)'}"></div>
+          </div>
+        </div>
+      </div>
+      ${isPaused ? '<div class="paused-badge">⏸ 일시정지 중</div>' : ''}
+    </div>`;
+  }).join('');
+}
+
+function renderSchedules() {
+  const schedules = portalData.schedules || [];
+  const today = portalData.today || '';
+  const el = document.getElementById('schedule-section');
+  const dayNames = ['일','월','화','수','목','금','토'];
+  const monthNames = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+
+  if (!schedules.length) {
+    el.innerHTML = '<div class="empty-state">예약된 일정이 없습니다<br><small style="font-size:11px;margin-top:4px;display:block">예약은 스튜디오로 문의해주세요</small></div>';
+    return;
+  }
+
+  el.innerHTML = `<div class="schedule-list">${schedules.map(s => {
+    const d = new Date(s.date);
+    const isToday = s.date === today;
+    const isPast = s.date < today;
+    const canCancel = !isPast && s.status === '확정';
+
+    // 취소 가능 시간 체크 (24시간 전)
+    const scheduleDateTime = new Date(`${s.date}T${s.time}:00`);
+    const now = new Date();
+    const hoursUntil = (scheduleDateTime - now) / (1000 * 60 * 60);
+    const cancelable = canCancel && hoursUntil > 24;
+
+    const statusColor = s.status === '참석' ? 'var(--success)' :
+      s.status === '노쇼' ? 'var(--danger)' : 'var(--text-muted)';
+
+    return `
+    <div class="schedule-item${isToday ? ' today' : ''}">
+      <div class="schedule-date-box">
+        <div class="schedule-month">${monthNames[d.getMonth()]}</div>
+        <div class="schedule-day">${d.getDate()}</div>
+        <div class="schedule-dow">${dayNames[d.getDay()]}</div>
+      </div>
+      <div class="schedule-info">
+        <div class="schedule-time">
+          ${s.time}
+          ${isToday ? '<span class="today-badge">오늘</span>' : ''}
+        </div>
+        <div class="schedule-instructor">${s.instructorName ? s.instructorName + ' 강사' : ''}</div>
+      </div>
+      <div style="text-align:right;">
+        <div class="schedule-status" style="color:${statusColor}">${s.status}</div>
+        ${cancelable
+          ? `<button class="btn-cancel" onclick="openCancel('${s.id}','${s.date}','${s.time}')" style="margin-top:6px;">취소</button>`
+          : canCancel
+          ? `<div style="font-size:10px;color:var(--text-muted);margin-top:4px;">24시간 전<br>취소 가능</div>`
+          : ''}
+      </div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+// ── 예약 취소 ──
+function openCancel(scheduleId, date, time) {
+  cancelScheduleId = scheduleId;
+  document.getElementById('cancel-msg').textContent =
+    `${date} ${time} 예약을 취소하시겠습니까?\n취소 후에는 되돌릴 수 없습니다.`;
+  document.getElementById('cancel-overlay').classList.add('show');
+}
+
+function closeCancel() {
+  cancelScheduleId = '';
+  document.getElementById('cancel-overlay').classList.remove('show');
+}
+
+async function confirmCancel() {
+  if (!cancelScheduleId) return;
+  try {
+    const res = await fetch(`${API}/api/member-portal/cancel`, {
+      method: 'PUT',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ scheduleId: cancelScheduleId, token, memberId })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      closeCancel();
+      showToast('예약이 취소되었습니다', 'success');
+      await loadPortalData();
+    } else {
+      showToast(data.error || '취소 실패', 'error');
+    }
+  } catch(e) {
+    showToast('오류가 발생했습니다', 'error');
+  }
+}
+
+// ── TOAST ──
+function showToast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  setTimeout(() => t.className = 'toast', 3000);
+}
+</script>
+</body>
+</html>
