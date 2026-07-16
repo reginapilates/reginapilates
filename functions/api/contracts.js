@@ -90,10 +90,39 @@ export async function onRequest(context) {
         }
       }
 
-      const contracts = rawContracts.map(c => ({
-        ...c,
-        usedSessions: sessionCountMap[c.id] || 0,
-        remainingSessions: Math.max(0, c.sessions - (sessionCountMap[c.id] || 0)),
+      const today = new Date().toISOString().split('T')[0];
+
+      const contracts = await Promise.all(rawContracts.map(async c => {
+        const usedSessions = sessionCountMap[c.id] || 0;
+        const remainingSessions = Math.max(0, c.sessions - usedSessions);
+
+        // 자동 종료 조건 체크 (진행중인 계약만)
+        if (c.status === '진행중') {
+          const isExpired = c.endDate && c.endDate < today;
+          const isDepleted = remainingSessions === 0 && c.sessions > 0;
+
+          if (isExpired || isDepleted) {
+            // Notion에서 자동으로 완료 처리
+            try {
+              await fetch(`https://api.notion.com/v1/pages/${c.id}`, {
+                method: 'PATCH',
+                headers: {
+                  'Authorization': `Bearer ${env.NOTION_API_KEY}`,
+                  'Notion-Version': '2022-06-28',
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  properties: {
+                    Status: { select: { name: '완료' } },
+                  },
+                }),
+              });
+              c.status = '완료';
+            } catch(e) {}
+          }
+        }
+
+        return { ...c, usedSessions, remainingSessions };
       }));
 
       return new Response(JSON.stringify({ contracts }), { headers });
