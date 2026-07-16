@@ -1358,20 +1358,24 @@ function renderMemberTable() {
 
   tbody.innerHTML = members.map(m => {
     const contracts = allContractsByMember[m.id] || [];
-    const activeContract = contracts.find(c => c.status === '진행중');
+    // 진행중 우선, 없으면 일시정지
+    const activeContract = contracts.find(c => c.status === '진행중') ||
+                           contracts.find(c => c.status === '일시정지');
+    const isPaused = activeContract?.status === '일시정지';
     const progName = activeContract?.title?.split(' - ').slice(1).join(' - ') || '—';
     const remaining = activeContract ? activeContract.remainingSessions + '회' : '—';
     const total = activeContract?.sessions || 0;
     const done = total - (activeContract?.remainingSessions || 0);
     const pct = total > 0 ? Math.round(done / total * 100) : 0;
     const progressBar = activeContract
-      ? `<div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>`
+      ? `<div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${isPaused?'var(--warning)':'var(--accent)'}"></div></div>`
       : '—';
 
     // 상태 배지
     let badge = '<span class="badge badge-active">활성</span>';
-    if (!activeContract && contracts.length > 0) badge = '<span class="badge badge-muted">완료</span>';
-    if (!contracts.length) badge = '<span class="badge badge-muted">미계약</span>';
+    if (isPaused) badge = '<span class="badge badge-warning">일시정지</span>';
+    else if (!activeContract && contracts.length > 0) badge = '<span class="badge badge-muted">완료</span>';
+    else if (!contracts.length) badge = '<span class="badge badge-muted">미계약</span>';
 
     // 리마케팅 알림
     const alertInfo = allAlerts.find(a => a.memberId === m.id);
@@ -2330,12 +2334,46 @@ async function confirmPause() {
 async function resumeContract(contractId) {
   if (!confirm('일시정지를 해제하고 세션을 재개하시겠습니까?')) return;
   try {
+    // 현재 계약 정보 조회
+    const cRes = await fetch(`${API}/api/contracts?memberId=${currentMember?.id}`);
+    const cData = await cRes.json();
+    const contract = (cData.contracts||[]).find(c => c.id === contractId);
+
+    let newEndDate = contract?.endDate || '';
+
+    if (contract?.pauseDate && contract?.endDate) {
+      // 정지 기간 계산: 오늘 - pauseDate
+      const pauseStart = new Date(contract.pauseDate);
+      const resumeToday = new Date();
+      const pausedDays = Math.floor((resumeToday - pauseStart) / (1000 * 60 * 60 * 24));
+
+      if (pausedDays > 0) {
+        // 종료일 연장
+        const endDate = new Date(contract.endDate);
+        endDate.setDate(endDate.getDate() + pausedDays);
+        const y = endDate.getFullYear();
+        const m = String(endDate.getMonth()+1).padStart(2,'0');
+        const d = String(endDate.getDate()).padStart(2,'0');
+        newEndDate = `${y}-${m}-${d}`;
+      }
+    }
+
     await fetch(`${API}/api/contracts?id=${contractId}`, {
       method:'PUT',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ status:'진행중', pauseDate: null, resumeDate: null })
+      body: JSON.stringify({
+        status: '진행중',
+        pauseDate: null,
+        resumeDate: null,
+        endDate: newEndDate,
+        note: contract?.note || '',
+      })
     });
-    showToast('세션이 재개되었습니다', 'success');
+
+    const extMsg = newEndDate !== contract?.endDate
+      ? ` · 종료일 ${newEndDate}로 연장됨`
+      : '';
+    showToast(`세션이 재개되었습니다${extMsg}`, 'success');
     await loadMemberContracts();
   } catch(e) { showToast('실패: ' + e.message, 'error'); }
 }
