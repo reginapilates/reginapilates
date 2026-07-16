@@ -347,6 +347,7 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
           <div class="detail-meta" id="detail-meta"></div>
         </div>
         <button class="btn btn-secondary" id="member-edit-btn" onclick="openEditMemberModal(currentMember)" style="margin-right:8px">✏️ 수정</button>
+        <button class="btn btn-secondary" onclick="generateMemberToken()" style="margin-right:8px">🔗 포털 링크</button>
         <button class="btn btn-primary" onclick="openNewContractModal()">+ 새 계약</button>
       </div>
       <div class="tabs">
@@ -1764,6 +1765,42 @@ async function saveProgram() {
   } catch(e) { showToast('저장 실패: ' + e.message, 'error'); console.error(e); }
 }
 
+// ── MEMBER PORTAL TOKEN ──
+async function generateMemberToken() {
+  if (!currentMember) return;
+
+  let token = currentMember.token || '';
+
+  // 토큰 없으면 새로 생성
+  if (!token) {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    token = 'RP-' + Array.from({length:6}, () => chars[Math.floor(Math.random()*chars.length)]).join('');
+
+    // Members DB에 저장
+    try {
+      await fetch(`${API}/api/members?id=${currentMember.id}`, {
+        method: 'PUT',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ ...currentMember, token })
+      });
+      currentMember.token = token;
+    } catch(e) {
+      showToast('토큰 저장 실패', 'error'); return;
+    }
+  }
+
+  const link = `https://reginapilates.pages.dev/my?token=${token}`;
+
+  // 클립보드 복사
+  try {
+    await navigator.clipboard.writeText(link);
+    showToast('포털 링크가 복사되었습니다! 카카오톡으로 전송해주세요 📋', 'success');
+  } catch(e) {
+    // 복사 실패 시 직접 표시
+    prompt('아래 링크를 복사해서 회원에게 전송해주세요:', link);
+  }
+}
+
 // ── EDIT MEMBER ──
 function openEditMemberModal(m) {
   if (!m) return;
@@ -1912,6 +1949,7 @@ async function saveMember() {
     marketingConsent: document.getElementById('nm-marketing').checked,
     adConsent: document.getElementById('nm-ad').checked,
     privacyConsent: document.getElementById('nm-privacy').checked,
+    token: currentMember?.token || '',
   };
 
   if (!body.privacyConsent) {
