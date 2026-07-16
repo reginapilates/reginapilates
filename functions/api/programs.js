@@ -75,6 +75,7 @@ export async function onRequest(context) {
             page.properties.FinalPrice?.number || 0,
           duration: page.properties.Duration?.number || null,
           isActive: page.properties.IsActive?.checkbox || false,
+        isTrial: page.properties.IsTrial?.checkbox || false,
         };
       });
 
@@ -104,6 +105,7 @@ export async function onRequest(context) {
             Discount: { number: body.discount || 0 },
             Duration: body.duration ? { number: body.duration } : undefined,
             IsActive: { checkbox: body.isActive !== false },
+            IsTrial: { checkbox: body.isTrial || false },
           },
         }),
       });
@@ -140,6 +142,7 @@ export async function onRequest(context) {
             Discount: { number: body.discount || 0 },
             Duration: body.duration ? { number: body.duration } : undefined,
             IsActive: { checkbox: body.isActive !== false },
+            IsTrial: { checkbox: body.isTrial || false },
           },
         }),
       });
