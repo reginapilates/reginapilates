@@ -196,6 +196,7 @@ export async function onRequest(context) {
       else if (body.pauseDate === null) properties.PauseDate = { date: null };
       if (body.resumeDate) properties.ResumeDate = { date: { start: body.resumeDate } };
       else if (body.resumeDate === null) properties.ResumeDate = { date: null };
+      if (body.endDate) properties.EndDate = { date: { start: body.endDate } };
       if (body.note !== undefined) properties.Note = { rich_text: [{ text: { content: body.note } }] };
 
       const response = await fetch(`https://api.notion.com/v1/pages/${contractId}`, {
