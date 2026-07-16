@@ -71,21 +71,12 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .schedule-time{font-size:14px;font-weight:500;}
 .schedule-instructor{font-size:12px;color:var(--text-muted);margin-top:2px;}
 .schedule-status{font-size:11px;font-weight:700;}
-.btn-cancel{padding:6px 12px;background:var(--surface);border:1px solid var(--border);font-family:'Noto Sans KR',sans-serif;font-size:11px;cursor:pointer;color:var(--text-muted);}
-.btn-cancel:hover{border-color:var(--danger);color:var(--danger);}
+
 .today-badge{display:inline-block;padding:2px 6px;background:var(--accent);color:#fff;font-size:10px;margin-left:6px;}
 .empty-state{text-align:center;padding:40px 20px;color:var(--text-muted);font-size:13px;}
 
 /* ── CANCEL CONFIRM ── */
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;display:none;align-items:flex-end;justify-content:center;}
-.overlay.show{display:flex;}
-.confirm-box{background:var(--white);width:100%;max-width:480px;padding:24px;margin-bottom:0;}
-.confirm-title{font-size:16px;font-weight:500;margin-bottom:8px;}
-.confirm-msg{font-size:13px;color:var(--text-muted);margin-bottom:20px;line-height:1.6;}
-.confirm-btns{display:flex;gap:8px;}
-.confirm-btns button{flex:1;padding:12px;border:none;font-family:'Noto Sans KR',sans-serif;font-size:14px;cursor:pointer;}
-.btn-confirm-cancel{background:var(--surface);color:var(--text);}
-.btn-confirm-ok{background:var(--danger);color:#fff;}
+
 
 /* ── TOAST ── */
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--dark);color:#fff;padding:12px 20px;font-size:13px;z-index:200;opacity:0;transition:all 0.3s;white-space:nowrap;}
@@ -130,17 +121,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
   </div>
 </div>
 
-<!-- 취소 확인 -->
-<div class="overlay" id="cancel-overlay">
-  <div class="confirm-box">
-    <div class="confirm-title">예약 취소</div>
-    <div class="confirm-msg" id="cancel-msg"></div>
-    <div class="confirm-btns">
-      <button class="btn-confirm-cancel" onclick="closeCancel()">닫기</button>
-      <button class="btn-confirm-ok" onclick="confirmCancel()">취소 확인</button>
-    </div>
-  </div>
-</div>
+
 
 <div class="toast" id="toast"></div>
 
@@ -149,7 +130,7 @@ const API = 'https://reginapilates.pages.dev';
 let token = '';
 let memberId = '';
 let memberName = '';
-let cancelScheduleId = '';
+
 let portalData = null;
 
 // URL에서 토큰 추출
@@ -257,13 +238,7 @@ function renderSchedules() {
     const d = new Date(s.date);
     const isToday = s.date === today;
     const isPast = s.date < today;
-    const canCancel = !isPast && s.status === '확정';
 
-    // 취소 가능 시간 체크 (24시간 전)
-    const scheduleDateTime = new Date(`${s.date}T${s.time}:00`);
-    const now = new Date();
-    const hoursUntil = (scheduleDateTime - now) / (1000 * 60 * 60);
-    const cancelable = canCancel && hoursUntil > 24;
 
     const statusColor = s.status === '참석' ? 'var(--success)' :
       s.status === '노쇼' ? 'var(--danger)' : 'var(--text-muted)';
@@ -284,49 +259,13 @@ function renderSchedules() {
       </div>
       <div style="text-align:right;">
         <div class="schedule-status" style="color:${statusColor}">${s.status}</div>
-        ${cancelable
-          ? `<button class="btn-cancel" onclick="openCancel('${s.id}','${s.date}','${s.time}')" style="margin-top:6px;">취소</button>`
-          : canCancel
-          ? `<div style="font-size:10px;color:var(--text-muted);margin-top:4px;">24시간 전<br>취소 가능</div>`
-          : ''}
+    
       </div>
     </div>`;
   }).join('')}</div>`;
 }
 
-// ── 예약 취소 ──
-function openCancel(scheduleId, date, time) {
-  cancelScheduleId = scheduleId;
-  document.getElementById('cancel-msg').textContent =
-    `${date} ${time} 예약을 취소하시겠습니까?\n취소 후에는 되돌릴 수 없습니다.`;
-  document.getElementById('cancel-overlay').classList.add('show');
-}
 
-function closeCancel() {
-  cancelScheduleId = '';
-  document.getElementById('cancel-overlay').classList.remove('show');
-}
-
-async function confirmCancel() {
-  if (!cancelScheduleId) return;
-  try {
-    const res = await fetch(`${API}/api/member-portal/cancel`, {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ scheduleId: cancelScheduleId, token, memberId })
-    });
-    const data = await res.json();
-    if (res.ok) {
-      closeCancel();
-      showToast('예약이 취소되었습니다', 'success');
-      await loadPortalData();
-    } else {
-      showToast(data.error || '취소 실패', 'error');
-    }
-  } catch(e) {
-    showToast('오류가 발생했습니다', 'error');
-  }
-}
 
 // ── TOAST ──
 function showToast(msg, type='') {
