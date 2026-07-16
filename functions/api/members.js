@@ -64,6 +64,7 @@ export async function onRequest(context) {
         marketingConsent: page.properties.MarketingConsent?.checkbox || false,
         adConsent: page.properties.AdConsent?.checkbox || false,
         createdAt: page.properties.CreatedAt?.date?.start || '',
+        token: page.properties.Token?.rich_text?.[0]?.plain_text || '',
       }));
 
       const url = new URL(request.url);
@@ -118,6 +119,7 @@ export async function onRequest(context) {
             AvailableDays: { multi_select: toMultiSelect(body.availableDays) },
             MarketingConsent: { checkbox: body.marketingConsent || false },
             AdConsent: { checkbox: body.adConsent || false },
+            Token: body.token ? { rich_text: [{ text: { content: body.token } }] } : undefined,
             CreatedAt: { date: { start: new Date().toISOString().split('T')[0] } },
           },
         }),
@@ -175,6 +177,7 @@ export async function onRequest(context) {
             AvailableDays: { multi_select: toMultiSelect(body.availableDays) },
             MarketingConsent: { checkbox: body.marketingConsent || false },
             AdConsent: { checkbox: body.adConsent || false },
+            Token: body.token ? { rich_text: [{ text: { content: body.token } }] } : undefined,
           },
         }),
       });
