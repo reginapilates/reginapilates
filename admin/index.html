@@ -820,7 +820,7 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
         <div class="form-group"><label class="form-label">할인율 (%)</label><input class="form-input" id="np-discount" type="number" placeholder="0" oninput="calcProgramPrice()"></div>
         <div class="form-group"><label class="form-label">최종 금액 (자동 계산)</label><input class="form-input" id="np-final" readonly style="background:var(--surface)"></div>
       </div>
-      <div class="form-row full">
+      <div class="form-row">
         <div class="form-group">
           <label class="form-label">사용 기간</label>
           <select class="form-select" id="np-duration">
@@ -830,6 +830,12 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
             <option value="7">7개월</option><option value="8">8개월</option><option value="9">9개월</option>
             <option value="10">10개월</option><option value="11">11개월</option><option value="12">12개월</option>
           </select>
+        </div>
+        <div class="form-group" style="justify-content:flex-end;padding-top:20px;">
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+            <input type="checkbox" id="np-trial">
+            Trial Lesson
+          </label>
         </div>
       </div>
     </div>
