@@ -1218,6 +1218,59 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
   </div>
 </div>
 
+<!-- MODAL: 기간 수정 -->
+<div class="modal-overlay" id="modal-extend-date" style="display:none">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-header">
+      <div class="modal-title">계약 기간 수정</div>
+      <button class="modal-close" onclick="closeModal('modal-extend-date')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="ed-contract-id">
+      <div id="ed-contract-title" style="font-size:13px;color:var(--text-muted);margin-bottom:16px;"></div>
+      <div class="form-row full">
+        <div class="form-group">
+          <label class="form-label">현재 종료일</label>
+          <input class="form-input" id="ed-current-end" readonly style="background:var(--surface);color:var(--text-muted)">
+        </div>
+      </div>
+      <div class="form-row full">
+        <div class="form-group">
+          <label class="form-label required">새 종료일</label>
+          <input class="form-input" id="ed-new-end" type="date">
+        </div>
+      </div>
+      <div class="form-row full">
+        <div class="form-group">
+          <label class="form-label">수정 사유 (선택)</label>
+          <select class="form-select" id="ed-reason">
+            <option value="">선택</option>
+            <option>일시정지 기간 반영</option>
+            <option>강사 사정으로 인한 연장</option>
+            <option>회원 요청</option>
+            <option>기타</option>
+          </select>
+        </div>
+      </div>
+      <!-- 빠른 연장 버튼 -->
+      <div style="margin-top:8px;">
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">빠른 연장</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="btn btn-secondary btn-sm" onclick="addDaysToEndDate(7)">+1주</button>
+          <button class="btn btn-secondary btn-sm" onclick="addDaysToEndDate(14)">+2주</button>
+          <button class="btn btn-secondary btn-sm" onclick="addDaysToEndDate(30)">+1개월</button>
+          <button class="btn btn-secondary btn-sm" onclick="addDaysToEndDate(60)">+2개월</button>
+          <button class="btn btn-secondary btn-sm" onclick="addDaysToEndDate(90)">+3개월</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-extend-date')">취소</button>
+      <button class="btn btn-primary" onclick="saveExtendDate()">저장</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1511,6 +1564,7 @@ async function loadMemberContracts() {
           </div>
           <div class="contract-actions">
             <button class="btn btn-secondary btn-sm" onclick="viewContractData(${JSON.stringify(c).replace(/"/g,'&quot;')})">계약서 보기</button>
+            <button class="btn btn-secondary btn-sm" onclick="openExtendDateModal('${c.id}','${c.endDate||''}','${c.title}')">📅 기간 수정</button>
             ${c.driveLink ? `<a href="${c.driveLink}" target="_blank" class="btn btn-secondary btn-sm">🔗</a>` : ''}
             ${c.status==='진행중' ? `<button class="btn btn-secondary btn-sm" onclick="openPauseModal('${c.id}')">일시정지</button>` : ''}
             ${c.status==='일시정지' ? `<button class="btn btn-primary btn-sm" onclick="resumeContract('${c.id}')">정지 해제</button>` : ''}
@@ -3642,6 +3696,51 @@ async function deleteSchedule() {
   } catch(e) { showToast('삭제 실패', 'error'); }
 }
 
+
+// ── EXTEND DATE ──
+function openExtendDateModal(contractId, currentEndDate, title) {
+  document.getElementById('ed-contract-id').value = contractId;
+  document.getElementById('ed-contract-title').textContent = title;
+  document.getElementById('ed-current-end').value = currentEndDate || '미설정';
+  document.getElementById('ed-new-end').value = currentEndDate || '';
+  document.getElementById('ed-reason').value = '';
+  document.getElementById('modal-extend-date').style.display = 'flex';
+}
+
+function addDaysToEndDate(days) {
+  const input = document.getElementById('ed-new-end');
+  const base = input.value ? new Date(input.value) : new Date();
+  base.setDate(base.getDate() + days);
+  const y = base.getFullYear();
+  const m = String(base.getMonth()+1).padStart(2,'0');
+  const d = String(base.getDate()).padStart(2,'0');
+  input.value = `${y}-${m}-${d}`;
+}
+
+async function saveExtendDate() {
+  const contractId = document.getElementById('ed-contract-id').value;
+  const newEndDate = document.getElementById('ed-new-end').value;
+  const reason = document.getElementById('ed-reason').value;
+
+  if (!newEndDate) { showToast('새 종료일을 입력해주세요', 'error'); return; }
+
+  try {
+    const note = reason ? `[기간수정] ${reason}` : '';
+    const res = await fetch(`${API}/api/contracts?id=${contractId}`, {
+      method: 'PUT',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ endDate: newEndDate, ...(note ? { note } : {}) })
+    });
+    if (res.ok) {
+      closeModal('modal-extend-date');
+      showToast(`종료일이 ${newEndDate}로 수정되었습니다`, 'success');
+      await loadMemberContracts();
+    } else {
+      const d = await res.json();
+      showToast('수정 실패: ' + (d.error||'오류'), 'error');
+    }
+  } catch(e) { showToast('수정 실패: ' + e.message, 'error'); }
+}
 
 // ── TOAST ──
 function showToast(msg, type='') {
