@@ -7,13 +7,13 @@ export async function onRequest(context) {
   const headers = {
     'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'PUT, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
   };
 
   if (method === 'OPTIONS') return new Response(null, { headers });
 
-  if (method === 'PUT') {
+  if (method === 'POST' || method === 'PUT') {
     const body = await request.json();
     const { scheduleId, token, memberId } = body;
 
