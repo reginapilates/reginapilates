@@ -241,6 +241,12 @@ body {
     <option value="1:2">Duet 1:2</option>
     <option value="1:3">Triple 1:3</option>
   </select>
+  <label style="margin-left:16px">CATEGORY</label>
+  <select id="trial-select" onchange="renderViewer()">
+    <option value="">Regular + Trial</option>
+    <option value="regular">Regular only</option>
+    <option value="trial">Trial only</option>
+  </select>
   <span class="loading-msg" id="loading-msg">불러오는 중...</span>
   <button class="btn-print" onclick="window.print()">🖨️ 인쇄 / PDF 저장</button>
 </div>
@@ -303,9 +309,12 @@ function renderViewer() {
   const typeOrder = { '1:1': 0, '1:2': 1, '1:3': 2 };
 
   // 필터링
+  const trialFilter = document.getElementById('trial-select')?.value || '';
   let programs = allPrograms.filter(p => p.isActive);
   if (instrId) programs = programs.filter(p => p.instructorId === instrId);
   if (typeFilter) programs = programs.filter(p => p.type === typeFilter);
+  if (trialFilter === 'regular') programs = programs.filter(p => !p.isTrial);
+  if (trialFilter === 'trial') programs = programs.filter(p => p.isTrial);
 
   if (!programs.length) {
     document.getElementById('viewer').innerHTML = '<div class="empty-state">표시할 프로그램이 없습니다.</div>';
@@ -315,6 +324,7 @@ function renderViewer() {
   // 제목
   const titleParts = [];
   if (instrName) titleParts.push(instrName);
+  if (trialFilter === 'trial') titleParts.push('Trial');
   if (typeFilter) titleParts.push(typeNames[typeFilter] || typeFilter);
   const docTitle = titleParts.length ? titleParts.join(' · ') + ' Lesson' : 'Program & Price';
 
@@ -356,7 +366,7 @@ function renderViewer() {
         html += `
           <div class="price-section">
             <div class="section-header">
-              <span class="section-name">${typeName} (50min) · ${instrDisplayName}</span>
+              <span class="section-name">${typeName} (50min) · ${instrDisplayName}${typeProgs[0]?.isTrial?' <span style="font-size:11px;background:rgba(255,255,255,0.2);padding:2px 8px;border-radius:10px">Trial</span>':''}</span>
               <span class="section-base-price">1회 수업비: <b>${fmt(basePrice)}원</b></span>
             </div>
             <table class="price-table">
