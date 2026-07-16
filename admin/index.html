@@ -893,6 +893,12 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
           </select>
         </div>
       </div>
+      <div class="form-row full">
+        <div class="form-group" style="flex-direction:row;align-items:center;gap:8px;">
+          <input type="checkbox" id="ep-trial">
+          <label style="font-size:13px;cursor:pointer">Trial Lesson</label>
+        </div>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('modal-edit-program')">취소</button>
@@ -1647,7 +1653,10 @@ async function loadPrograms() {
         <td>${p.discount||0}%</td>
         <td><b>${p.finalPrice?.toLocaleString()||0}원</b></td>
         <td>${p.duration?p.duration+'개월':'제한없음'}</td>
-        <td><span class="badge ${p.isActive?'badge-active':'badge-muted'}">${p.isActive?'운영중':'중단'}</span></td>
+        <td>
+          <span class="badge ${p.isActive?'badge-active':'badge-muted'}">${p.isActive?'운영중':'중단'}</span>
+          ${p.isTrial?'<span class="badge" style="background:#F4ECF7;color:#8E44AD;margin-left:4px">Trial</span>':''}
+        </td>
         <td style="white-space:nowrap">
           <button class="btn btn-secondary btn-sm" onclick="openEditProgramModal(${JSON.stringify(p).replace(/"/g,'&quot;')})">수정</button>
           <button class="btn btn-sm" style="background:#FDEDEC;color:var(--danger);border:1px solid #F5B7B1;margin-left:4px" onclick="deleteProgram('${p.id}','${p.name}')">삭제</button>
@@ -1677,6 +1686,7 @@ async function saveProgram() {
     pricePerSession: parseInt(document.getElementById('np-price').value)||0,
     discount: parseInt(document.getElementById('np-discount').value)||0,
     duration: parseInt(document.getElementById('np-duration').value)||null,
+    isTrial: document.getElementById('np-trial').checked,
     isActive: true,
   };
   if (!body.name) { showToast('프로그램명을 입력해주세요', 'error'); return; }
@@ -2753,6 +2763,7 @@ async function openEditProgramModal(p) {
   document.getElementById('ep-discount').value = p.discount || 0;
   document.getElementById('ep-duration').value = p.duration || '';
   document.getElementById('ep-active').value = p.isActive ? 'true' : 'false';
+  document.getElementById('ep-trial').checked = p.isTrial || false;
   calcEditProgramPrice();
   document.getElementById('modal-edit-program').style.display = 'flex';
 }
@@ -2776,6 +2787,7 @@ async function updateProgram() {
     pricePerSession: parseInt(document.getElementById('ep-price').value)||0,
     discount: parseInt(document.getElementById('ep-discount').value)||0,
     duration: parseInt(document.getElementById('ep-duration').value)||null,
+    isTrial: document.getElementById('ep-trial').checked,
     isActive: document.getElementById('ep-active').value === 'true',
   };
   try {
