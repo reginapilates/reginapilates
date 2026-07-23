@@ -3360,6 +3360,7 @@ async function resumeContract(contractId) {
 // ── SESSIONS LOG ──
 let allSessionsLog = [];
 let allMembersForLog = [];
+let allSchedulesForLog = [];
 let sessionLogFilter = 'all';
 let slSelectedMemberId = '';
 
@@ -3378,6 +3379,7 @@ async function loadSessionsLog() {
     const mData = await mRes.json();
     const cData2 = await cRes2.json();
     const schData = await schRes.json();
+    allSchedulesForLog = schData.schedules || [];
 
     allMembersForLog = mData.members || [];
 
@@ -3668,15 +3670,18 @@ async function renderSessionLog() {
       : (isScheduleOnly ? '' : '—');
     const statusKey = s.attendanceStatus || '확정';
     const badge = statusBadge[statusKey] || `<span style="font-size:12px;color:var(--text-muted);">${statusKey}</span>`;
-    const usedTotal = s.contractSessions
+    // 확정(예약) 상태는 사용/총 표시 안 함
+    const usedTotal = (!isScheduleOnly && s.contractSessions)
       ? `${s.contractUsed}/${s.contractSessions}`
-      : '—';
-    // 확정 예약은 행 배경 연하게, 지난 날짜면 주의 표시
+      : '';
     const rowStyle = isScheduleOnly
       ? (isPast ? 'background:#FFF8F0;' : 'background:#F8FBFF;')
       : '';
+    // 클릭 시 스케줄 상세 모달 (scheduleId 기준)
+    const clickId = s.scheduleId || s.id;
+    const clickFn = clickId ? `onclick="openSessionLogDetail('${clickId}')"` : '';
 
-    return `<tr style="${rowStyle}">
+    return `<tr style="${rowStyle};cursor:pointer;" ${clickFn}>
       <td style="white-space:nowrap;font-size:13px;${isPast&&isScheduleOnly?'color:#E67E22;font-weight:600;':''}">${s.date||'—'}${isPast&&isScheduleOnly?' ⚠':''}</td>
       <td style="white-space:nowrap;">${s.time||'—'}</td>
       <td><b>${s.memberName}</b></td>
@@ -3688,6 +3693,25 @@ async function renderSessionLog() {
       <td style="white-space:nowrap;">${badge}</td>
     </tr>`;
   }).join('');
+}
+
+// 세션 로그에서 행 클릭 시 스케줄 상세 모달 열기
+async function openSessionLogDetail(scheduleId) {
+  // allSchedules(캘린더)에 없으면 allSchedulesForLog에서 찾아 임시 주입
+  const inCalendar = allSchedules.find(s => s.id === scheduleId);
+  if (!inCalendar) {
+    const found = allSchedulesForLog.find(s => s.id === scheduleId);
+    if (found) {
+      // 임시로 allSchedules에 추가해서 openScheduleDetail이 찾을 수 있게
+      allSchedules = [...allSchedules, found];
+    } else {
+      // DB에서 직접 조회
+      try {
+        const res = await fetch(`${API}/api/schedules?memberId=${found?.memberId||''}`);
+      } catch(e) {}
+    }
+  }
+  await openScheduleDetail(scheduleId);
 }
 
 async function openNewScheduleForMember(memberId, contractId) {
