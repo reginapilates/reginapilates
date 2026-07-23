@@ -1782,41 +1782,62 @@ function loadReportExpired() {
 // ④ 월간 매출 현황
 function loadReportSales() {
   const year = parseInt(document.getElementById('rpt-sales-year').value);
-  const memberMap = getMemberMap();
 
   const months = Array.from({length:12},(_,i)=>i+1);
 
-  // 재등록 판별: 해당 회원의 이전 계약이 있으면 재등록
-  const memberFirstContract = {};
-  rptAllContracts.filter(c=>c.startDate).sort((a,b)=>a.startDate.localeCompare(b.startDate))
-    .forEach(c => { if (!memberFirstContract[c.memberId]) memberFirstContract[c.memberId] = c.id; });
+  // Trial 제외 계약 / Trial만 있는 계약 분류
+  const nonTrialContracts = rptAllContracts.filter(c => !c.isTrial);
+  const trialOnlyMemberIds = new Set(
+    rptAllMembers
+      .filter(m2 => {
+        const memberContracts = rptAllContracts.filter(c => c.memberId === m2.id);
+        return memberContracts.length > 0 && memberContracts.every(c => c.isTrial);
+      })
+      .map(m2 => m2.id)
+  );
+
+  // 신규/재등록: Trial 제외 계약 기준으로 회원별 첫 계약 ID
+  const memberFirstNonTrial = {};
+  nonTrialContracts.filter(c=>c.startDate).sort((a,b)=>a.startDate.localeCompare(b.startDate))
+    .forEach(c => { if (!memberFirstNonTrial[c.memberId]) memberFirstNonTrial[c.memberId] = c.id; });
 
   const rows = months.map(m => {
     const prefix = `${year}-${String(m).padStart(2,'0')}`;
+
+    // 매출: Trial 포함 전체
     const monthContracts = rptAllContracts.filter(c => c.startDate?.startsWith(prefix));
-
     const revenue = monthContracts.reduce((s,c) => s+(c.totalAmount||0), 0);
-    const newCount = monthContracts.filter(c => memberFirstContract[c.memberId] === c.id).length;
-    const reregCount = monthContracts.filter(c => memberFirstContract[c.memberId] !== c.id).length;
 
-    // 재등록 미스: 해당 월 만료된 계약의 회원 중 그 이후로 재등록 없는 회원
-    const expiredThisMonth = rptAllContracts.filter(c =>
+    // 신규: 이달 Trial 제외 계약 중 해당 회원의 첫 비Trial 계약
+    const monthNonTrial = nonTrialContracts.filter(c => c.startDate?.startsWith(prefix));
+    const newCount = monthNonTrial.filter(c => memberFirstNonTrial[c.memberId] === c.id).length;
+
+    // 재등록: 이달 Trial 제외 계약 중 2번째 이상
+    const reregCount = monthNonTrial.filter(c => memberFirstNonTrial[c.memberId] !== c.id).length;
+
+    // 상담: 이달 신규 회원가입 수 + Trial만 계약한 사람
+    const newMembersThisMonth = rptAllMembers.filter(m2 => m2.createdAt?.startsWith(prefix));
+    const membersWithNonTrial = new Set(nonTrialContracts.map(c => c.memberId));
+    const consultCount = newMembersThisMonth.filter(m2 =>
+      !membersWithNonTrial.has(m2.id) // 비Trial 계약 없는 사람 (미계약 or Trial만)
+    ).length;
+
+    // 재등록 미스: 이달 만료된 비Trial 계약 회원 중 이후 비Trial 재계약 없는 회원
+    // Trial만 이용한 회원 제외
+    const expiredThisMonth = nonTrialContracts.filter(c =>
       (c.status === '완료' || c.status === '만료') && c.endDate?.startsWith(prefix)
     );
-    const missCount = expiredThisMonth.filter(c => {
-      const hasRenewed = rptAllContracts.some(nc =>
+    const missedMemberIds = new Set();
+    expiredThisMonth.forEach(c => {
+      if (trialOnlyMemberIds.has(c.memberId)) return; // Trial만 이용한 회원 제외
+      const hasRenewed = nonTrialContracts.some(nc =>
         nc.memberId === c.memberId &&
         nc.startDate > (c.endDate||'') &&
         nc.id !== c.id
       );
-      return !hasRenewed;
-    }).length;
-
-    // 상담(명): 해당 월 등록된 회원 중 계약이 하나도 없는 회원
-    const membersHavingContract = new Set(rptAllContracts.map(c => c.memberId));
-    const consultCount = rptAllMembers.filter(m2 =>
-      m2.createdAt?.startsWith(prefix) && !membersHavingContract.has(m2.id)
-    ).length;
+      if (!hasRenewed) missedMemberIds.add(c.memberId);
+    });
+    const missCount = missedMemberIds.size;
 
     const isEmpty = monthContracts.length === 0 && expiredThisMonth.length === 0 && consultCount === 0;
     return `<tr style="${isEmpty?'color:var(--text-muted)':''}">
@@ -1829,15 +1850,11 @@ function loadReportSales() {
     </tr>`;
   }).join('');
 
-  const totalRevenue = rptAllContracts
-    .filter(c => c.startDate?.startsWith(String(year)))
-    .reduce((s,c) => s+(c.totalAmount||0), 0);
-  const totalNew = rptAllContracts.filter(c => c.startDate?.startsWith(String(year)) && memberFirstContract[c.memberId] === c.id).length;
-  const totalRereg = rptAllContracts.filter(c => c.startDate?.startsWith(String(year)) && memberFirstContract[c.memberId] !== c.id).length;
-  const membersHavingContractAll = new Set(rptAllContracts.map(c => c.memberId));
-  const totalConsult = rptAllMembers.filter(m2 =>
-    m2.createdAt?.startsWith(String(year)) && !membersHavingContractAll.has(m2.id)
-  ).length;
+  const totalRevenue = rptAllContracts.filter(c=>c.startDate?.startsWith(String(year))).reduce((s,c)=>s+(c.totalAmount||0),0);
+  const totalNew = nonTrialContracts.filter(c=>c.startDate?.startsWith(String(year))&&memberFirstNonTrial[c.memberId]===c.id).length;
+  const totalRereg = nonTrialContracts.filter(c=>c.startDate?.startsWith(String(year))&&memberFirstNonTrial[c.memberId]!==c.id).length;
+  const membersWithNonTrialAll = new Set(nonTrialContracts.map(c=>c.memberId));
+  const totalConsult = rptAllMembers.filter(m2=>m2.createdAt?.startsWith(String(year))&&!membersWithNonTrialAll.has(m2.id)).length;
 
   document.getElementById('rpt-sales-content').innerHTML = `
     <table class="member-table" id="rpt-sales-table" style="max-width:600px;">
@@ -1855,7 +1872,9 @@ function loadReportSales() {
         <td style="text-align:center;"></td>
       </tr></tfoot>
     </table>
-    <div style="margin-top:10px;font-size:11px;color:var(--text-muted);">※ 상담(명): 해당 월 회원 등록 후 계약 미진행 인원 / 재등록 미스: 해당 월 만료 후 재등록 없는 회원 수</div>`;
+    <div style="margin-top:10px;font-size:11px;color:var(--text-muted);">
+      ※ 신규: 이달 첫 계약자(Trial 제외) · 재등록: 2번째 계약 이상(Trial 제외) · 상담: 이달 신규가입+Trial만 이용 · 재등록 미스: 만료 후 미재계약(Trial 제외)
+    </div>`;
 }
 
 // ── 엑셀 다운로드 ──
@@ -1928,26 +1947,40 @@ function downloadReportExcel(type) {
 
   else if (type === 'sales') {
     const year = parseInt(document.getElementById('rpt-sales-year').value);
-    const memberFirstContract = {};
-    rptAllContracts.filter(c=>c.startDate).sort((a,b)=>a.startDate.localeCompare(b.startDate))
-      .forEach(c => { if (!memberFirstContract[c.memberId]) memberFirstContract[c.memberId] = c.id; });
+
+    const nonTrialC = rptAllContracts.filter(c=>!c.isTrial);
+    const trialOnlyIds = new Set(
+      rptAllMembers.filter(m2=>{
+        const mc = rptAllContracts.filter(c=>c.memberId===m2.id);
+        return mc.length>0 && mc.every(c=>c.isTrial);
+      }).map(m2=>m2.id)
+    );
+    const memberFirstNonTrial = {};
+    nonTrialC.filter(c=>c.startDate).sort((a,b)=>a.startDate.localeCompare(b.startDate))
+      .forEach(c=>{ if(!memberFirstNonTrial[c.memberId]) memberFirstNonTrial[c.memberId]=c.id; });
+    const membersWithNonTrialAll = new Set(nonTrialC.map(c=>c.memberId));
 
     rows = [[year+'년'], ['월','매출(원)','신규(명)','재등록(명)','상담(명)','재등록 미스']];
-    let totRev=0, totNew=0, totRereg=0;
+    let totRev=0, totNew=0, totRereg=0, totConsult=0;
     for (let m=1; m<=12; m++) {
       const prefix = `${year}-${String(m).padStart(2,'0')}`;
-      const mc = rptAllContracts.filter(c=>c.startDate?.startsWith(prefix));
-      const rev = mc.reduce((s,c)=>s+(c.totalAmount||0),0);
-      const nw = mc.filter(c=>memberFirstContract[c.memberId]===c.id).length;
-      const rr = mc.filter(c=>memberFirstContract[c.memberId]!==c.id).length;
-      const expiredM = rptAllContracts.filter(c=>(c.status==='완료'||c.status==='만료')&&c.endDate?.startsWith(prefix));
-      const miss = expiredM.filter(c=>!rptAllContracts.some(nc=>nc.memberId===c.memberId&&nc.startDate>(c.endDate||'')&&nc.id!==c.id)).length;
-      const membersWithContract = new Set(rptAllContracts.map(c=>c.memberId));
-      const consult = rptAllMembers.filter(m2=>m2.createdAt?.startsWith(prefix)&&!membersWithContract.has(m2.id)).length;
-      totRev+=rev; totNew+=nw; totRereg+=rr;
-      rows.push([m, rev||0, nw||0, rr||0, consult||0, miss||0]);
+      const rev = rptAllContracts.filter(c=>c.startDate?.startsWith(prefix)).reduce((s,c)=>s+(c.totalAmount||0),0);
+      const monthNT = nonTrialC.filter(c=>c.startDate?.startsWith(prefix));
+      const nw = monthNT.filter(c=>memberFirstNonTrial[c.memberId]===c.id).length;
+      const rr = monthNT.filter(c=>memberFirstNonTrial[c.memberId]!==c.id).length;
+      const newMembersM = rptAllMembers.filter(m2=>m2.createdAt?.startsWith(prefix));
+      const consult = newMembersM.filter(m2=>!membersWithNonTrialAll.has(m2.id)).length;
+      const expiredM = nonTrialC.filter(c=>(c.status==='완료'||c.status==='만료')&&c.endDate?.startsWith(prefix));
+      const missedIds = new Set();
+      expiredM.forEach(c=>{
+        if(trialOnlyIds.has(c.memberId)) return;
+        if(!nonTrialC.some(nc=>nc.memberId===c.memberId&&nc.startDate>(c.endDate||'')&&nc.id!==c.id))
+          missedIds.add(c.memberId);
+      });
+      totRev+=rev; totNew+=nw; totRereg+=rr; totConsult+=consult;
+      rows.push([m, rev||0, nw||0, rr||0, consult||0, missedIds.size||0]);
     }
-    rows.push(['합계', totRev, totNew, totRereg, '', '']);
+    rows.push(['합계', totRev, totNew, totRereg, totConsult, '']);
     filename = `월간매출현황_${year}`;
   }
 
