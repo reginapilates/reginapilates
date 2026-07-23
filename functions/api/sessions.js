@@ -21,6 +21,7 @@ export async function onRequest(context) {
       const contractId = url.searchParams.get('contractId');
       const memberId = url.searchParams.get('memberId');
 
+      const lastVisitOnly = url.searchParams.get('lastVisitOnly') === 'true';
       const filter = contractId
         ? { filter: { property: 'Contract', relation: { contains: contractId } } }
         : memberId
@@ -56,6 +57,16 @@ export async function onRequest(context) {
         allResults = allResults.concat(data.results || []);
         hasMore = data.has_more || false;
         startCursor = data.next_cursor;
+      }
+
+      // lastVisitOnly: 마지막 방문일 집계용 - 최소 필드만 반환
+      if (lastVisitOnly) {
+        const sessions = allResults.map(page => ({
+          memberId: page.properties.Member?.relation?.[0]?.id || '',
+          date: page.properties.Date?.date?.start || '',
+          attendanceStatus: page.properties.AttendanceStatus?.select?.name || '',
+        }));
+        return new Response(JSON.stringify({ sessions }), { headers });
       }
 
       const sessions = allResults.map(page => ({
