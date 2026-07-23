@@ -250,6 +250,47 @@ export async function onRequest(context) {
       return new Response(JSON.stringify({ success: true }), { headers });
     }
 
+    // DELETE — 세션 삭제 + UsedSessions -1
+    if (method === 'DELETE') {
+      const url = new URL(request.url);
+      const sessionId = url.searchParams.get('id');
+      const contractId = url.searchParams.get('contractId');
+      const prevAttendanceStatus = url.searchParams.get('prevStatus') || '';
+
+      // 세션 archive
+      await fetch(`https://api.notion.com/v1/pages/${sessionId}`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${env.NOTION_API_KEY}`,
+          'Notion-Version': '2022-06-28',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ archived: true }),
+      });
+
+      // 참석/노쇼였으면 UsedSessions -1
+      if (contractId && (prevAttendanceStatus === '참석' || prevAttendanceStatus === '노쇼')) {
+        try {
+          const cp = await fetch(`https://api.notion.com/v1/pages/${contractId}`, {
+            headers: { 'Authorization': `Bearer ${env.NOTION_API_KEY}`, 'Notion-Version': '2022-06-28' },
+          });
+          const cd = await cp.json();
+          const cur = cd.properties?.UsedSessions?.number || 0;
+          await fetch(`https://api.notion.com/v1/pages/${contractId}`, {
+            method: 'PATCH',
+            headers: {
+              'Authorization': `Bearer ${env.NOTION_API_KEY}`,
+              'Notion-Version': '2022-06-28',
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ properties: { UsedSessions: { number: Math.max(0, cur - 1) } } }),
+          });
+        } catch(e) {}
+      }
+
+      return new Response(JSON.stringify({ success: true }), { headers });
+    }
+
     return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers });
 
   } catch (error) {
