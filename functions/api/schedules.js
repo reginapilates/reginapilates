@@ -1,4 +1,5 @@
 // functions/api/schedules.js
+// 개편: 전체 로드 제거 → Notion 날짜 필터 쿼리로 변경
 
 export async function onRequest(context) {
   const { request, env } = context;
@@ -21,13 +22,26 @@ export async function onRequest(context) {
       const instructorId = url.searchParams.get('instructorId');
       const memberId = url.searchParams.get('memberId');
 
-      // 날짜 필터 없이 전체 가져오기 (페이지네이션)
+      // Notion 날짜 필터 구성 (전체 로드 → 필터 쿼리로 변경)
+      const filters = [];
+      if (startDate) filters.push({ property: 'Date', date: { on_or_after: startDate } });
+      if (endDate) filters.push({ property: 'Date', date: { on_or_before: endDate } });
+      if (memberId) filters.push({ property: 'Member', relation: { contains: memberId } });
+
+      const filterBody = filters.length === 1
+        ? { filter: filters[0] }
+        : filters.length > 1
+          ? { filter: { and: filters } }
+          : {};
+
+      // 페이지네이션 (날짜 필터로 결과가 줄어 대부분 1페이지로 끝남)
       let allResults = [];
       let hasMore = true;
       let startCursor = undefined;
 
       while (hasMore) {
         const body = {
+          ...filterBody,
           sorts: [
             { property: 'Date', direction: 'ascending' },
             { property: 'Time', direction: 'ascending' },
@@ -61,7 +75,9 @@ export async function onRequest(context) {
         id: page.id,
         name: page.properties.Name?.title?.[0]?.plain_text || '',
         instructorId: page.properties.Instructor?.relation?.[0]?.id || '',
+        instructorName: page.properties.InstructorName?.rich_text?.[0]?.plain_text || '',
         memberId: page.properties.Member?.relation?.[0]?.id || '',
+        memberName: page.properties.MemberName?.rich_text?.[0]?.plain_text || '',
         contractId: page.properties.Contract?.relation?.[0]?.id || '',
         date: page.properties.Date?.date?.start || '',
         time: page.properties.Time?.select?.name || '',
@@ -71,11 +87,8 @@ export async function onRequest(context) {
         status: page.properties.Status?.select?.name || '',
       }));
 
-      // JS로 필터링
-      if (startDate) schedules = schedules.filter(s => s.date >= startDate);
-      if (endDate) schedules = schedules.filter(s => s.date <= endDate);
+      // instructorId 필터는 JS에서 (Notion relation 필터 복잡도 회피)
       if (instructorId) schedules = schedules.filter(s => s.instructorId === instructorId);
-      if (memberId) schedules = schedules.filter(s => s.memberId === memberId);
 
       return new Response(JSON.stringify({ schedules, total: schedules.length }), { headers });
     }
@@ -96,14 +109,14 @@ export async function onRequest(context) {
         }
 
         while (current <= end) {
-          const dateStr = current.toISOString().split('T')[0];
-          const title = `${body.memberName || ''} - ${dateStr} ${body.time}`;
+          const dateStr = `${current.getFullYear()}-${String(current.getMonth()+1).padStart(2,'0')}-${String(current.getDate()).padStart(2,'0')}`;
+          const title = `${body.memberName || ''} · ${body.instructorName || ''} ${dateStr} ${body.time}`;
           const res = await createSchedule(env, { ...body, date: dateStr, title });
           if (res.id) created.push(res.id);
           current.setDate(current.getDate() + 7);
         }
       } else {
-        const title = `${body.memberName || body.instructorName || ''} - ${body.date} ${body.time}`;
+        const title = `${body.memberName || ''} · ${body.instructorName || ''} ${body.date} ${body.time}`;
         const res = await createSchedule(env, { ...body, title });
         if (res.id) created.push(res.id);
       }
@@ -180,7 +193,9 @@ async function createSchedule(env, body) {
       properties: {
         Name: { title: [{ text: { content: body.title || '' } }] },
         Instructor: body.instructorId ? { relation: [{ id: body.instructorId }] } : undefined,
+        InstructorName: body.instructorName ? { rich_text: [{ text: { content: body.instructorName } }] } : undefined,
         Member: body.memberId ? { relation: [{ id: body.memberId }] } : undefined,
+        MemberName: body.memberName ? { rich_text: [{ text: { content: body.memberName } }] } : undefined,
         Contract: body.contractId ? { relation: [{ id: body.contractId }] } : undefined,
         Date: body.date ? { date: { start: body.date } } : undefined,
         Time: body.time ? { select: { name: body.time } } : undefined,

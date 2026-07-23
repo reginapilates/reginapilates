@@ -1,4 +1,5 @@
 // functions/api/contracts.js
+// 개편: Sessions N+1 제거 (UsedSessions 필드), Programs/Instructors 병렬 쿼리
 
 export async function onRequest(context) {
   const { request, env } = context;
@@ -17,39 +18,66 @@ export async function onRequest(context) {
     // GET — 회원별 또는 전체 계약 목록
     if (method === 'GET') {
       const url = new URL(request.url);
-      const memberId = url.searchParams.get('memberId');
 
+      // 서명 데이터 전용 엔드포인트
+      if (url.pathname.endsWith('/signature')) {
+        const id = url.searchParams.get('id');
+        if (!id) return new Response(JSON.stringify({ error: 'id required' }), { status: 400, headers });
+        const response = await fetch(`https://api.notion.com/v1/pages/${id}`, {
+          headers: { 'Authorization': `Bearer ${env.NOTION_API_KEY}`, 'Notion-Version': '2022-06-28' },
+        });
+        const data = await response.json();
+        const signatureData =
+          (data.properties?.SignatureData?.rich_text?.[0]?.plain_text || '') +
+          (data.properties?.SignatureData2?.rich_text?.[0]?.plain_text || '') +
+          (data.properties?.SignatureData3?.rich_text?.[0]?.plain_text || '');
+        return new Response(JSON.stringify({ signatureData }), { headers });
+      }
+
+      const memberId = url.searchParams.get('memberId');
       const filterBody = memberId
         ? { filter: { property: 'Member', relation: { contains: memberId } } }
         : {};
 
-      const response = await fetch(
-        `https://api.notion.com/v1/databases/${env.NOTION_CONTRACTS_DB_ID}/query`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${env.NOTION_API_KEY}`,
-            'Notion-Version': '2022-06-28',
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            ...filterBody,
-            sorts: [{ property: 'SignedAt', direction: 'descending' }],
-          }),
-        }
-      );
+      // 1. 계약 전체 조회 (페이지네이션)
+      let allResults = [];
+      let hasMore = true;
+      let startCursor = undefined;
+      while (hasMore) {
+        const qBody = {
+          ...filterBody,
+          sorts: [{ property: 'SignedAt', direction: 'descending' }],
+          page_size: 100,
+        };
+        if (startCursor) qBody.start_cursor = startCursor;
 
-      const data = await response.json();
-      if (!response.ok) {
-        return new Response(JSON.stringify({ error: data.message }), { status: 500, headers });
+        const response = await fetch(
+          `https://api.notion.com/v1/databases/${env.NOTION_CONTRACTS_DB_ID}/query`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${env.NOTION_API_KEY}`,
+              'Notion-Version': '2022-06-28',
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(qBody),
+          }
+        );
+        const data = await response.json();
+        if (!response.ok) return new Response(JSON.stringify({ error: data.message }), { status: 500, headers });
+        allResults = allResults.concat(data.results || []);
+        hasMore = data.has_more || false;
+        startCursor = data.next_cursor;
       }
 
-      const rawContracts = (data.results || []).map(page => ({
+      const rawContracts = allResults.map(page => ({
         id: page.id,
         title: page.properties.Name?.title?.[0]?.plain_text || '',
         memberId: page.properties.Member?.relation?.[0]?.id || '',
         programId: page.properties.Program?.relation?.[0]?.id || '',
         sessions: page.properties.Sessions?.number || 0,
+        // UsedSessions 필드에서 직접 읽기 (N+1 제거 핵심)
+        usedSessions: page.properties.UsedSessions?.number || 0,
         totalAmount: page.properties.TotalAmount?.number || 0,
         paymentMethod: page.properties.PaymentMethod?.select?.name || '',
         startDate: page.properties.StartDate?.date?.start || '',
@@ -65,99 +93,78 @@ export async function onRequest(context) {
         note: page.properties.Note?.rich_text?.[0]?.plain_text || '',
       }));
 
-      // Programs DB에서 programId → instructorName 맵 생성
+      // 2. Programs → Instructors 병렬 조회 (순차 N번 → 병렬 1라운드)
       const programIds = [...new Set(rawContracts.map(c => c.programId).filter(Boolean))];
+      const programPages = await Promise.all(
+        programIds.map(pid =>
+          fetch(`https://api.notion.com/v1/pages/${pid}`, {
+            headers: { 'Authorization': `Bearer ${env.NOTION_API_KEY}`, 'Notion-Version': '2022-06-28' },
+          }).then(r => r.json()).catch(() => null)
+        )
+      );
+
+      // 강사 ID 수집 → 병렬 조회
+      const instructorIdMap = {}; // programId → instructorId
+      programIds.forEach((pid, i) => {
+        instructorIdMap[pid] = programPages[i]?.properties?.Instructor?.relation?.[0]?.id || '';
+      });
+      const instructorIds = [...new Set(Object.values(instructorIdMap).filter(Boolean))];
+      const instructorPages = await Promise.all(
+        instructorIds.map(iid =>
+          fetch(`https://api.notion.com/v1/pages/${iid}`, {
+            headers: { 'Authorization': `Bearer ${env.NOTION_API_KEY}`, 'Notion-Version': '2022-06-28' },
+          }).then(r => r.json()).catch(() => null)
+        )
+      );
+      const instructorNameMap = {}; // instructorId → name
+      instructorIds.forEach((iid, i) => {
+        instructorNameMap[iid] = instructorPages[i]?.properties?.Name?.title?.[0]?.plain_text || '';
+      });
+
       const programInstructorMap = {}; // programId → { instructorId, instructorName }
-      for (const pid of programIds) {
-        try {
-          const pRes = await fetch(`https://api.notion.com/v1/pages/${pid}`, {
-            headers: {
-              'Authorization': `Bearer ${env.NOTION_API_KEY}`,
-              'Notion-Version': '2022-06-28',
-            },
-          });
-          const pData = await pRes.json();
-          const instructorId = pData.properties?.Instructor?.relation?.[0]?.id || '';
-          let instructorName = '';
-          if (instructorId) {
-            const iRes = await fetch(`https://api.notion.com/v1/pages/${instructorId}`, {
-              headers: {
-                'Authorization': `Bearer ${env.NOTION_API_KEY}`,
-                'Notion-Version': '2022-06-28',
-              },
-            });
-            const iData = await iRes.json();
-            instructorName = iData.properties?.Name?.title?.[0]?.plain_text || '';
-          }
-          programInstructorMap[pid] = { instructorId, instructorName };
-        } catch(e) {
-          programInstructorMap[pid] = { instructorId: '', instructorName: '' };
-        }
-      }
+      programIds.forEach(pid => {
+        const iid = instructorIdMap[pid] || '';
+        programInstructorMap[pid] = { instructorId: iid, instructorName: instructorNameMap[iid] || '' };
+      });
 
-      // Sessions DB에서 각 계약의 실제 세션 수 조회
-      const sessionCountMap = {};
-      for (const c of rawContracts) {
-        try {
-          const sRes = await fetch(
-            `https://api.notion.com/v1/databases/${env.NOTION_SESSIONS_DB_ID}/query`,
-            {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${env.NOTION_API_KEY}`,
-                'Notion-Version': '2022-06-28',
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                filter: { property: 'Contract', relation: { contains: c.id } },
-              }),
-            }
-          );
-          const sData = await sRes.json();
-          sessionCountMap[c.id] = (sData.results || []).length;
-        } catch(e) {
-          sessionCountMap[c.id] = 0;
-        }
-      }
-
+      // 3. 잔여 계산 + 자동 만료 처리 (Sessions DB 쿼리 없음)
       const today = new Date().toISOString().split('T')[0];
 
-      const contracts = await Promise.all(rawContracts.map(async c => {
-        const usedSessions = sessionCountMap[c.id] || 0;
-        const remainingSessions = Math.max(0, c.sessions - usedSessions);
+      const autoExpirePromises = [];
+      const contracts = rawContracts.map(c => {
+        const remainingSessions = Math.max(0, c.sessions - c.usedSessions);
+        const instrInfo = programInstructorMap[c.programId] || {};
 
-        // 자동 종료 조건 체크 (진행중인 계약만)
+        // 자동 만료 처리 (진행중인 계약만)
         if (c.status === '진행중') {
           const isExpired = c.endDate && c.endDate < today;
           const isDepleted = remainingSessions === 0 && c.sessions > 0;
-
           if (isExpired || isDepleted) {
-            // Notion에서 자동으로 완료 처리
-            try {
-              await fetch(`https://api.notion.com/v1/pages/${c.id}`, {
+            autoExpirePromises.push(
+              fetch(`https://api.notion.com/v1/pages/${c.id}`, {
                 method: 'PATCH',
                 headers: {
                   'Authorization': `Bearer ${env.NOTION_API_KEY}`,
                   'Notion-Version': '2022-06-28',
                   'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                  properties: {
-                    Status: { select: { name: '완료' } },
-                  },
-                }),
-              });
-              c.status = '완료';
-            } catch(e) {}
+                body: JSON.stringify({ properties: { Status: { select: { name: '완료' } } } }),
+              }).catch(() => {})
+            );
+            c.status = '완료';
           }
         }
 
-        const instrInfo = programInstructorMap[c.programId] || {};
-        return { ...c, usedSessions, remainingSessions,
+        return {
+          ...c,
+          remainingSessions,
           instructorId: instrInfo.instructorId || '',
           instructorName: instrInfo.instructorName || '',
         };
-      }));
+      });
+
+      // 자동 만료 처리 병렬 실행 (응답 기다리지 않음 - fire & forget)
+      if (autoExpirePromises.length > 0) Promise.all(autoExpirePromises).catch(() => {});
 
       return new Response(JSON.stringify({ contracts }), { headers });
     }
@@ -167,7 +174,6 @@ export async function onRequest(context) {
       const body = await request.json();
       const { memberName, programName, pdfBase64, ...contractData } = body;
 
-      // 1. 구글 드라이브에 PDF 저장
       let driveLink = '';
       let driveError = '';
       if (pdfBase64) {
@@ -178,7 +184,6 @@ export async function onRequest(context) {
         }
       }
 
-      // 2. Notion에 계약 저장
       const title = programName;
       const notionRes = await fetch('https://api.notion.com/v1/pages', {
         method: 'POST',
@@ -194,7 +199,7 @@ export async function onRequest(context) {
             Member: contractData.memberId ? { relation: [{ id: contractData.memberId }] } : undefined,
             Program: contractData.programId ? { relation: [{ id: contractData.programId }] } : undefined,
             Sessions: { number: contractData.sessions || 0 },
-            // RemainingSessions 제거 - Sessions DB 개수로 계산
+            UsedSessions: { number: 0 }, // 신규 계약은 0으로 초기화
             TotalAmount: { number: contractData.totalAmount || 0 },
             PaymentMethod: contractData.paymentMethod ? { select: { name: contractData.paymentMethod } } : undefined,
             StartDate: contractData.startDate ? { date: { start: contractData.startDate } } : undefined,
@@ -220,30 +225,7 @@ export async function onRequest(context) {
       if (!notionRes.ok) {
         return new Response(JSON.stringify({ error: notionData.message, details: notionData }), { status: 500, headers });
       }
-
       return new Response(JSON.stringify({ id: notionData.id, driveLink, driveError, success: true }), { headers });
-    }
-
-    // GET signature — 서명 데이터만 조회
-    if (method === 'GET') {
-      const url = new URL(request.url);
-      if (url.pathname.endsWith('/signature')) {
-        const id = url.searchParams.get('id');
-        if (!id) return new Response(JSON.stringify({ error: 'id required' }), { status: 400, headers });
-
-        const response = await fetch(`https://api.notion.com/v1/pages/${id}`, {
-          headers: {
-            'Authorization': `Bearer ${env.NOTION_API_KEY}`,
-            'Notion-Version': '2022-06-28',
-          },
-        });
-        const data = await response.json();
-        const sig1 = data.properties?.SignatureData?.rich_text?.[0]?.plain_text || '';
-        const sig2 = data.properties?.SignatureData2?.rich_text?.[0]?.plain_text || '';
-        const sig3 = data.properties?.SignatureData3?.rich_text?.[0]?.plain_text || '';
-        const signatureData = sig1 + sig2 + sig3;
-        return new Response(JSON.stringify({ signatureData }), { headers });
-      }
     }
 
     // PUT — 계약 상태 업데이트
@@ -254,7 +236,6 @@ export async function onRequest(context) {
 
       const properties = {};
       if (body.status) properties.Status = { select: { name: body.status } };
-      // RemainingSessions 직접 업데이트 제거 - Sessions DB 기준
       if (body.pauseDate) properties.PauseDate = { date: { start: body.pauseDate } };
       else if (body.pauseDate === null) properties.PauseDate = { date: null };
       if (body.resumeDate) properties.ResumeDate = { date: { start: body.resumeDate } };
@@ -276,7 +257,6 @@ export async function onRequest(context) {
         const data = await response.json();
         return new Response(JSON.stringify({ error: data.message }), { status: 500, headers });
       }
-
       return new Response(JSON.stringify({ success: true }), { headers });
     }
 

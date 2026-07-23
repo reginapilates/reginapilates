@@ -1,5 +1,5 @@
 // functions/api/sessions.js
-// 세션 목록 조회 + 출석 기록
+// 개편: 세션 생성/수정 시 Contracts DB UsedSessions 카운터 업데이트
 
 export async function onRequest(context) {
   const { request, env } = context;
@@ -15,42 +15,50 @@ export async function onRequest(context) {
   if (method === 'OPTIONS') return new Response(null, { headers });
 
   try {
-    // GET — 계약별 세션 목록 조회
+    // GET — 계약별/회원별 세션 목록 조회
     if (method === 'GET') {
       const url = new URL(request.url);
       const contractId = url.searchParams.get('contractId');
       const memberId = url.searchParams.get('memberId');
 
-      const filter = contractId ? {
-        filter: {
-          property: 'Contract',
-          relation: { contains: contractId }
-        }
-      } : memberId ? {
-        filter: {
-          property: 'Member',
-          relation: { contains: memberId }
-        }
-      } : {};
+      const filter = contractId
+        ? { filter: { property: 'Contract', relation: { contains: contractId } } }
+        : memberId
+          ? { filter: { property: 'Member', relation: { contains: memberId } } }
+          : {};
 
-      const response = await fetch(
-        `https://api.notion.com/v1/databases/${env.NOTION_SESSIONS_DB_ID}/query`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${env.NOTION_API_KEY}`,
-            'Notion-Version': '2022-06-28',
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            ...filter,
-            sorts: [{ property: 'Date', direction: 'descending' }],
-          }),
-        }
-      );
+      // 페이지네이션으로 전체 조회
+      let allResults = [];
+      let hasMore = true;
+      let startCursor = undefined;
 
-      const data = await response.json();
-      const sessions = data.results.map(page => ({
+      while (hasMore) {
+        const qBody = {
+          ...filter,
+          sorts: [{ property: 'Date', direction: 'descending' }],
+          page_size: 100,
+        };
+        if (startCursor) qBody.start_cursor = startCursor;
+
+        const response = await fetch(
+          `https://api.notion.com/v1/databases/${env.NOTION_SESSIONS_DB_ID}/query`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${env.NOTION_API_KEY}`,
+              'Notion-Version': '2022-06-28',
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(qBody),
+          }
+        );
+        const data = await response.json();
+        allResults = allResults.concat(data.results || []);
+        hasMore = data.has_more || false;
+        startCursor = data.next_cursor;
+      }
+
+      const sessions = allResults.map(page => ({
         id: page.id,
         title: page.properties.Name?.title?.[0]?.plain_text || '',
         contractId: page.properties.Contract?.relation?.[0]?.id || '',
@@ -68,13 +76,12 @@ export async function onRequest(context) {
       return new Response(JSON.stringify({ sessions }), { headers });
     }
 
-    // POST — 새 세션 기록 (출석 체크)
+    // POST — 새 세션 기록
     if (method === 'POST') {
       const body = await request.json();
-      const { memberName, contractId, memberId } = body;
+      const { memberName, contractId, memberId, scheduleId } = body;
 
-      // 1. 이미 이 Schedule에 연결된 세션이 있는지 확인 (중복 방지)
-      const scheduleId = body.scheduleId;
+      // 중복 방지: 이 Schedule에 이미 연결된 세션 있는지 확인
       if (scheduleId) {
         const dupRes = await fetch(
           `https://api.notion.com/v1/databases/${env.NOTION_SESSIONS_DB_ID}/query`,
@@ -85,14 +92,12 @@ export async function onRequest(context) {
               'Notion-Version': '2022-06-28',
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-              filter: { property: 'Schedule', relation: { contains: scheduleId } },
-            }),
+            body: JSON.stringify({ filter: { property: 'Schedule', relation: { contains: scheduleId } } }),
           }
         );
         const dupData = await dupRes.json();
         if ((dupData.results || []).length > 0) {
-          // 이미 세션 있음 → 기존 세션 업데이트만
+          // 기존 세션 업데이트만 (UsedSessions 변경 없음)
           const existingSession = dupData.results[0];
           await fetch(`https://api.notion.com/v1/pages/${existingSession.id}`, {
             method: 'PATCH',
@@ -113,10 +118,23 @@ export async function onRequest(context) {
         }
       }
 
-      // DB에서 현재 세션 수 조회 → 회차 계산
-      const existingRes = await fetch(
-        `https://api.notion.com/v1/databases/${env.NOTION_SESSIONS_DB_ID}/query`,
-        {
+      // 현재 계약의 UsedSessions 조회 → 회차 계산
+      let sessionNo = 1;
+      let currentUsed = 0;
+      if (contractId) {
+        const contractPage = await fetch(`https://api.notion.com/v1/pages/${contractId}`, {
+          headers: { 'Authorization': `Bearer ${env.NOTION_API_KEY}`, 'Notion-Version': '2022-06-28' },
+        });
+        const contractData = await contractPage.json();
+        currentUsed = contractData.properties?.UsedSessions?.number || 0;
+        sessionNo = currentUsed + 1;
+      }
+
+      const title = `${memberName} #${sessionNo}`;
+
+      // 세션 생성 + UsedSessions +1 업데이트 병렬 실행
+      const [sessionRes] = await Promise.all([
+        fetch('https://api.notion.com/v1/pages', {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${env.NOTION_API_KEY}`,
@@ -124,66 +142,45 @@ export async function onRequest(context) {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            filter: contractId ? {
-              property: 'Contract',
-              relation: { contains: contractId }
-            } : undefined,
+            parent: { database_id: env.NOTION_SESSIONS_DB_ID },
+            properties: {
+              Name: { title: [{ text: { content: title } }] },
+              Contract: contractId ? { relation: [{ id: contractId }] } : undefined,
+              Member: memberId ? { relation: [{ id: memberId }] } : undefined,
+              SessionNo: { number: sessionNo },
+              Date: { date: { start: body.date || new Date().toISOString().split('T')[0] } },
+              Condition: (body.condition && body.condition !== '—') ? { select: { name: body.condition } } : undefined,
+              Memo: { rich_text: [{ text: { content: body.memo || '' } }] },
+              AttendanceStatus: body.attendanceStatus ? { select: { name: body.attendanceStatus } } : undefined,
+              Time: body.time ? { select: { name: body.time } } : undefined,
+              Instructor: body.instructorId ? { relation: [{ id: body.instructorId }] } : undefined,
+              Schedule: body.scheduleId ? { relation: [{ id: body.scheduleId }] } : undefined,
+            },
           }),
-        }
-      );
-      const existingData = await existingRes.json();
-      const sessionNo = (existingData.results?.length || 0) + 1;
-
-      // 잔여횟수는 Sessions DB 개수로 자동 계산되므로 별도 조회 불필요
-
-      const title = `${memberName} #${sessionNo}`;
-
-      // 3. 세션 생성
-      const sessionRes = await fetch('https://api.notion.com/v1/pages', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${env.NOTION_API_KEY}`,
-          'Notion-Version': '2022-06-28',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          parent: { database_id: env.NOTION_SESSIONS_DB_ID },
-          properties: {
-            Name: { title: [{ text: { content: title } }] },
-            Contract: contractId ? { relation: [{ id: contractId }] } : undefined,
-            Member: memberId ? { relation: [{ id: memberId }] } : undefined,
-            SessionNo: { number: sessionNo },
-            Date: { date: { start: body.date || new Date().toISOString().split('T')[0] } },
-            Condition: (body.condition && body.condition !== '—')
-              ? { select: { name: body.condition } } : undefined,
-            Memo: { rich_text: [{ text: { content: body.memo || '' } }] },
-            AttendanceStatus: body.attendanceStatus ? { select: { name: body.attendanceStatus } } : undefined,
-            Time: body.time ? { select: { name: body.time } } : undefined,
-            Instructor: body.instructorId ? { relation: [{ id: body.instructorId }] } : undefined,
-            Schedule: body.scheduleId ? { relation: [{ id: body.scheduleId }] } : undefined,
-          },
         }),
-      });
+        // UsedSessions +1 업데이트
+        contractId ? fetch(`https://api.notion.com/v1/pages/${contractId}`, {
+          method: 'PATCH',
+          headers: {
+            'Authorization': `Bearer ${env.NOTION_API_KEY}`,
+            'Notion-Version': '2022-06-28',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            properties: { UsedSessions: { number: currentUsed + 1 } },
+          }),
+        }) : Promise.resolve(),
+      ]);
 
-      const sessionData2 = await sessionRes.json();
-
+      const sessionData = await sessionRes.json();
       if (!sessionRes.ok) {
-        return new Response(JSON.stringify({
-          error: sessionData2.message || 'Session creation failed',
-          details: sessionData2
-        }), { status: 500, headers });
+        return new Response(JSON.stringify({ error: sessionData.message || 'Session creation failed' }), { status: 500, headers });
       }
 
-      // RemainingSessions 필드 업데이트 불필요 - Sessions DB 개수로 자동 계산됨
-
-      return new Response(JSON.stringify({
-        id: sessionData2.id,
-        sessionNo,
-        success: true
-      }), { headers });
+      return new Response(JSON.stringify({ id: sessionData.id, sessionNo, success: true }), { headers });
     }
 
-    // PUT — 세션 수정 (컨디션/메모 업데이트)
+    // PUT — 세션 수정 (컨디션/메모/날짜)
     if (method === 'PUT') {
       const url = new URL(request.url);
       const sessionId = url.searchParams.get('id');
@@ -193,6 +190,7 @@ export async function onRequest(context) {
       if (body.condition) properties.Condition = { select: { name: body.condition } };
       if (body.memo !== undefined) properties.Memo = { rich_text: [{ text: { content: body.memo } }] };
       if (body.date) properties.Date = { date: { start: body.date } };
+      if (body.attendanceStatus) properties.AttendanceStatus = { select: { name: body.attendanceStatus } };
 
       await fetch(`https://api.notion.com/v1/pages/${sessionId}`, {
         method: 'PATCH',
