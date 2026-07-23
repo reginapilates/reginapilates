@@ -523,7 +523,7 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
             <th>시간</th>
             <th>이름</th>
             <th>프로그램</th>
-            <th style="text-align:center;">사용/총</th>
+            <th style="text-align:center;">회차/전체</th>
             <th>강사</th>
             <th>컨디션</th>
             <th style="min-width:200px;">메모</th>
@@ -3670,9 +3670,9 @@ async function renderSessionLog() {
       : (isScheduleOnly ? '' : '—');
     const statusKey = s.attendanceStatus || '확정';
     const badge = statusBadge[statusKey] || `<span style="font-size:12px;color:var(--text-muted);">${statusKey}</span>`;
-    // 확정(예약) 상태는 사용/총 표시 안 함
-    const usedTotal = (!isScheduleOnly && s.contractSessions)
-      ? `${s.contractUsed}/${s.contractSessions}`
+    // 확정(예약) 상태는 회차 표시 안 함, 세션은 sessionNo/전체
+    const usedTotal = (!isScheduleOnly && s.sessionNo && s.contractSessions)
+      ? `#${s.sessionNo} / ${s.contractSessions}회`
       : '';
     const rowStyle = isScheduleOnly
       ? (isPast ? 'background:#FFF8F0;' : 'background:#F8FBFF;')
@@ -3697,20 +3697,36 @@ async function renderSessionLog() {
 
 // 세션 로그에서 행 클릭 시 스케줄 상세 모달 열기
 async function openSessionLogDetail(scheduleId) {
-  // allSchedules(캘린더)에 없으면 allSchedulesForLog에서 찾아 임시 주입
-  const inCalendar = allSchedules.find(s => s.id === scheduleId);
-  if (!inCalendar) {
-    const found = allSchedulesForLog.find(s => s.id === scheduleId);
-    if (found) {
-      // 임시로 allSchedules에 추가해서 openScheduleDetail이 찾을 수 있게
-      allSchedules = [...allSchedules, found];
-    } else {
-      // DB에서 직접 조회
-      try {
-        const res = await fetch(`${API}/api/schedules?memberId=${found?.memberId||''}`);
-      } catch(e) {}
-    }
+  if (!scheduleId) return;
+
+  // 1. allSchedules(캘린더 현재 주)에서 먼저 찾기
+  let found = allSchedules.find(s => s.id === scheduleId);
+
+  // 2. 없으면 allSchedulesForLog(세션로그 로드 시 전체)에서 찾기
+  if (!found) found = allSchedulesForLog.find(s => s.id === scheduleId);
+
+  // 3. 그래도 없으면 DB에서 직접 조회
+  if (!found) {
+    try {
+      showToast('스케줄 조회 중...', '');
+      // 회원 ID 없이 전체 스케줄에서 id로 찾기 위해 기간 없이 조회
+      const res = await fetch(`${API}/api/schedules`);
+      const data = await res.json();
+      allSchedulesForLog = data.schedules || [];
+      found = allSchedulesForLog.find(s => s.id === scheduleId);
+    } catch(e) {}
   }
+
+  if (!found) {
+    showToast('스케줄 정보를 찾을 수 없습니다', 'error');
+    return;
+  }
+
+  // allSchedules에 없으면 임시 추가
+  if (!allSchedules.find(s => s.id === scheduleId)) {
+    allSchedules = [...allSchedules, found];
+  }
+
   await openScheduleDetail(scheduleId);
 }
 
