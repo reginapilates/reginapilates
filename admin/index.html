@@ -3487,7 +3487,6 @@ async function renderSessionLog() {
             });
             if (invalidSchedules.length > 0) {
               showToast(`${invalidSchedules.length}개의 유효하지 않은 예약이 취소되었습니다`, '');
-              calDataLoaded = false;
             }
           }
 
@@ -3681,7 +3680,6 @@ async function quickStatusChange(scheduleId, status, memberId) {
 
   showToast(`${status} 처리 완료`, 'success');
   // 캐시 초기화 후 캘린더 새로고침
-  Object.keys(calWeekCache).forEach(k => delete calWeekCache[k]);
   await loadCalendar();
   await renderSessionLog();
   // 계약 요약 재로드
@@ -3697,7 +3695,6 @@ function goToCalendarForMember(memberId) {
   showPage('schedule');
   // 오늘 주간으로 이동
   calCurrentDate = new Date();
-  calDataLoaded = false;
   loadCalendar();
   showToast('캘린더에서 예약 블록을 클릭해 출석 처리해주세요', '');
 }
@@ -3898,13 +3895,13 @@ let calCurrentDate = new Date();
 let allInstructors = [];
 let allSchedules = [];
 let calFilterInstructors = [];
-const calWeekCache = {}; // 주간별 스케줄 캐시 { 'YYYY-MM-DD': schedules[] }
+// 캘린더는 캐시 없이 항상 현재 주를 새로 fetch (예약 변경 정확성 우선)
 
 // ── CALENDAR INIT ──
 function calToday() { calCurrentDate = new Date(); loadCalendar(); }
 function calPrev() { calCurrentDate.setDate(calCurrentDate.getDate() - 7); loadCalendar(); }
 function calNext() { calCurrentDate.setDate(calCurrentDate.getDate() + 7); loadCalendar(); }
-function calReload() { Object.keys(calWeekCache).forEach(k => delete calWeekCache[k]); loadCalendar(); }
+function calReload() { loadCalendar(true); }
 
 function getWeekDates(base) {
   // 오늘 날짜를 로컬 기준으로 계산
@@ -3933,18 +3930,9 @@ function toLocalDateStr(d) {
 }
 
 async function loadCalendar(forceReload = false) {
-  // 현재 주의 시작일 계산
   const dates = getWeekDates(calCurrentDate);
-  const weekKey = dates[0].dateStr;
   const startDate = dates[0].dateStr;
   const endDate = dates[dates.length - 1].dateStr;
-
-  // 캐시 히트 (같은 주 재방문)
-  if (!forceReload && calWeekCache[weekKey]) {
-    allSchedules = calWeekCache[weekKey];
-    renderCalendar();
-    return;
-  }
 
   try {
     const fetchPromises = [fetch(`${API}/api/schedules?startDate=${startDate}&endDate=${endDate}`)];
@@ -3960,7 +3948,6 @@ async function loadCalendar(forceReload = false) {
     }
 
     allSchedules = schData.schedules || [];
-    calWeekCache[weekKey] = allSchedules; // 캐시 저장
   } catch(e) {
     console.error('Calendar load error:', e);
   }
@@ -4460,7 +4447,6 @@ async function saveSchedule() {
     if (res.ok) {
       closeModal('modal-new-schedule');
       showToast(`예약 ${data.count}개 등록 완료`, 'success');
-      calDataLoaded = false;
       loadCalendar();
     } else showToast('등록 실패: ' + (data.error||'오류'), 'error');
   } catch(e) { showToast('등록 실패: ' + e.message, 'error'); }
@@ -4635,7 +4621,6 @@ async function updateSchedule() {
   }
 
   closeModal('modal-schedule-detail');
-  Object.keys(calWeekCache).forEach(k => delete calWeekCache[k]);
   loadCalendar();
 
   // 회원 상세 페이지가 열려있으면 세션 새로고침
