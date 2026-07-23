@@ -274,6 +274,7 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
       </a>
     </nav>
     <div class="sidebar-bottom">
+      <button class="logout-btn l1-only" onclick="runMigration()" style="margin-bottom:8px;background:rgba(231,76,60,0.15);color:#E74C3C;font-size:11px;">🔧 세션수 동기화</button>
       <button class="logout-btn" onclick="doLogout()">로그아웃</button>
     </div>
   </div>
@@ -1423,6 +1424,32 @@ async function doLogin() {
     }
   } catch(e) {
     document.getElementById('login-error').style.display = 'block';
+  }
+}
+
+async function runMigration() {
+  if (!confirm('세션 수 동기화를 실행할까요?\n\nSessions DB의 실제 기록 수를 기준으로\n모든 계약의 UsedSessions를 업데이트합니다.')) return;
+
+  showToast('동기화 중... 잠시 기다려주세요', '');
+
+  try {
+    const res = await fetch(`${API}/api/migrate-sessions`, { method: 'POST' });
+    const data = await res.json();
+
+    if (!res.ok) {
+      showToast('오류: ' + (data.error || '알 수 없는 오류'), 'error');
+      return;
+    }
+
+    const msg = `동기화 완료!\n전체 계약: ${data.total}건\n업데이트: ${data.updated}건\n변경없음: ${data.skipped}건`;
+    alert(msg);
+    showToast(`동기화 완료 — ${data.updated}건 업데이트`, 'success');
+
+    // 상세 결과 콘솔 출력
+    console.log('Migration results:', data.results);
+
+  } catch(e) {
+    showToast('동기화 실패: ' + e.message, 'error');
   }
 }
 
