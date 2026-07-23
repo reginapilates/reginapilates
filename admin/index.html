@@ -264,6 +264,10 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>
         세션 로그
       </div>
+      <div class="nav-item l1-only" onclick="showPage('reports')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="9" x2="9" y2="21"/></svg>
+        리포트
+      </div>
       <a class="nav-item" href="/tools/price-viewer" target="_blank" style="text-decoration:none;">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
         레슨비 안내 ↗
@@ -520,6 +524,59 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
           <tr><td colspan="7" class="loading">불러오는 중...</td></tr>
         </tbody>
       </table>
+    </div>
+
+    <!-- 리포트 페이지 -->
+    <div class="page" id="page-reports">
+      <div class="page-header">
+        <div class="page-title">리포트</div>
+      </div>
+
+      <!-- 탭 -->
+      <div style="display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:24px;">
+        <button id="rpt-tab-monthly" onclick="switchReportTab('monthly')" style="padding:10px 20px;border:none;background:none;font-size:13px;cursor:pointer;border-bottom:2px solid var(--accent);margin-bottom:-2px;color:var(--text);font-weight:600;">월 등록 회원</button>
+        <button id="rpt-tab-active" onclick="switchReportTab('active')" style="padding:10px 20px;border:none;background:none;font-size:13px;cursor:pointer;color:var(--text-muted);">유효 회원</button>
+        <button id="rpt-tab-expired" onclick="switchReportTab('expired')" style="padding:10px 20px;border:none;background:none;font-size:13px;cursor:pointer;color:var(--text-muted);">만료 회원</button>
+        <button id="rpt-tab-sales" onclick="switchReportTab('sales')" style="padding:10px 20px;border:none;background:none;font-size:13px;cursor:pointer;color:var(--text-muted);">월간 매출 현황</button>
+      </div>
+
+      <!-- ① 월 등록 회원 -->
+      <div id="rpt-monthly">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+          <select id="rpt-month-year" class="form-select" style="width:100px;" onchange="loadReportMonthly()"></select>
+          <select id="rpt-month-month" class="form-select" style="width:80px;" onchange="loadReportMonthly()"></select>
+          <button class="btn btn-secondary" onclick="downloadReportExcel('monthly')">⬇ 엑셀 다운로드</button>
+        </div>
+        <div id="rpt-monthly-content"></div>
+      </div>
+
+      <!-- ② 유효 회원 -->
+      <div id="rpt-active" style="display:none;">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:16px;">
+          <button class="btn btn-secondary" onclick="downloadReportExcel('active')">⬇ 엑셀 다운로드</button>
+        </div>
+        <div id="rpt-active-content"></div>
+      </div>
+
+      <!-- ③ 만료 회원 -->
+      <div id="rpt-expired" style="display:none;">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+          <select id="rpt-expired-year" class="form-select" style="width:100px;" onchange="loadReportExpired()">
+            <option value="">전체</option>
+          </select>
+          <button class="btn btn-secondary" onclick="downloadReportExcel('expired')">⬇ 엑셀 다운로드</button>
+        </div>
+        <div id="rpt-expired-content"></div>
+      </div>
+
+      <!-- ④ 월간 매출 현황 -->
+      <div id="rpt-sales" style="display:none;">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+          <select id="rpt-sales-year" class="form-select" style="width:100px;" onchange="loadReportSales()"></select>
+          <button class="btn btn-secondary" onclick="downloadReportExcel('sales')">⬇ 엑셀 다운로드</button>
+        </div>
+        <div id="rpt-sales-content"></div>
+      </div>
     </div>
 
   </div>
@@ -1396,6 +1453,7 @@ function showPage(page) {
   if (page === 'schedule') { loadCalendar(); }
   if (page === 'instructors') loadInstructors();
   if (page === 'sessions-log') loadSessionsLog();
+  if (page === 'reports') loadReports();
 }
 
 function showTab(tab, el) {
@@ -1447,6 +1505,437 @@ function initApp() {
   document.getElementById('today-date').textContent = new Date().toLocaleDateString('ko-KR', {year:'numeric',month:'long',day:'numeric',weekday:'long'});
   loadDashboard();
   loadCalendar();
+}
+
+// ── REPORTS ──
+let rptAllMembers = [];
+let rptAllContracts = [];
+let rptDataLoaded = false;
+
+async function loadReports() {
+  if (!rptDataLoaded) {
+    try {
+      const [mRes, cRes] = await Promise.all([
+        fetch(`${API}/api/members`),
+        fetch(`${API}/api/contracts`),
+      ]);
+      const mData = await mRes.json();
+      const cData = await cRes.json();
+      rptAllMembers = mData.members || [];
+      rptAllContracts = cData.contracts || [];
+      rptDataLoaded = true;
+    } catch(e) {
+      console.error('Report load error:', e);
+      return;
+    }
+  }
+  // 연도/월 셀렉트 초기화
+  initReportSelects();
+  switchReportTab('monthly');
+}
+
+function initReportSelects() {
+  const today = new Date();
+  const curYear = today.getFullYear();
+  const curMonth = today.getMonth() + 1;
+
+  // 월 등록 - 연도/월
+  const yearSel = document.getElementById('rpt-month-year');
+  const monthSel = document.getElementById('rpt-month-month');
+  if (!yearSel.options.length) {
+    for (let y = curYear; y >= 2023; y--) {
+      yearSel.add(new Option(y + '년', y));
+    }
+    for (let m = 1; m <= 12; m++) {
+      monthSel.add(new Option(m + '월', m));
+    }
+    yearSel.value = curYear;
+    monthSel.value = curMonth;
+  }
+
+  // 매출 연도
+  const salesYear = document.getElementById('rpt-sales-year');
+  if (!salesYear.options.length) {
+    for (let y = curYear; y >= 2023; y--) {
+      salesYear.add(new Option(y + '년', y));
+    }
+    salesYear.value = curYear;
+  }
+
+  // 만료 회원 연도
+  const expYears = [...new Set(rptAllContracts
+    .filter(c => c.status === '완료' || c.status === '만료')
+    .map(c => c.endDate?.slice(0,4))
+    .filter(Boolean)
+  )].sort((a,b) => b-a);
+  const expYearSel = document.getElementById('rpt-expired-year');
+  expYearSel.innerHTML = '<option value="">전체</option>';
+  expYears.forEach(y => expYearSel.add(new Option(y + '년', y)));
+}
+
+function switchReportTab(tab) {
+  ['monthly','active','expired','sales'].forEach(t => {
+    document.getElementById('rpt-' + t).style.display = t === tab ? 'block' : 'none';
+    const btn = document.getElementById('rpt-tab-' + t);
+    if (btn) {
+      btn.style.borderBottom = t === tab ? '2px solid var(--accent)' : 'none';
+      btn.style.color = t === tab ? 'var(--text)' : 'var(--text-muted)';
+      btn.style.fontWeight = t === tab ? '600' : '400';
+      btn.style.marginBottom = t === tab ? '-2px' : '0';
+    }
+  });
+  if (tab === 'monthly') loadReportMonthly();
+  if (tab === 'active') loadReportActive();
+  if (tab === 'expired') loadReportExpired();
+  if (tab === 'sales') loadReportSales();
+}
+
+// 회원 이름 맵
+function getMemberMap() {
+  const map = {};
+  rptAllMembers.forEach(m => { map[m.id] = m; });
+  return map;
+}
+
+// ① 월 등록 회원
+function loadReportMonthly() {
+  const year = document.getElementById('rpt-month-year').value;
+  const month = String(document.getElementById('rpt-month-month').value).padStart(2,'0');
+  const prefix = `${year}-${month}`;
+  const memberMap = getMemberMap();
+
+  const contracts = rptAllContracts
+    .filter(c => c.startDate?.startsWith(prefix))
+    .sort((a,b) => a.startDate.localeCompare(b.startDate));
+
+  const totalAmount = contracts.reduce((s,c) => s + (c.totalAmount||0), 0);
+
+  const rows = contracts.map((c,i) => {
+    const m = memberMap[c.memberId] || {};
+    return `<tr>
+      <td style="text-align:center;">${i+1}</td>
+      <td>${c.startDate||'—'}</td>
+      <td style="cursor:pointer;color:var(--accent);" onclick="openMemberById('${c.memberId}')">${m.name||'—'}</td>
+      <td>${maskPhone(m.phone||'')}</td>
+      <td>${c.title||'—'}</td>
+      <td style="text-align:center;">${c.sessions||0}회</td>
+      <td style="text-align:right;">${(c.totalAmount||0).toLocaleString()}원</td>
+      <td>${c.startDate||''} ~ ${c.endDate||''}</td>
+      <td>${c.instructorName||'—'}</td>
+      <td>${c.note||''}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('rpt-monthly-content').innerHTML = `
+    <div style="margin-bottom:8px;font-size:13px;color:var(--text-muted);">${year}년 ${parseInt(month)}월 등록 회원 — 총 ${contracts.length}건</div>
+    <table class="member-table" id="rpt-monthly-table">
+      <thead><tr>
+        <th>연번</th><th>날짜</th><th>이름</th><th>전화번호</th>
+        <th>프로그램</th><th>횟수</th><th>가격</th><th>유효기간</th>
+        <th>담당강사</th><th>비고</th>
+      </tr></thead>
+      <tbody>${rows || '<tr><td colspan="10" class="loading">해당 월 등록 회원이 없습니다</td></tr>'}</tbody>
+      <tfoot><tr style="background:var(--bg);font-weight:600;">
+        <td colspan="6" style="text-align:right;padding:10px 8px;">총합계</td>
+        <td style="text-align:right;padding:10px 8px;">${totalAmount.toLocaleString()}원</td>
+        <td colspan="3"></td>
+      </tr></tfoot>
+    </table>`;
+}
+
+// ② 유효 회원
+function loadReportActive() {
+  const memberMap = getMemberMap();
+
+  // 회원별 진행중 계약 중 가장 최근 것
+  const activeMemberMap = {};
+  rptAllContracts
+    .filter(c => c.status === '진행중')
+    .sort((a,b) => (b.startDate||'').localeCompare(a.startDate||''))
+    .forEach(c => {
+      if (!activeMemberMap[c.memberId]) activeMemberMap[c.memberId] = c;
+    });
+
+  // 회원별 최초 등록일 (가장 오래된 계약 startDate)
+  const firstContractMap = {};
+  rptAllContracts
+    .filter(c => c.startDate)
+    .sort((a,b) => a.startDate.localeCompare(b.startDate))
+    .forEach(c => {
+      if (!firstContractMap[c.memberId]) firstContractMap[c.memberId] = c.startDate;
+    });
+
+  const activeList = Object.values(activeMemberMap)
+    .sort((a,b) => (firstContractMap[a.memberId]||'').localeCompare(firstContractMap[b.memberId]||''));
+
+  const rows = activeList.map((c,i) => {
+    const m = memberMap[c.memberId] || {};
+    const firstDate = firstContractMap[c.memberId] || '—';
+    const isReReg = firstDate !== c.startDate;
+    return `<tr>
+      <td style="text-align:center;">${i+1}</td>
+      <td style="cursor:pointer;color:var(--accent);" onclick="openMemberById('${c.memberId}')">${m.name||'—'}</td>
+      <td>${maskPhone(m.phone||'')}</td>
+      <td>${firstDate}</td>
+      <td>${isReReg ? c.startDate : '—'}</td>
+      <td style="text-align:right;">${(c.totalAmount||0).toLocaleString()}원</td>
+      <td>${c.instructorName||'—'}</td>
+      <td>${c.note||''}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('rpt-active-content').innerHTML = `
+    <div style="margin-bottom:8px;font-size:13px;color:var(--text-muted);">현재 진행중 계약 회원 — 총 ${activeList.length}명</div>
+    <table class="member-table" id="rpt-active-table">
+      <thead><tr>
+        <th>연번</th><th>이름</th><th>전화번호</th><th>최초등록일</th>
+        <th>재등록일</th><th>마지막등록가격</th><th>담당강사</th><th>비고</th>
+      </tr></thead>
+      <tbody>${rows || '<tr><td colspan="8" class="loading">유효 회원이 없습니다</td></tr>'}</tbody>
+    </table>`;
+}
+
+// ③ 만료 회원
+function loadReportExpired() {
+  const memberMap = getMemberMap();
+  const selectedYear = document.getElementById('rpt-expired-year').value;
+
+  const expired = rptAllContracts
+    .filter(c => (c.status === '완료' || c.status === '만료') &&
+      (!selectedYear || c.endDate?.startsWith(selectedYear)))
+    .sort((a,b) => (a.endDate||'').localeCompare(b.endDate||''));
+
+  // 회원별 최초 등록일
+  const firstContractMap = {};
+  rptAllContracts.filter(c => c.startDate).sort((a,b) => a.startDate.localeCompare(b.startDate))
+    .forEach(c => { if (!firstContractMap[c.memberId]) firstContractMap[c.memberId] = c.startDate; });
+
+  // 연도별 그룹
+  const byYear = {};
+  expired.forEach(c => {
+    const yr = c.endDate?.slice(0,4) || '기타';
+    if (!byYear[yr]) byYear[yr] = [];
+    byYear[yr].push(c);
+  });
+
+  let html = `<div style="margin-bottom:8px;font-size:13px;color:var(--text-muted);">만료 회원 — 총 ${expired.length}건</div>`;
+  let tableHtml = '';
+
+  Object.keys(byYear).sort((a,b) => b.localeCompare(a)).forEach(yr => {
+    const list = byYear[yr];
+    const yearRows = list.map((c,i) => {
+      const m = memberMap[c.memberId] || {};
+      return `<tr>
+        <td style="text-align:center;">${i+1}</td>
+        <td style="cursor:pointer;color:var(--accent);" onclick="openMemberById('${c.memberId}')">${m.name||'—'}</td>
+        <td>${maskPhone(m.phone||'')}</td>
+        <td>${firstContractMap[c.memberId]||'—'}</td>
+        <td>${c.endDate||'—'}</td>
+        <td style="text-align:right;">${(c.totalAmount||0).toLocaleString()}원</td>
+        <td>${c.instructorName||'—'}</td>
+        <td>${c.note||''}</td>
+      </tr>`;
+    }).join('');
+
+    tableHtml += `<div style="margin-bottom:24px;">
+      <div style="font-weight:600;font-size:14px;padding:8px 0;border-bottom:2px solid var(--text);margin-bottom:0;">${yr}년</div>
+      <table class="member-table rpt-expired-${yr}">
+        <thead><tr>
+          <th>연번</th><th>이름</th><th>전화번호</th><th>최초등록일</th>
+          <th>마지막운동일</th><th>마지막등록가격</th><th>담당강사</th><th>비고</th>
+        </tr></thead>
+        <tbody>${yearRows}</tbody>
+      </table>
+    </div>`;
+  });
+
+  document.getElementById('rpt-expired-content').innerHTML = html + (tableHtml || '<div style="color:var(--text-muted);padding:20px 0;">해당 만료 회원이 없습니다</div>');
+}
+
+// ④ 월간 매출 현황
+function loadReportSales() {
+  const year = parseInt(document.getElementById('rpt-sales-year').value);
+  const memberMap = getMemberMap();
+
+  const months = Array.from({length:12},(_,i)=>i+1);
+
+  // 재등록 판별: 해당 회원의 이전 계약이 있으면 재등록
+  const memberFirstContract = {};
+  rptAllContracts.filter(c=>c.startDate).sort((a,b)=>a.startDate.localeCompare(b.startDate))
+    .forEach(c => { if (!memberFirstContract[c.memberId]) memberFirstContract[c.memberId] = c.id; });
+
+  const rows = months.map(m => {
+    const prefix = `${year}-${String(m).padStart(2,'0')}`;
+    const monthContracts = rptAllContracts.filter(c => c.startDate?.startsWith(prefix));
+
+    const revenue = monthContracts.reduce((s,c) => s+(c.totalAmount||0), 0);
+    const newCount = monthContracts.filter(c => memberFirstContract[c.memberId] === c.id).length;
+    const reregCount = monthContracts.filter(c => memberFirstContract[c.memberId] !== c.id).length;
+
+    // 재등록 미스: 해당 월 만료된 계약의 회원 중 그 이후로 재등록 없는 회원
+    const expiredThisMonth = rptAllContracts.filter(c =>
+      (c.status === '완료' || c.status === '만료') && c.endDate?.startsWith(prefix)
+    );
+    const missCount = expiredThisMonth.filter(c => {
+      const hasRenewed = rptAllContracts.some(nc =>
+        nc.memberId === c.memberId &&
+        nc.startDate > (c.endDate||'') &&
+        nc.id !== c.id
+      );
+      return !hasRenewed;
+    }).length;
+
+    // 상담(명): 해당 월 등록된 회원 중 계약이 하나도 없는 회원
+    const membersHavingContract = new Set(rptAllContracts.map(c => c.memberId));
+    const consultCount = rptAllMembers.filter(m2 =>
+      m2.createdAt?.startsWith(prefix) && !membersHavingContract.has(m2.id)
+    ).length;
+
+    const isEmpty = monthContracts.length === 0 && expiredThisMonth.length === 0 && consultCount === 0;
+    return `<tr style="${isEmpty?'color:var(--text-muted)':''}">
+      <td style="text-align:center;">${m}</td>
+      <td style="text-align:right;">${revenue ? revenue.toLocaleString()+'원' : ''}</td>
+      <td style="text-align:center;">${newCount||''}</td>
+      <td style="text-align:center;">${reregCount||''}</td>
+      <td style="text-align:center;">${consultCount||''}</td>
+      <td style="text-align:center;${missCount?'color:#E74C3C;font-weight:600;':''}">${missCount||''}</td>
+    </tr>`;
+  }).join('');
+
+  const totalRevenue = rptAllContracts
+    .filter(c => c.startDate?.startsWith(String(year)))
+    .reduce((s,c) => s+(c.totalAmount||0), 0);
+  const totalNew = rptAllContracts.filter(c => c.startDate?.startsWith(String(year)) && memberFirstContract[c.memberId] === c.id).length;
+  const totalRereg = rptAllContracts.filter(c => c.startDate?.startsWith(String(year)) && memberFirstContract[c.memberId] !== c.id).length;
+  const membersHavingContractAll = new Set(rptAllContracts.map(c => c.memberId));
+  const totalConsult = rptAllMembers.filter(m2 =>
+    m2.createdAt?.startsWith(String(year)) && !membersHavingContractAll.has(m2.id)
+  ).length;
+
+  document.getElementById('rpt-sales-content').innerHTML = `
+    <table class="member-table" id="rpt-sales-table" style="max-width:600px;">
+      <thead>
+        <tr><th colspan="6" style="text-align:center;font-size:15px;">${year}년</th></tr>
+        <tr><th>월</th><th>매출(원)</th><th>신규(명)</th><th>재등록(명)</th><th>상담(명)</th><th>재등록 미스</th></tr>
+      </thead>
+      <tbody>${rows}</tbody>
+      <tfoot><tr style="background:var(--bg);font-weight:600;">
+        <td style="text-align:center;">합계</td>
+        <td style="text-align:right;">${totalRevenue.toLocaleString()}원</td>
+        <td style="text-align:center;">${totalNew}</td>
+        <td style="text-align:center;">${totalRereg}</td>
+        <td style="text-align:center;">${totalConsult}</td>
+        <td style="text-align:center;"></td>
+      </tr></tfoot>
+    </table>
+    <div style="margin-top:10px;font-size:11px;color:var(--text-muted);">※ 상담(명): 해당 월 회원 등록 후 계약 미진행 인원 / 재등록 미스: 해당 월 만료 후 재등록 없는 회원 수</div>`;
+}
+
+// ── 엑셀 다운로드 ──
+function downloadReportExcel(type) {
+  let rows = [];
+  let filename = '';
+  const today = new Date().toISOString().slice(0,10);
+
+  if (type === 'monthly') {
+    const year = document.getElementById('rpt-month-year').value;
+    const month = String(document.getElementById('rpt-month-month').value).padStart(2,'0');
+    const prefix = `${year}-${month}`;
+    const memberMap = getMemberMap();
+    const contracts = rptAllContracts.filter(c => c.startDate?.startsWith(prefix))
+      .sort((a,b) => a.startDate.localeCompare(b.startDate));
+
+    rows = [['연번','날짜','이름','전화번호','프로그램','횟수','가격','유효기간시작','유효기간종료','담당강사','비고']];
+    contracts.forEach((c,i) => {
+      const m = memberMap[c.memberId] || {};
+      rows.push([i+1, c.startDate||'', m.name||'', m.phone||'', c.title||'', c.sessions||0,
+        c.totalAmount||0, c.startDate||'', c.endDate||'', c.instructorName||'', c.note||'']);
+    });
+    rows.push(['합계','','','','','', contracts.reduce((s,c)=>s+(c.totalAmount||0),0),'','','','']);
+    filename = `월등록회원_${year}${month}`;
+  }
+
+  else if (type === 'active') {
+    const memberMap = getMemberMap();
+    const firstContractMap = {};
+    rptAllContracts.filter(c=>c.startDate).sort((a,b)=>a.startDate.localeCompare(b.startDate))
+      .forEach(c => { if (!firstContractMap[c.memberId]) firstContractMap[c.memberId] = c.startDate; });
+
+    const activeMemberMap = {};
+    rptAllContracts.filter(c=>c.status==='진행중')
+      .sort((a,b)=>(b.startDate||'').localeCompare(a.startDate||''))
+      .forEach(c => { if (!activeMemberMap[c.memberId]) activeMemberMap[c.memberId] = c; });
+
+    const list = Object.values(activeMemberMap)
+      .sort((a,b)=>(firstContractMap[a.memberId]||'').localeCompare(firstContractMap[b.memberId]||''));
+
+    rows = [['연번','이름','전화번호','최초등록일','재등록일','마지막등록가격','담당강사','비고']];
+    list.forEach((c,i) => {
+      const m = memberMap[c.memberId] || {};
+      const firstDate = firstContractMap[c.memberId] || '';
+      rows.push([i+1, m.name||'', m.phone||'', firstDate,
+        firstDate!==c.startDate?c.startDate:'', c.totalAmount||0, c.instructorName||'', c.note||'']);
+    });
+    filename = `유효회원_${today}`;
+  }
+
+  else if (type === 'expired') {
+    const memberMap = getMemberMap();
+    const selectedYear = document.getElementById('rpt-expired-year').value;
+    const firstContractMap = {};
+    rptAllContracts.filter(c=>c.startDate).sort((a,b)=>a.startDate.localeCompare(b.startDate))
+      .forEach(c => { if (!firstContractMap[c.memberId]) firstContractMap[c.memberId] = c.startDate; });
+
+    const expired = rptAllContracts
+      .filter(c => (c.status==='완료'||c.status==='만료') && (!selectedYear||c.endDate?.startsWith(selectedYear)))
+      .sort((a,b)=>(a.endDate||'').localeCompare(b.endDate||''));
+
+    rows = [['연번','이름','전화번호','최초등록일','마지막운동일','마지막등록가격','담당강사','비고']];
+    expired.forEach((c,i) => {
+      const m = memberMap[c.memberId] || {};
+      rows.push([i+1, m.name||'', m.phone||'', firstContractMap[c.memberId]||'',
+        c.endDate||'', c.totalAmount||0, c.instructorName||'', c.note||'']);
+    });
+    filename = `만료회원_${selectedYear||'전체'}_${today}`;
+  }
+
+  else if (type === 'sales') {
+    const year = parseInt(document.getElementById('rpt-sales-year').value);
+    const memberFirstContract = {};
+    rptAllContracts.filter(c=>c.startDate).sort((a,b)=>a.startDate.localeCompare(b.startDate))
+      .forEach(c => { if (!memberFirstContract[c.memberId]) memberFirstContract[c.memberId] = c.id; });
+
+    rows = [[year+'년'], ['월','매출(원)','신규(명)','재등록(명)','상담(명)','재등록 미스']];
+    let totRev=0, totNew=0, totRereg=0;
+    for (let m=1; m<=12; m++) {
+      const prefix = `${year}-${String(m).padStart(2,'0')}`;
+      const mc = rptAllContracts.filter(c=>c.startDate?.startsWith(prefix));
+      const rev = mc.reduce((s,c)=>s+(c.totalAmount||0),0);
+      const nw = mc.filter(c=>memberFirstContract[c.memberId]===c.id).length;
+      const rr = mc.filter(c=>memberFirstContract[c.memberId]!==c.id).length;
+      const expiredM = rptAllContracts.filter(c=>(c.status==='완료'||c.status==='만료')&&c.endDate?.startsWith(prefix));
+      const miss = expiredM.filter(c=>!rptAllContracts.some(nc=>nc.memberId===c.memberId&&nc.startDate>(c.endDate||'')&&nc.id!==c.id)).length;
+      const membersWithContract = new Set(rptAllContracts.map(c=>c.memberId));
+      const consult = rptAllMembers.filter(m2=>m2.createdAt?.startsWith(prefix)&&!membersWithContract.has(m2.id)).length;
+      totRev+=rev; totNew+=nw; totRereg+=rr;
+      rows.push([m, rev||0, nw||0, rr||0, consult||0, miss||0]);
+    }
+    rows.push(['합계', totRev, totNew, totRereg, '', '']);
+    filename = `월간매출현황_${year}`;
+  }
+
+  // CSV 생성 (BOM 포함 → 엑셀 한글 정상 표시)
+  const bom = '\uFEFF';
+  const csv = bom + rows.map(r => r.map(v => {
+    const s = String(v ?? '');
+    return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s.replace(/"/g,'""')}"` : s;
+  }).join(',')).join('\n');
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename + '.csv';
+  a.click();
 }
 
 // ── DASHBOARD ──
