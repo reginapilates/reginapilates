@@ -3368,18 +3368,20 @@ async function loadSessionsLog() {
   tbody.innerHTML = '<tr><td colspan="8" class="loading">불러오는 중...</td></tr>';
 
   try {
-    const [sRes, mRes] = await Promise.all([
+    const [sRes, mRes, cRes2, schRes] = await Promise.all([
       fetch(`${API}/api/sessions`),
       fetch(`${API}/api/members`),
+      fetch(`${API}/api/contracts`),
+      fetch(`${API}/api/schedules`),
     ]);
     const sData = await sRes.json();
     const mData = await mRes.json();
+    const cData2 = await cRes2.json();
+    const schData = await schRes.json();
 
     allMembersForLog = mData.members || [];
 
     // 진행중/일시정지 계약 있는 회원만 필터링
-    const [cRes2] = await Promise.all([fetch(`${API}/api/contracts`)]);
-    const cData2 = await cRes2.json();
     const activeContracts2 = (cData2.contracts||[]).filter(c =>
       c.status === '진행중' || c.status === '일시정지'
     );
@@ -3392,18 +3394,51 @@ async function loadSessionsLog() {
     const instrMap = {};
     allInstructors.forEach(i => instrMap[i.id] = i.name);
 
-    // 계약 맵 (contractId → { title, sessions })
+    // 계약 맵
     const contractMap = {};
     (cData2.contracts||[]).forEach(c => { contractMap[c.id] = c; });
 
-    allSessionsLog = (sData.sessions||[]).map(s => ({
+    // 이미 세션 기록된 scheduleId 집합 (중복 방지)
+    const sessionScheduleIds = new Set(
+      (sData.sessions||[]).map(s => s.scheduleId).filter(Boolean)
+    );
+
+    // Sessions DB 데이터
+    const sessionRows = (sData.sessions||[]).map(s => ({
       ...s,
+      _type: 'session',
       memberName: memberMap[s.memberId] || s.name?.split(' #')[0] || '—',
       instructorName: instrMap[s.instructorId] || '—',
       contractTitle: contractMap[s.contractId]?.title || '—',
       contractSessions: contractMap[s.contractId]?.sessions || 0,
       contractUsed: contractMap[s.contractId]?.usedSessions || 0,
+      attendanceStatus: s.attendanceStatus || '확정',
     }));
+
+    // Schedule DB에서 '확정' 상태인 것 중 세션 기록 없는 것만 추가
+    const scheduleRows = (schData.schedules||[])
+      .filter(s => s.status === '확정' && !sessionScheduleIds.has(s.id) && s.memberId)
+      .map(s => ({
+        id: s.id,
+        _type: 'schedule',
+        scheduleId: s.id,
+        memberId: s.memberId,
+        contractId: s.contractId,
+        date: s.date,
+        time: s.time,
+        instructorId: s.instructorId,
+        memberName: memberMap[s.memberId] || '—',
+        instructorName: instrMap[s.instructorId] || '—',
+        contractTitle: contractMap[s.contractId]?.title || '—',
+        contractSessions: contractMap[s.contractId]?.sessions || 0,
+        contractUsed: contractMap[s.contractId]?.usedSessions || 0,
+        attendanceStatus: '확정',
+        condition: '',
+        memo: '',
+        sessionNo: null,
+      }));
+
+    allSessionsLog = [...sessionRows, ...scheduleRows];
     allSessionsLog.sort((a, b) => {
       const dateCmp = (b.date||'').localeCompare(a.date||'');
       if (dateCmp !== 0) return dateCmp;
@@ -3622,19 +3657,27 @@ async function renderSessionLog() {
     '확정':  '<span style="color:var(--accent);font-weight:700;font-size:12px;">예약</span>',
   };
 
+  const today = new Date().toISOString().slice(0,10);
+
   tbody.innerHTML = sessions.map(s => {
+    const isScheduleOnly = s._type === 'schedule';
+    const isPast = s.date < today;
     const memo = (s.memo && s.memo !== 'NO-SHOW') ? s.memo : '';
     const condDot = s.condition && s.condition !== '—'
       ? `<span style="display:inline-flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:50%;background:${condColors[s.condition]||'#ccc'};display:inline-block;flex-shrink:0;"></span>${s.condition}</span>`
-      : '—';
+      : (isScheduleOnly ? '' : '—');
     const statusKey = s.attendanceStatus || '확정';
     const badge = statusBadge[statusKey] || `<span style="font-size:12px;color:var(--text-muted);">${statusKey}</span>`;
     const usedTotal = s.contractSessions
       ? `${s.contractUsed}/${s.contractSessions}`
       : '—';
+    // 확정 예약은 행 배경 연하게, 지난 날짜면 주의 표시
+    const rowStyle = isScheduleOnly
+      ? (isPast ? 'background:#FFF8F0;' : 'background:#F8FBFF;')
+      : '';
 
-    return `<tr>
-      <td style="white-space:nowrap;font-size:13px;">${s.date||'—'}</td>
+    return `<tr style="${rowStyle}">
+      <td style="white-space:nowrap;font-size:13px;${isPast&&isScheduleOnly?'color:#E67E22;font-weight:600;':''}">${s.date||'—'}${isPast&&isScheduleOnly?' ⚠':''}</td>
       <td style="white-space:nowrap;">${s.time||'—'}</td>
       <td><b>${s.memberName}</b></td>
       <td style="font-size:12px;color:var(--text-muted);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.contractTitle||'—'}</td>
