@@ -2284,17 +2284,11 @@ async function saveContract() {
   const privacyConsent = document.getElementById('nc-agree-info').checked;
 
   // 1. 먼저 Notion에 계약 저장
-  const instructorEl = document.getElementById('nc-instructor');
-  const instructorId = instructorEl?.value || '';
-  const instructorName = instructorEl?.options[instructorEl?.selectedIndex]?.text || '';
-
   const body = {
     memberName: currentMember.name,
     memberId: currentMember.id,
     programId,
     programName,
-    instructorId,
-    instructorName,
     sessions,
     totalAmount,
     paymentMethod,
