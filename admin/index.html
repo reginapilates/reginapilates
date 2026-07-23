@@ -4480,28 +4480,53 @@ async function openScheduleDetail(id) {
   document.getElementById('sd-time').value = s.time;
   document.getElementById('sd-status').value = s.status || '확정';
   document.getElementById('sd-memo').value = '';
-  document.getElementById('sd-condition-row').style.display = 'none';
+  document.getElementById('sd-condition').value = '보통';
+  // 이전 상태 저장 (UsedSessions 조정용)
+  document.getElementById('sd-status').dataset.prevStatus = s.status || '확정';
 
   const instr = allInstructors.find(i => i.id === s.instructorId);
-
-  // 회원/계약 정보 조회
   let memberName = s.name.split(' - ')[0] || '—';
   let remainingSessions = '—';
-  if (s.contractId) {
-    try {
-      const cRes = await fetch(`${API}/api/contracts?memberId=${s.memberId}`);
-      const cData = await cRes.json();
+
+  // 회원/계약 정보 + 기존 세션 데이터 동시 조회
+  const fetches = [];
+  if (s.contractId) fetches.push(fetch(`${API}/api/contracts?memberId=${s.memberId}`));
+  if (s.id) fetches.push(fetch(`${API}/api/sessions?contractId=${s.contractId}`));
+
+  try {
+    const results = await Promise.all(fetches);
+    if (results[0]) {
+      const cData = await results[0].json();
       const contract = (cData.contracts||[]).find(c => c.id === s.contractId);
       if (contract) remainingSessions = contract.remainingSessions + '회';
-    } catch(e) {}
-  }
+    }
+    if (results[1]) {
+      const sData = await results[1].json();
+      // 이 스케줄에 연결된 기존 세션 찾기
+      const existingSession = (sData.sessions||[]).find(sess =>
+        sess.contractId === s.contractId &&
+        sess.date === s.date &&
+        sess.time === s.time
+      );
+      if (existingSession) {
+        document.getElementById('sd-memo').value = existingSession.memo || '';
+        if (existingSession.condition) document.getElementById('sd-condition').value = existingSession.condition;
+        document.getElementById('sd-session-created').value = existingSession.id;
+      }
+    }
+  } catch(e) {}
+
+  // 상태에 따라 컨디션/메모 항상 표시
+  const currentStatus = s.status || '확정';
+  const condRow = document.getElementById('sd-condition-row');
+  condRow.style.display = (currentStatus === '참석' || currentStatus === '노쇼') ? 'block' : 'none';
 
   document.getElementById('sd-info').innerHTML = `
     <div>📅 <b>${s.date}</b> &nbsp; ⏰ <b>${s.time}</b></div>
     <div>👤 회원: <b>${memberName}</b></div>
     <div>🎯 강사: <b>${instr?.name || '—'}</b></div>
     <div>📊 잔여 횟수: <b>${remainingSessions}</b></div>
-    <div>📋 현재 상태: <b>${s.status || '확정'}</b></div>
+    <div>📋 현재 상태: <b>${currentStatus}</b></div>
   `;
 
   document.getElementById('modal-schedule-detail').style.display = 'flex';
@@ -4510,7 +4535,7 @@ async function openScheduleDetail(id) {
 function onStatusChange() {
   const status = document.getElementById('sd-status').value;
   const condRow = document.getElementById('sd-condition-row');
-  condRow.style.display = (status === '참석') ? 'block' : 'none';
+  condRow.style.display = (status === '참석' || status === '노쇼') ? 'block' : 'none';
 }
 
 async function updateSchedule() {
@@ -4535,56 +4560,82 @@ async function updateSchedule() {
     }
   } catch(e) { showToast('수정 실패', 'error'); return; }
 
-  // 2. 참석/노쇼일 경우 → 세션 자동 생성
-  if ((status === '참석' || status === '노쇼') && memberId && contractId) {
+  const prevStatus = document.getElementById('sd-status').dataset.prevStatus || '확정';
+  const existingSessionId = document.getElementById('sd-session-created').value;
+  const memberName = document.getElementById('sd-title').textContent.split(' - ')[0];
+  const condition = document.getElementById('sd-condition').value;
+  const memo = document.getElementById('sd-memo').value;
+  const isNowCounted = status === '참석' || status === '노쇼';
+  const wasCounted = prevStatus === '참석' || prevStatus === '노쇼';
+
+  // 2. 세션 처리
+  if (isNowCounted && memberId && contractId) {
     try {
-      // 현재 계약 잔여횟수 조회
-      const cRes = await fetch(`${API}/api/contracts?memberId=${memberId}`);
-      const cData = await cRes.json();
-      const contract = (cData.contracts||[]).find(c => c.id === contractId);
-
-      if (contract) {
-        // 기존 세션 수 조회 (회차 계산)
-        const sRes = await fetch(`${API}/api/sessions?contractId=${contractId}`);
-        const sData = await sRes.json();
-        const sessionNo = (sData.sessions||[]).length + 1;
-
-        const memberName = document.getElementById('sd-title').textContent.split(' - ')[0];
-        const condition = document.getElementById('sd-condition').value;
-        const memo = document.getElementById('sd-memo').value;
-
-        // 세션 생성 (scheduleId로 중복 방지)
-        const sessionRes = await fetch(`${API}/api/sessions`, {
+      if (existingSessionId) {
+        // 기존 세션 수정 (메모/컨디션/출석상태 + UsedSessions 조정)
+        await fetch(`${API}/api/sessions?id=${existingSessionId}`, {
+          method: 'PUT',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({
+            attendanceStatus: status,
+            prevAttendanceStatus: prevStatus,
+            contractId,
+            condition: status === '참석' ? condition : '',
+            memo: status === '노쇼' ? (memo || 'NO-SHOW') : memo,
+            date,
+          })
+        });
+      } else {
+        // 신규 세션 생성
+        await fetch(`${API}/api/sessions`, {
           method: 'POST',
           headers: {'Content-Type':'application/json'},
           body: JSON.stringify({
-            memberName,
-            memberId,
-            contractId,
-            instructorId,
-            scheduleId: id,  // Schedule ID로 중복 체크
-            sessionNo,
-            date,
-            time,
+            memberName, memberId, contractId, instructorId,
+            scheduleId: id,
+            date, time,
             condition: status === '참석' ? condition : '',
-            memo: status === '노쇼' ? 'NO-SHOW' : memo,
+            memo: status === '노쇼' ? (memo || 'NO-SHOW') : memo,
             attendanceStatus: status,
           })
         });
-        const sessionResult = await sessionRes.json();
-        const isUpdate = sessionResult.updated;
-        showToast(`${status} 처리 완료${isUpdate ? ' (기존 세션 업데이트)' : ''}`, 'success');
       }
+      showToast(`${status} 처리 완료`, 'success');
     } catch(e) {
-      console.error('세션 생성 실패:', e);
-      showToast('출석 처리됐지만 세션 생성 실패', '');
+      console.error('세션 처리 실패:', e);
+      showToast('출석 처리됐지만 세션 저장 실패', '');
     }
+  } else if (!isNowCounted && wasCounted && existingSessionId) {
+    // 참석/노쇼 → 확정/취소로 변경: 세션 상태만 업데이트, UsedSessions -1
+    try {
+      await fetch(`${API}/api/sessions?id=${existingSessionId}`, {
+        method: 'PUT',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          attendanceStatus: status,
+          prevAttendanceStatus: prevStatus,
+          contractId,
+          memo,
+        })
+      });
+      showToast('수정되었습니다', 'success');
+    } catch(e) { showToast('수정되었습니다', 'success'); }
+  } else if (existingSessionId && (memo !== '' || condition)) {
+    // 상태 변경 없이 메모/컨디션만 수정
+    try {
+      await fetch(`${API}/api/sessions?id=${existingSessionId}`, {
+        method: 'PUT',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ condition, memo })
+      });
+    } catch(e) {}
+    showToast('수정되었습니다', 'success');
   } else {
     showToast('수정되었습니다', 'success');
   }
 
   closeModal('modal-schedule-detail');
-  calDataLoaded = false;
+  Object.keys(calWeekCache).forEach(k => delete calWeekCache[k]);
   loadCalendar();
 
   // 회원 상세 페이지가 열려있으면 세션 새로고침
