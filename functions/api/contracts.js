@@ -63,6 +63,8 @@ export async function onRequest(context) {
         pauseDate: page.properties.PauseDate?.date?.start || '',
         resumeDate: page.properties.ResumeDate?.date?.start || '',
         note: page.properties.Note?.rich_text?.[0]?.plain_text || '',
+        instructorId: page.properties.InstructorId?.rich_text?.[0]?.plain_text || '',
+        instructorName: page.properties.InstructorName?.rich_text?.[0]?.plain_text || '',
       }));
 
       // Sessions DB에서 각 계약의 실제 세션 수 조회
@@ -145,7 +147,7 @@ export async function onRequest(context) {
       }
 
       // 2. Notion에 계약 저장
-      const title = `${memberName} - ${programName}`;
+      const title = programName;
       const notionRes = await fetch('https://api.notion.com/v1/pages', {
         method: 'POST',
         headers: {
@@ -178,6 +180,8 @@ export async function onRequest(context) {
               rich_text: [{ text: { content: contractData.signatureData.substring(3800, 5700) } }]
             } : undefined,
             Note: { rich_text: [{ text: { content: contractData.note || '' } }] },
+            InstructorId: contractData.instructorId ? { rich_text: [{ text: { content: contractData.instructorId } }] } : undefined,
+            InstructorName: contractData.instructorName ? { rich_text: [{ text: { content: contractData.instructorName } }] } : undefined,
           },
         }),
       });
