@@ -3677,9 +3677,10 @@ async function renderSessionLog() {
     const rowStyle = isScheduleOnly
       ? (isPast ? 'background:#FFF8F0;' : 'background:#F8FBFF;')
       : '';
-    // 클릭 시 스케줄 상세 모달 (scheduleId 기준)
-    const clickId = s.scheduleId || s.id;
-    const clickFn = clickId ? `onclick="openSessionLogDetail('${clickId}')"` : '';
+    // 클릭: 세션이면 sessionId+scheduleId, 예약확정이면 scheduleId만
+    const clickFn = isScheduleOnly
+      ? `onclick="openSessionLogDetail('${s.id}', null)"`
+      : `onclick="openSessionLogDetail('${s.scheduleId||''}', '${s.id}')"`;
 
     return `<tr style="${rowStyle};cursor:pointer;" ${clickFn}>
       <td style="white-space:nowrap;font-size:13px;${isPast&&isScheduleOnly?'color:#E67E22;font-weight:600;':''}">${s.date||'—'}${isPast&&isScheduleOnly?' ⚠':''}</td>
@@ -3696,38 +3697,60 @@ async function renderSessionLog() {
 }
 
 // 세션 로그에서 행 클릭 시 스케줄 상세 모달 열기
-async function openSessionLogDetail(scheduleId) {
-  if (!scheduleId) return;
+async function openSessionLogDetail(scheduleId, sessionId) {
+  // scheduleId가 있으면 스케줄 모달 시도
+  if (scheduleId) {
+    let found = allSchedules.find(s => s.id === scheduleId)
+               || allSchedulesForLog.find(s => s.id === scheduleId);
 
-  // 1. allSchedules(캘린더 현재 주)에서 먼저 찾기
-  let found = allSchedules.find(s => s.id === scheduleId);
-
-  // 2. 없으면 allSchedulesForLog(세션로그 로드 시 전체)에서 찾기
-  if (!found) found = allSchedulesForLog.find(s => s.id === scheduleId);
-
-  // 3. 그래도 없으면 DB에서 직접 조회
-  if (!found) {
-    try {
-      showToast('스케줄 조회 중...', '');
-      // 회원 ID 없이 전체 스케줄에서 id로 찾기 위해 기간 없이 조회
-      const res = await fetch(`${API}/api/schedules`);
-      const data = await res.json();
-      allSchedulesForLog = data.schedules || [];
-      found = allSchedulesForLog.find(s => s.id === scheduleId);
-    } catch(e) {}
+    if (found) {
+      if (!allSchedules.find(s => s.id === scheduleId)) {
+        allSchedules = [...allSchedules, found];
+      }
+      await openScheduleDetail(scheduleId);
+      return;
+    }
   }
 
-  if (!found) {
-    showToast('스케줄 정보를 찾을 수 없습니다', 'error');
+  // scheduleId로 못 찾은 경우 → 세션 데이터로 직접 모달 구성
+  if (sessionId) {
+    const s = allSessionsLog.find(s => s.id === sessionId);
+    if (!s) { showToast('세션 정보를 찾을 수 없습니다', 'error'); return; }
+
+    // allSchedules에 가상 스케줄 객체 주입
+    const virtualSchedule = {
+      id: sessionId,  // 세션 ID를 임시 key로
+      name: `${s.memberName} - ${s.date} ${s.time}`,
+      memberId: s.memberId,
+      contractId: s.contractId,
+      instructorId: s.instructorId,
+      date: s.date,
+      time: s.time,
+      status: s.attendanceStatus || '참석',
+      type: '',
+    };
+    allSchedules = allSchedules.filter(sc => sc.id !== sessionId);
+    allSchedules = [...allSchedules, virtualSchedule];
+
+    // sd-session-created에 sessionId 주입하도록 openScheduleDetail 호출 후 값 덮어쓰기
+    await openScheduleDetail(sessionId);
+
+    // 세션 ID 및 기존 상태 주입
+    document.getElementById('sd-session-created').value = sessionId;
+    document.getElementById('sd-status').dataset.prevStatus = s.attendanceStatus || '참석';
+
+    // 메모/컨디션 복원
+    if (s.memo && s.memo !== 'NO-SHOW') document.getElementById('sd-memo').value = s.memo;
+    if (s.condition) document.getElementById('sd-condition').value = s.condition;
+
+    // 컨디션 행 표시
+    const condRow = document.getElementById('sd-condition-row');
+    const st = s.attendanceStatus;
+    if (condRow) condRow.style.display = (st === '참석' || st === '노쇼') ? 'block' : 'none';
     return;
   }
 
-  // allSchedules에 없으면 임시 추가
-  if (!allSchedules.find(s => s.id === scheduleId)) {
-    allSchedules = [...allSchedules, found];
-  }
-
-  await openScheduleDetail(scheduleId);
+  showToast('스케줄 정보를 찾을 수 없습니다', 'error');
 }
 
 async function openNewScheduleForMember(memberId, contractId) {
