@@ -3752,13 +3752,13 @@ let calCurrentDate = new Date();
 let allInstructors = [];
 let allSchedules = [];
 let calFilterInstructors = [];
-let calDataLoaded = false; // 전체 데이터 로드 여부
+const calWeekCache = {}; // 주간별 스케줄 캐시 { 'YYYY-MM-DD': schedules[] }
 
 // ── CALENDAR INIT ──
-function calToday() { calCurrentDate = new Date(); renderCalendar(); }
-function calPrev() { calCurrentDate.setDate(calCurrentDate.getDate() - 7); renderCalendar(); }
-function calNext() { calCurrentDate.setDate(calCurrentDate.getDate() + 7); renderCalendar(); }
-function calReload() { calDataLoaded = false; loadCalendar(); }
+function calToday() { calCurrentDate = new Date(); loadCalendar(); }
+function calPrev() { calCurrentDate.setDate(calCurrentDate.getDate() - 7); loadCalendar(); }
+function calNext() { calCurrentDate.setDate(calCurrentDate.getDate() + 7); loadCalendar(); }
+function calReload() { Object.keys(calWeekCache).forEach(k => delete calWeekCache[k]); loadCalendar(); }
 
 function getWeekDates(base) {
   // 오늘 날짜를 로컬 기준으로 계산
@@ -3787,23 +3787,34 @@ function toLocalDateStr(d) {
 }
 
 async function loadCalendar(forceReload = false) {
-  // 이미 로드됐으면 렌더링만
-  if (calDataLoaded && !forceReload) {
+  // 현재 주의 시작일 계산
+  const dates = getWeekDates(calCurrentDate);
+  const weekKey = dates[0].dateStr;
+  const startDate = dates[0].dateStr;
+  const endDate = dates[dates.length - 1].dateStr;
+
+  // 캐시 히트 (같은 주 재방문)
+  if (!forceReload && calWeekCache[weekKey]) {
+    allSchedules = calWeekCache[weekKey];
     renderCalendar();
     return;
   }
 
   try {
-    const [instrRes, schRes] = await Promise.all([
-      fetch(`${API}/api/instructors`),
-      fetch(`${API}/api/schedules`)  // 날짜 필터 없이 전체 로드
-    ]);
-    const instrData = await instrRes.json();
-    const schData = await schRes.json();
-    allInstructors = instrData.instructors || [];
+    const fetchPromises = [fetch(`${API}/api/schedules?startDate=${startDate}&endDate=${endDate}`)];
+    // 강사 목록은 최초 1회만 로드
+    if (!allInstructors.length) fetchPromises.push(fetch(`${API}/api/instructors`));
+
+    const results = await Promise.all(fetchPromises);
+    const schData = await results[0].json();
+
+    if (results[1]) {
+      const instrData = await results[1].json();
+      allInstructors = instrData.instructors || [];
+    }
+
     allSchedules = schData.schedules || [];
-    calDataLoaded = true;
-    console.log('Calendar data loaded:', allSchedules.length, 'schedules');
+    calWeekCache[weekKey] = allSchedules; // 캐시 저장
   } catch(e) {
     console.error('Calendar load error:', e);
   }
