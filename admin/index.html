@@ -1302,6 +1302,7 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
     </div>
     <div class="modal-body">
       <input type="hidden" id="sd-id">
+      <input type="hidden" id="sd-is-session-only" value="0">
       <input type="hidden" id="sd-member-id">
       <input type="hidden" id="sd-contract-id">
       <input type="hidden" id="sd-instructor-id">
@@ -3735,6 +3736,8 @@ async function openSessionLogDetail(scheduleId, sessionId) {
     // sd-session-created에 sessionId 주입하도록 openScheduleDetail 호출 후 값 덮어쓰기
     await openScheduleDetail(sessionId);
 
+    // 세션 전용 모드 표시 (스케줄 API 호출 건너뜀)
+    document.getElementById('sd-is-session-only').value = '1';
     // 세션 ID 및 기존 상태 주입
     document.getElementById('sd-session-created').value = sessionId;
     document.getElementById('sd-status').dataset.prevStatus = s.attendanceStatus || '참석';
@@ -4616,6 +4619,7 @@ async function openScheduleDetail(id) {
   if (!s) return;
 
   document.getElementById('sd-id').value = id;
+  document.getElementById('sd-is-session-only').value = '0';
   document.getElementById('sd-member-id').value = s.memberId || '';
   document.getElementById('sd-contract-id').value = s.contractId || '';
   document.getElementById('sd-instructor-id').value = s.instructorId || '';
@@ -4692,18 +4696,22 @@ async function updateSchedule() {
   const contractId = document.getElementById('sd-contract-id').value;
   const instructorId = document.getElementById('sd-instructor-id').value;
 
-  // 1. 스케줄 상태 업데이트
-  try {
-    const res = await fetch(`${API}/api/schedules?id=${id}`, {
-      method: 'PUT', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ date, time, status })
-    });
-    if (!res.ok) {
-      const d = await res.json();
-      showToast('수정 실패: ' + (d.error||'오류'), 'error');
-      return;
-    }
-  } catch(e) { showToast('수정 실패', 'error'); return; }
+  const isSessionOnly = document.getElementById('sd-is-session-only').value === '1';
+
+  // 1. 스케줄 상태 업데이트 (세션 전용 모드면 건너뜀)
+  if (!isSessionOnly) {
+    try {
+      const res = await fetch(`${API}/api/schedules?id=${id}`, {
+        method: 'PUT', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ date, time, status })
+      });
+      if (!res.ok) {
+        const d = await res.json();
+        showToast('수정 실패: ' + (d.error||'오류'), 'error');
+        return;
+      }
+    } catch(e) { showToast('수정 실패', 'error'); return; }
+  }
 
   const prevStatus = document.getElementById('sd-status').dataset.prevStatus || '확정';
   const existingSessionId = document.getElementById('sd-session-created').value;
@@ -4799,11 +4807,12 @@ async function deleteSchedule() {
   const existingSessionId = document.getElementById('sd-session-created').value;
   const contractId = document.getElementById('sd-contract-id').value;
   const currentStatus = document.getElementById('sd-status').value;
+  const isSessionOnly = document.getElementById('sd-is-session-only').value === '1';
 
-  if (!confirm('이 예약을 삭제하시겠습니까? 참석/노쇼 처리된 경우 세션 기록도 함께 삭제됩니다.')) return;
+  if (!confirm('삭제하시겠습니까? 세션 기록도 함께 삭제됩니다.')) return;
 
   try {
-    // 1. 연결된 세션 삭제 (참석/노쇼인 경우 UsedSessions -1 포함)
+    // 1. 세션 삭제
     if (existingSessionId) {
       await fetch(
         `${API}/api/sessions?id=${existingSessionId}&contractId=${contractId}&prevStatus=${currentStatus}`,
@@ -4811,16 +4820,22 @@ async function deleteSchedule() {
       );
     }
 
-    // 2. 스케줄 삭제
-    const res = await fetch(`${API}/api/schedules?id=${id}`, { method: 'DELETE' });
-    if (res.ok) {
-      closeModal('modal-schedule-detail');
-      showToast('삭제되었습니다', 'success');
-      Object.keys(calWeekCache).forEach(k => delete calWeekCache[k]);
-      loadCalendar();
-    } else {
-      const d = await res.json();
-      showToast('삭제 실패: ' + (d.error||'오류'), 'error');
+    // 2. 스케줄 삭제 (세션 전용 모드면 건너뜀)
+    if (!isSessionOnly) {
+      const res = await fetch(`${API}/api/schedules?id=${id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const d = await res.json();
+        showToast('삭제 실패: ' + (d.error||'오류'), 'error');
+        return;
+      }
+    }
+
+    closeModal('modal-schedule-detail');
+    showToast('삭제되었습니다', 'success');
+    loadCalendar();
+    // 세션 로그 새로고침
+    if (document.getElementById('page-sessions-log')?.classList.contains('active')) {
+      await loadSessionsLog();
     }
   } catch(e) { showToast('삭제 실패', 'error'); }
 }
