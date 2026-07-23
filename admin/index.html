@@ -3680,8 +3680,8 @@ async function quickStatusChange(scheduleId, status, memberId) {
   }
 
   showToast(`${status} 처리 완료`, 'success');
-  // 새로고침
-  calDataLoaded = false;
+  // 캐시 초기화 후 캘린더 새로고침
+  Object.keys(calWeekCache).forEach(k => delete calWeekCache[k]);
   await loadCalendar();
   await renderSessionLog();
   // 계약 요약 재로드
@@ -4047,20 +4047,28 @@ function renderCalendar() {
 
         let bg = c.bg, border = c.border, textColor = c.text;
         let extraStyle = '';
-        if (s.type === '예약불가') { bg='#FDEDEC'; border='#E74C3C'; textColor='#922B21'; }
-        else if (s.status === '참석') {
-          bg='#E8E8E8'; border='#999'; textColor='#666';
-        }
-        else if (s.status === '노쇼') {
-          bg='#E8E8E8'; border='#333'; textColor='#666';
-          extraStyle = 'text-decoration:line-through;text-decoration-color:#000;text-decoration-thickness:2px;';
-        }
+        let statusTag = '';
 
+        if (s.type === '예약불가') {
+          bg='#FDEDEC'; border='#E74C3C'; textColor='#922B21';
+        } else if (s.status === '참석') {
+          bg='#EBEBEB'; border='#AAAAAA'; textColor='#888';
+          statusTag = '<span style="font-size:9px;background:#AAA;color:#fff;border-radius:2px;padding:0 3px;margin-left:3px;vertical-align:middle;">완료</span>';
+        } else if (s.status === '노쇼') {
+          bg='#EBEBEB'; border='#888'; textColor='#888';
+          extraStyle = 'text-decoration:line-through;';
+          statusTag = '<span style="font-size:9px;background:#E74C3C;color:#fff;border-radius:2px;padding:0 3px;margin-left:3px;vertical-align:middle;">노쇼</span>';
+        } else if (s.status === '취소') {
+          bg='#F5F5F5'; border='#CCC'; textColor='#BBB';
+          extraStyle = 'text-decoration:line-through;opacity:0.6;';
+          statusTag = '<span style="font-size:9px;background:#CCC;color:#fff;border-radius:2px;padding:0 3px;margin-left:3px;vertical-align:middle;">취소</span>';
+        }
 
         const memberName = s.name.split(' - ')[0] || s.name;
-        const label = s.type === '예약불가' ? '🚫 불가' :
+        const baseLabel = s.type === '예약불가' ? '🚫 불가' :
           s.type === '가용일정' ? `✓ ${instr?.name||''}` :
           `${memberName}${instr ? ' · '+instr.name : ''}`;
+        const label = baseLabel + statusTag;
 
         return `<div onclick="openScheduleDetail('${s.id}')" title="${s.name} (${s.status||'확정'})"
           style="padding:3px 6px;font-size:11px;margin:1px;cursor:pointer;
