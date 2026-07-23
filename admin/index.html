@@ -4652,15 +4652,33 @@ async function updateSchedule() {
 
 async function deleteSchedule() {
   const id = document.getElementById('sd-id').value;
-  if (!confirm('이 예약을 삭제하시겠습니까?')) return;
+  const existingSessionId = document.getElementById('sd-session-created').value;
+  const contractId = document.getElementById('sd-contract-id').value;
+  const currentStatus = document.getElementById('sd-status').value;
+
+  if (!confirm('이 예약을 삭제하시겠습니까?
+참석/노쇼 처리된 경우 세션 기록도 함께 삭제됩니다.')) return;
+
   try {
+    // 1. 연결된 세션 삭제 (참석/노쇼인 경우 UsedSessions -1 포함)
+    if (existingSessionId) {
+      await fetch(
+        `${API}/api/sessions?id=${existingSessionId}&contractId=${contractId}&prevStatus=${currentStatus}`,
+        { method: 'DELETE' }
+      );
+    }
+
+    // 2. 스케줄 삭제
     const res = await fetch(`${API}/api/schedules?id=${id}`, { method: 'DELETE' });
     if (res.ok) {
       closeModal('modal-schedule-detail');
       showToast('삭제되었습니다', 'success');
-      calDataLoaded = false;
+      Object.keys(calWeekCache).forEach(k => delete calWeekCache[k]);
       loadCalendar();
-    } else { const d = await res.json(); showToast('삭제 실패: ' + (d.error||'오류'), 'error'); }
+    } else {
+      const d = await res.json();
+      showToast('삭제 실패: ' + (d.error||'오류'), 'error');
+    }
   } catch(e) { showToast('삭제 실패', 'error'); }
 }
 
