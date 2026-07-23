@@ -63,9 +63,37 @@ export async function onRequest(context) {
         pauseDate: page.properties.PauseDate?.date?.start || '',
         resumeDate: page.properties.ResumeDate?.date?.start || '',
         note: page.properties.Note?.rich_text?.[0]?.plain_text || '',
-        instructorId: page.properties.InstructorId?.rich_text?.[0]?.plain_text || '',
-        instructorName: page.properties.InstructorName?.rich_text?.[0]?.plain_text || '',
       }));
+
+      // Programs DB에서 programId → instructorName 맵 생성
+      const programIds = [...new Set(rawContracts.map(c => c.programId).filter(Boolean))];
+      const programInstructorMap = {}; // programId → { instructorId, instructorName }
+      for (const pid of programIds) {
+        try {
+          const pRes = await fetch(`https://api.notion.com/v1/pages/${pid}`, {
+            headers: {
+              'Authorization': `Bearer ${env.NOTION_API_KEY}`,
+              'Notion-Version': '2022-06-28',
+            },
+          });
+          const pData = await pRes.json();
+          const instructorId = pData.properties?.Instructor?.relation?.[0]?.id || '';
+          let instructorName = '';
+          if (instructorId) {
+            const iRes = await fetch(`https://api.notion.com/v1/pages/${instructorId}`, {
+              headers: {
+                'Authorization': `Bearer ${env.NOTION_API_KEY}`,
+                'Notion-Version': '2022-06-28',
+              },
+            });
+            const iData = await iRes.json();
+            instructorName = iData.properties?.Name?.title?.[0]?.plain_text || '';
+          }
+          programInstructorMap[pid] = { instructorId, instructorName };
+        } catch(e) {
+          programInstructorMap[pid] = { instructorId: '', instructorName: '' };
+        }
+      }
 
       // Sessions DB에서 각 계약의 실제 세션 수 조회
       const sessionCountMap = {};
@@ -124,7 +152,11 @@ export async function onRequest(context) {
           }
         }
 
-        return { ...c, usedSessions, remainingSessions };
+        const instrInfo = programInstructorMap[c.programId] || {};
+        return { ...c, usedSessions, remainingSessions,
+          instructorId: instrInfo.instructorId || '',
+          instructorName: instrInfo.instructorName || '',
+        };
       }));
 
       return new Response(JSON.stringify({ contracts }), { headers });
@@ -180,8 +212,6 @@ export async function onRequest(context) {
               rich_text: [{ text: { content: contractData.signatureData.substring(3800, 5700) } }]
             } : undefined,
             Note: { rich_text: [{ text: { content: contractData.note || '' } }] },
-            InstructorId: contractData.instructorId ? { rich_text: [{ text: { content: contractData.instructorId } }] } : undefined,
-            InstructorName: contractData.instructorName ? { rich_text: [{ text: { content: contractData.instructorName } }] } : undefined,
           },
         }),
       });
