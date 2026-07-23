@@ -121,10 +121,11 @@ export async function onRequest(context) {
         instructorNameMap[iid] = instructorPages[i]?.properties?.Name?.title?.[0]?.plain_text || '';
       });
 
-      const programInstructorMap = {}; // programId → { instructorId, instructorName }
-      programIds.forEach(pid => {
+      const programInstructorMap = {}; // programId → { instructorId, instructorName, isTrial }
+      programIds.forEach((pid, i) => {
         const iid = instructorIdMap[pid] || '';
-        programInstructorMap[pid] = { instructorId: iid, instructorName: instructorNameMap[iid] || '' };
+        const isTrial = programPages[i]?.properties?.IsTrial?.checkbox || false;
+        programInstructorMap[pid] = { instructorId: iid, instructorName: instructorNameMap[iid] || '', isTrial };
       });
 
       // 3. 잔여 계산 + 자동 만료 처리 (Sessions DB 쿼리 없음)
@@ -160,6 +161,7 @@ export async function onRequest(context) {
           remainingSessions,
           instructorId: instrInfo.instructorId || '',
           instructorName: instrInfo.instructorName || '',
+          isTrial: instrInfo.isTrial || false,
         };
       });
 
