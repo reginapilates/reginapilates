@@ -375,22 +375,35 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
         <div class="page-title">회원 관리</div>
         <button class="btn btn-primary" onclick="openNewMemberModal()">+ 신규 회원</button>
       </div>
-      <div class="toolbar">
-        <input class="search-input" id="member-search" placeholder="이름 또는 연락처 검색..." oninput="filterMembers()">
-        <div class="filter-tabs">
-          <div class="filter-tab active" onclick="setFilter('all',this)">전체</div>
-          <div class="filter-tab" onclick="setFilter('active',this)">진행중</div>
-          <div class="filter-tab" onclick="setFilter('alert',this)">리마케팅</div>
-        </div>
+      <div class="toolbar" style="flex-wrap:wrap;gap:8px;">
+        <input class="search-input" id="member-search" placeholder="이름 또는 연락처 검색..." oninput="filterMembers()" style="min-width:200px;">
+        <select id="member-filter-status" class="form-select" style="width:130px;height:36px;font-size:13px;" onchange="filterMembers()">
+          <option value="">전체 상태</option>
+          <option value="신규">신규</option>
+          <option value="진행중">진행중</option>
+          <option value="재계약필요">재계약 필요</option>
+          <option value="완료">완료</option>
+          <option value="상담">상담</option>
+        </select>
+        <select id="member-filter-instructor" class="form-select" style="width:130px;height:36px;font-size:13px;" onchange="filterMembers()">
+          <option value="">전체 강사</option>
+        </select>
       </div>
       <table class="member-table">
         <thead>
           <tr>
-            <th>이름</th><th>연락처</th><th>현재 프로그램</th><th>잔여 횟수</th><th>진행률</th><th>마지막 방문</th><th>상태</th>
+            <th style="cursor:pointer;" onclick="sortMembers('createdAt')">가입일 ↕</th>
+            <th>이름</th>
+            <th>연락처</th>
+            <th>현재 프로그램</th>
+            <th style="text-align:center;">사용/전체</th>
+            <th>마지막 방문</th>
+            <th>담당강사</th>
+            <th>상태</th>
           </tr>
         </thead>
         <tbody id="member-table-body">
-          <tr><td colspan="7" class="loading">회원 목록 불러오는 중...</td></tr>
+          <tr><td colspan="8" class="loading">회원 목록 불러오는 중...</td></tr>
         </tbody>
       </table>
     </div>
@@ -2123,17 +2136,21 @@ async function loadDashboard() {
 let allContractsByMember = {}; // 회원ID → 계약 목록 캐시
 let allSessionsByMember = {};  // 회원ID → 마지막 세션 날짜 캐시
 
+let memberSortKey = 'createdAt';
+let memberSortDesc = true;
+
 async function loadMembers() {
   const tbody = document.getElementById('member-table-body');
-  tbody.innerHTML = '<tr><td colspan="7" class="loading">불러오는 중...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="8" class="loading">불러오는 중...</td></tr>';
   try {
-    // 회원 + 전체 계약 동시 로드
-    const [membersRes, contractsRes] = await Promise.all([
+    const [membersRes, contractsRes, sessionsRes] = await Promise.all([
       fetch(`${API}/api/members`),
       fetch(`${API}/api/contracts`),
+      fetch(`${API}/api/sessions?lastVisitOnly=true`),
     ]);
     const membersData = await membersRes.json();
     const contractsData = await contractsRes.json();
+    const sessionsData = await sessionsRes.json();
 
     allMembers = membersData.members || [];
 
@@ -2144,70 +2161,139 @@ async function loadMembers() {
       allContractsByMember[c.memberId].push(c);
     });
 
+    // 회원별 마지막 방문일 (참석+노쇼 기준)
+    allSessionsByMember = {};
+    (sessionsData.sessions || []).forEach(s => {
+      if (!s.memberId) return;
+      if (s.attendanceStatus === '참석' || s.attendanceStatus === '노쇼') {
+        if (!allSessionsByMember[s.memberId] || s.date > allSessionsByMember[s.memberId]) {
+          allSessionsByMember[s.memberId] = s.date;
+        }
+      }
+    });
+
+    // 강사 필터 셀렉트 초기화
+    const instrSel = document.getElementById('member-filter-instructor');
+    if (instrSel && allInstructors.length) {
+      instrSel.innerHTML = '<option value="">전체 강사</option>';
+      allInstructors.forEach(i => {
+        instrSel.innerHTML += `<option value="${i.id}">${i.name}</option>`;
+      });
+    }
+
     renderMemberTable();
   } catch(e) {
-    tbody.innerHTML = '<tr><td colspan="7" class="empty-state">불러오기 실패</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" class="empty-state">불러오기 실패</td></tr>';
   }
 }
 
+function getMemberStatus(m) {
+  const contracts = allContractsByMember[m.id] || [];
+  const nonTrialContracts = contracts.filter(c => !c.isTrial);
+  const activeContract = contracts.find(c => c.status === '진행중');
+
+  // 상담: 비Trial 계약이 없는 회원
+  if (nonTrialContracts.length === 0) return '상담';
+
+  // 진행중 계약 없으면 완료
+  if (!activeContract) return '완료';
+
+  const used = activeContract.usedSessions || 0;
+  const remaining = activeContract.remainingSessions ?? 0;
+
+  // 신규: 진행중 계약의 사용 세션이 3회 미만
+  if (used < 3) return '신규';
+
+  // 재계약 필요: 잔여 5회 이하
+  if (remaining <= 5) return '재계약필요';
+
+  return '진행중';
+}
+
 function renderMemberTable() {
-  const search = document.getElementById('member-search')?.value || '';
-  let members = allMembers.filter(m =>
-    m.name.includes(search) || (m.phone||'').includes(search)
-  );
+  const search = (document.getElementById('member-search')?.value || '').toLowerCase();
+  const filterStatus = document.getElementById('member-filter-status')?.value || '';
+  const filterInstructor = document.getElementById('member-filter-instructor')?.value || '';
+
+  let members = allMembers.filter(m => {
+    const matchSearch = !search ||
+      m.name.includes(search) ||
+      (m.phone||'').includes(search);
+    const status = getMemberStatus(m);
+    const matchStatus = !filterStatus || status === filterStatus;
+
+    // 담당강사 필터: 진행중 계약의 instructorId로 매칭
+    let matchInstructor = true;
+    if (filterInstructor) {
+      const contracts = allContractsByMember[m.id] || [];
+      const activeC = contracts.find(c => c.status === '진행중');
+      matchInstructor = activeC?.instructorId === filterInstructor;
+    }
+    return matchSearch && matchStatus && matchInstructor;
+  });
+
+  // 정렬 (기본: 가입일 최신순)
+  members = members.sort((a, b) => {
+    const va = a[memberSortKey] || '';
+    const vb = b[memberSortKey] || '';
+    return memberSortDesc ? vb.localeCompare(va) : va.localeCompare(vb);
+  });
 
   const tbody = document.getElementById('member-table-body');
   if (members.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><p>등록된 회원이 없습니다</p></div></td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><p>해당 조건의 회원이 없습니다</p></div></td></tr>';
     return;
   }
 
+  // 상태별 배지
+  const statusBadge = {
+    '신규':      '<span class="badge" style="background:#D6EAF8;color:#1A5276;">신규</span>',
+    '진행중':    '<span class="badge badge-active">진행중</span>',
+    '재계약필요':'<span class="badge badge-warning">재계약 필요</span>',
+    '완료':      '<span class="badge badge-muted">완료</span>',
+    '상담':      '<span class="badge" style="background:#F4ECF7;color:#6C3483;">상담</span>',
+  };
+
   tbody.innerHTML = members.map(m => {
     const contracts = allContractsByMember[m.id] || [];
-    // 진행중 우선, 없으면 일시정지
     const activeContract = contracts.find(c => c.status === '진행중') ||
                            contracts.find(c => c.status === '일시정지');
-    const isPaused = activeContract?.status === '일시정지';
-    const progName = activeContract?.title?.split(' - ').slice(1).join(' - ') || '—';
-    const remaining = activeContract ? activeContract.remainingSessions + '회' : '—';
+    const used = activeContract?.usedSessions ?? 0;
     const total = activeContract?.sessions || 0;
-    const done = total - (activeContract?.remainingSessions || 0);
-    const pct = total > 0 ? Math.round(done / total * 100) : 0;
-    const progressBar = activeContract
-      ? `<div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${isPaused?'var(--warning)':'var(--accent)'}"></div></div>`
+    const progName = activeContract?.title || '';
+    const lastVisit = allSessionsByMember[m.id] || '—';
+    const instructorName = activeContract?.instructorName || '—';
+    const status = getMemberStatus(m);
+
+    const sessionText = activeContract
+      ? `<span style="${(activeContract.remainingSessions??0)<=5?'color:#E67E22;font-weight:600;':''}">${used}/${total}</span>`
       : '—';
-
-    // 상태 배지
-    let badge = '<span class="badge badge-active">활성</span>';
-    if (isPaused) badge = '<span class="badge badge-warning">일시정지</span>';
-    else if (!activeContract && contracts.length > 0) badge = '<span class="badge badge-muted">완료</span>';
-    else if (!contracts.length) badge = '<span class="badge badge-muted">미계약</span>';
-
-    // 리마케팅 알림
-    const alertInfo = allAlerts.find(a => a.memberId === m.id);
-    if (alertInfo) {
-      const isRed = alertInfo.alertTypes.includes('long_absence_60');
-      badge = `<span class="badge ${isRed ? 'badge-danger' : 'badge-warning'}">${isRed ? '장기미출석' : '알림'}</span>`;
-    }
 
     return `
     <tr onclick="openMember('${m.id}')">
+      <td style="color:var(--text-muted);font-size:12px;">${m.createdAt||'—'}</td>
       <td><b>${m.name}</b></td>
       <td>${maskPhone(m.phone)}</td>
-      <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${progName}</td>
-      <td>${remaining}</td>
-      <td>${progressBar}</td>
-      <td>—</td>
-      <td>${badge}</td>
+      <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${progName||'—'}</td>
+      <td style="text-align:center;">${sessionText}</td>
+      <td style="font-size:12px;">${lastVisit}</td>
+      <td>${instructorName}</td>
+      <td>${statusBadge[status]||''}</td>
     </tr>`;
   }).join('');
+}
+
+function sortMembers(key) {
+  if (memberSortKey === key) memberSortDesc = !memberSortDesc;
+  else { memberSortKey = key; memberSortDesc = true; }
+  renderMemberTable();
 }
 
 function filterMembers() { renderMemberTable(); }
 function setFilter(f, el) {
   currentFilter = f;
   document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
-  el.classList.add('active');
+  if (el) el.classList.add('active');
   renderMemberTable();
 }
 
