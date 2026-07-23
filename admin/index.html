@@ -4656,8 +4656,7 @@ async function deleteSchedule() {
   const contractId = document.getElementById('sd-contract-id').value;
   const currentStatus = document.getElementById('sd-status').value;
 
-  if (!confirm('이 예약을 삭제하시겠습니까?
-참석/노쇼 처리된 경우 세션 기록도 함께 삭제됩니다.')) return;
+  if (!confirm('이 예약을 삭제하시겠습니까? 참석/노쇼 처리된 경우 세션 기록도 함께 삭제됩니다.')) return;
 
   try {
     // 1. 연결된 세션 삭제 (참석/노쇼인 경우 UsedSessions -1 포함)
