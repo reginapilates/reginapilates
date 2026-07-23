@@ -1587,7 +1587,7 @@ function renderProfile() {
         <div class="field-row"><span class="field-label">운동 경험(종목)</span><span class="field-value">${m.exerciseExp||'—'}</span></div>
         <div class="field-row"><span class="field-label">자격증</span><span class="field-value">${m.pilatesCert?'있음':'없음'}${m.pilatesCertOrg?' · '+m.pilatesCertOrg:''}${m.pilatesCertYears?' ('+m.pilatesCertYears+'년)':''}</span></div>
         <div class="field-row"><span class="field-label">운동 중단 이유</span><span class="field-value">${m.stopReasons||'—'}</span></div>
-        <div class="field-row"><span class="field-label">운동 목적</span><span class="field-value">${m.exerciseGoals||'—'}</span></div>
+        <div class="field-row"><span class="field-label">운동 목적</span><span class="field-value">${(m.exerciseGoals||(m.exerciseGoalsEtc?'기타':''))||'—'}${m.exerciseGoalsEtc?' ('+m.exerciseGoalsEtc+')':''}</span></div>
         <div class="field-row"><span class="field-label">운동 가능 요일</span><span class="field-value">${m.availableDays||'—'}</span></div>
         <div class="field-row"><span class="field-label">운동 가능 시간</span><span class="field-value">${m.availableTime||'—'}</span></div>
       </div>
@@ -1596,8 +1596,8 @@ function renderProfile() {
       <div class="profile-section">
         <div class="section-title">■ 통증·병력</div>
         <div class="field-row"><span class="field-label">수술 여부</span><span class="field-value">${m.surgery?'있음':'없음'}${m.surgeryDetail?' · '+m.surgeryDetail:''}</span></div>
-        <div class="field-row"><span class="field-label">병력</span><span class="field-value">${m.medicalHistory||'—'}</span></div>
-        <div class="field-row"><span class="field-label">통증 부위</span><span class="field-value">${m.painAreas||'—'}</span></div>
+        <div class="field-row"><span class="field-label">병력</span><span class="field-value">${(m.medicalHistory||(m.medicalHistoryEtc?'기타':''))||'—'}${m.medicalHistoryEtc?' ('+m.medicalHistoryEtc+')':''}</span></div>
+        <div class="field-row"><span class="field-label">통증 부위</span><span class="field-value">${(m.painAreas||(m.painAreasEtc?'기타':''))||'—'}${m.painAreasEtc?' ('+m.painAreasEtc+')':''}</span></div>
       </div>
     </div>
   `;
