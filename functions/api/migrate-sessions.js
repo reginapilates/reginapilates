@@ -49,11 +49,14 @@ export async function onRequest(context) {
       startCursor = data.next_cursor;
     }
 
-    // 3. 계약별 세션 수 집계
+    // 3. 계약별 세션 수 집계 (참석인 세션만 카운트)
     const sessionCountMap = {};
     allSessions.forEach(s => {
       const cid = s.properties.Contract?.relation?.[0]?.id;
-      if (cid) sessionCountMap[cid] = (sessionCountMap[cid] || 0) + 1;
+      const status = s.properties.AttendanceStatus?.select?.name || '';
+      if (cid && (status === '참석' || status === '노쇼')) {
+        sessionCountMap[cid] = (sessionCountMap[cid] || 0) + 1;
+      }
     });
 
     // 4. 각 계약의 UsedSessions 업데이트

@@ -130,9 +130,10 @@ export async function onRequest(context) {
         sessionNo = currentUsed + 1;
       }
 
+      const isAttended = body.attendanceStatus === '참석' || body.attendanceStatus === '노쇼';
       const title = `${memberName} #${sessionNo}`;
 
-      // 세션 생성 + UsedSessions +1 업데이트 병렬 실행
+      // 세션 생성 + (참석일 때만) UsedSessions +1 병렬 실행
       const [sessionRes] = await Promise.all([
         fetch('https://api.notion.com/v1/pages', {
           method: 'POST',
@@ -158,8 +159,8 @@ export async function onRequest(context) {
             },
           }),
         }),
-        // UsedSessions +1 업데이트
-        contractId ? fetch(`https://api.notion.com/v1/pages/${contractId}`, {
+        // 참석일 때만 UsedSessions +1
+        (contractId && isAttended) ? fetch(`https://api.notion.com/v1/pages/${contractId}`, {
           method: 'PATCH',
           headers: {
             'Authorization': `Bearer ${env.NOTION_API_KEY}`,
@@ -180,11 +181,44 @@ export async function onRequest(context) {
       return new Response(JSON.stringify({ id: sessionData.id, sessionNo, success: true }), { headers });
     }
 
-    // PUT — 세션 수정 (컨디션/메모/날짜)
+    // PUT — 세션 수정 (컨디션/메모/날짜/출석상태)
     if (method === 'PUT') {
       const url = new URL(request.url);
       const sessionId = url.searchParams.get('id');
       const body = await request.json();
+
+      // 출석 상태 변경 시 UsedSessions 조정
+      // prevAttendanceStatus: 이전 상태를 클라이언트에서 전달
+      if (body.attendanceStatus && body.prevAttendanceStatus !== undefined && body.contractId) {
+        const wasAttended = body.prevAttendanceStatus === '참석' || body.prevAttendanceStatus === '노쇼';
+        const isNowAttended = body.attendanceStatus === '참석' || body.attendanceStatus === '노쇼';
+
+        if (!wasAttended && isNowAttended) {
+          // 결석/취소 → 참석: +1
+          const cp = await fetch(`https://api.notion.com/v1/pages/${body.contractId}`, {
+            headers: { 'Authorization': `Bearer ${env.NOTION_API_KEY}`, 'Notion-Version': '2022-06-28' },
+          });
+          const cd = await cp.json();
+          const cur = cd.properties?.UsedSessions?.number || 0;
+          await fetch(`https://api.notion.com/v1/pages/${body.contractId}`, {
+            method: 'PATCH',
+            headers: { 'Authorization': `Bearer ${env.NOTION_API_KEY}`, 'Notion-Version': '2022-06-28', 'Content-Type': 'application/json' },
+            body: JSON.stringify({ properties: { UsedSessions: { number: cur + 1 } } }),
+          });
+        } else if (wasAttended && !isNowAttended) {
+          // 참석 → 결석/취소: -1
+          const cp = await fetch(`https://api.notion.com/v1/pages/${body.contractId}`, {
+            headers: { 'Authorization': `Bearer ${env.NOTION_API_KEY}`, 'Notion-Version': '2022-06-28' },
+          });
+          const cd = await cp.json();
+          const cur = cd.properties?.UsedSessions?.number || 0;
+          await fetch(`https://api.notion.com/v1/pages/${body.contractId}`, {
+            method: 'PATCH',
+            headers: { 'Authorization': `Bearer ${env.NOTION_API_KEY}`, 'Notion-Version': '2022-06-28', 'Content-Type': 'application/json' },
+            body: JSON.stringify({ properties: { UsedSessions: { number: Math.max(0, cur - 1) } } }),
+          });
+        }
+      }
 
       const properties = {};
       if (body.condition) properties.Condition = { select: { name: body.condition } };
