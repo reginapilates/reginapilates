@@ -559,7 +559,8 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
             <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" value="다이어트"> 다이어트</label>
             <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" value="스트레스해소"> 스트레스해소</label>
             <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" value="유연성증가"> 유연성증가</label>
-            <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" value="기타"> 기타</label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" value="기타" onchange="toggleEtcInput('goals-etc', this)"> 기타</label>
+            <input type="text" id="goals-etc" placeholder="기타 운동목적 입력" style="display:none;margin-top:6px;width:100%;padding:6px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;">
           </div>
         </div>
       </div>
@@ -590,7 +591,8 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
             <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" value="골다공증"> 골다공증</label>
             <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" value="관절염"> 관절염</label>
             <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" value="편두통"> 편두통</label>
-            <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" value="기타"> 기타</label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" value="기타" onchange="toggleEtcInput('medical-etc', this)"> 기타</label>
+            <input type="text" id="medical-etc" placeholder="기타 병력 입력" style="display:none;margin-top:6px;width:100%;padding:6px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;">
           </div>
         </div>
       </div>
@@ -605,7 +607,8 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
             <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" value="골반"> 골반</label>
             <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" value="무릎"> 무릎</label>
             <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" value="발목"> 발목</label>
-            <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" value="기타"> 기타</label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" value="기타" onchange="toggleEtcInput('pain-etc', this)"> 기타</label>
+            <input type="text" id="pain-etc" placeholder="기타 통증부위 입력" style="display:none;margin-top:6px;width:100%;padding:6px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;">
           </div>
         </div>
       </div>
@@ -1904,6 +1907,18 @@ function openEditMemberModal(m) {
   setChecked('nm-pain', m.painAreas);
   setChecked('nm-avail-days', m.availableDays);
 
+  // 기타 텍스트 복원
+  const restoreEtc = (inputId, groupId, value) => {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    input.value = value || '';
+    const hasEtc = document.querySelector(`#${groupId} input[value="기타"]`);
+    if (hasEtc) input.style.display = hasEtc.checked ? 'block' : 'none';
+  };
+  restoreEtc('goals-etc', 'nm-goals', m.exerciseGoalsEtc);
+  restoreEtc('medical-etc', 'nm-medical', m.medicalHistoryEtc);
+  restoreEtc('pain-etc', 'nm-pain', m.painAreasEtc);
+
   // 모달 제목 변경 + 저장 버튼을 수정으로
   document.querySelector('#modal-new-member .modal-title').textContent = '회원 정보 수정';
   const saveBtn = document.querySelector('#modal-new-member .modal-footer .btn-primary');
@@ -1933,8 +1948,11 @@ async function updateMember(id) {
     surgery: document.getElementById('nm-surgery').value === 'true',
     surgeryDetail: document.getElementById('nm-surgery-detail').value,
     medicalHistory: getChecked('nm-medical'),
+    medicalHistoryEtc: document.getElementById('medical-etc').value.trim(),
     painAreas: getChecked('nm-pain'),
+    painAreasEtc: document.getElementById('pain-etc').value.trim(),
     exerciseGoals: getChecked('nm-goals'),
+    exerciseGoalsEtc: document.getElementById('goals-etc').value.trim(),
     visitSource: document.getElementById('nm-source').value,
     availableTime: document.getElementById('nm-avail-time').value,
     availableDays: getChecked('nm-avail-days'),
@@ -1962,6 +1980,13 @@ async function updateMember(id) {
 }
 
 // ── NEW MEMBER ──
+function toggleEtcInput(inputId, checkbox) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  input.style.display = checkbox.checked ? 'block' : 'none';
+  if (!checkbox.checked) input.value = '';
+}
+
 function toggleSurgery() {
   const val = document.getElementById('nm-surgery').value;
   document.getElementById('surgery-detail-group').style.display = val === 'true' ? 'block' : 'none';
@@ -2000,10 +2025,13 @@ async function saveMember() {
     pilatesCertYears: parseInt(document.getElementById('nm-cert-years').value)||null,
     stopReasons: document.getElementById('nm-stop-reason').value,
     exerciseGoals: getChecked('nm-goals'),
+    exerciseGoalsEtc: document.getElementById('goals-etc').value.trim(),
     surgery: document.getElementById('nm-surgery').value === 'true',
     surgeryDetail: document.getElementById('nm-surgery-detail').value,
     medicalHistory: getChecked('nm-medical'),
+    medicalHistoryEtc: document.getElementById('medical-etc').value.trim(),
     painAreas: getChecked('nm-pain'),
+    painAreasEtc: document.getElementById('pain-etc').value.trim(),
     visitSource: document.getElementById('nm-source').value,
     availableTime: document.getElementById('nm-avail-time').value,
     availableDays: getChecked('nm-avail-days'),
