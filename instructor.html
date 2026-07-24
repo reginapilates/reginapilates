@@ -59,13 +59,13 @@ body { font-family:'Noto Sans KR',sans-serif; background:var(--bg); color:var(--
 
 /* ── 카드 ── */
 .schedule-card { background:var(--white); border-radius:var(--radius); overflow:hidden; box-shadow:0 1px 4px rgba(0,0,0,.06); }
-.schedule-card.s-참석 { border-left:4px solid var(--success); background:#FAFFFE; }
-.schedule-card.s-노쇼 { border-left:4px solid var(--danger); background:#FFFAFA; }
-.schedule-card.s-취소 { border-left:4px solid var(--border); opacity:.45; }
-.schedule-card.s-확정 { border-left:4px solid var(--accent); }
+.schedule-card.s-참석 { border-left:4px solid #CCC; background:#F5F5F5; }
+.schedule-card.s-노쇼 { border-left:4px solid #CCC; background:#F5F5F5; }
+.schedule-card.s-취소 { border-left:4px solid var(--border); opacity:.35; }
+.schedule-card.s-확정 { border-left:4px solid var(--success); background:#F0FFF6; }
 .card-done-banner { display:flex; align-items:center; gap:6px; padding:7px 16px; font-size:13px; font-weight:600; }
-.card-done-banner.done-참석 { background:#EAFAF1; color:var(--success); }
-.card-done-banner.done-노쇼 { background:#FDEDEC; color:var(--danger); }
+.card-done-banner.done-참석 { background:#E8E8E8; color:#888; }
+.card-done-banner.done-노쇼 { background:#EBEBEB; color:#999; }
 .card-main { padding:15px 16px; display:flex; align-items:center; gap:12px; cursor:pointer; user-select:none; }
 .card-main:active { background:var(--surface); }
 .card-time { font-family:'Outfit',sans-serif; font-size:24px; font-weight:300; min-width:60px; }
@@ -75,10 +75,10 @@ body { font-family:'Noto Sans KR',sans-serif; background:var(--bg); color:var(--
 .card-instr { font-size:13px; color:var(--muted); margin-top:2px; }
 .card-phone { font-size:13px; color:var(--accent); margin-top:4px; font-weight:500; }
 .card-badge { flex-shrink:0; font-size:13px; font-weight:600; padding:6px 12px; border-radius:20px; }
-.cb-확정 { background:#F0EDE9; color:var(--muted); }
-.cb-참석 { background:#EAFAF1; color:var(--success); }
-.cb-노쇼 { background:#FDEDEC; color:var(--danger); }
-.cb-취소 { background:#F5F5F5; color:#bbb; }
+.cb-확정 { background:#D4F5E2; color:#1E8449; font-weight:700; }
+.cb-참석 { background:#E8E8E8; color:#888; }
+.cb-노쇼 { background:#E8E8E8; color:#888; }
+.cb-취소 { background:#F0F0F0; color:#bbb; }
 
 /* ── 카드 패널 (펼쳐지는 영역) ── */
 .card-panel { display:none; border-top:1px solid var(--border); }
@@ -88,6 +88,7 @@ body { font-family:'Noto Sans KR',sans-serif; background:var(--bg); color:var(--
 .panel-tabs { display:flex; border-bottom:1px solid var(--border); }
 .panel-tab { flex:1; padding:11px 0; text-align:center; font-size:13px; color:var(--muted); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px; }
 .panel-tab.active { color:var(--text); font-weight:600; border-bottom-color:var(--accent); }
+.panel-close-btn { padding:10px 14px; font-size:18px; color:var(--muted); background:none; border:none; cursor:pointer; flex-shrink:0; line-height:1; }
 
 .panel-content { padding:16px; }
 
@@ -278,7 +279,8 @@ function getWeekDates(offset=0) {
   base.setDate(base.getDate() + offset*7);
   const day = base.getDay()===0?6:base.getDay()-1;
   const mon = new Date(base); mon.setDate(base.getDate()-day);
-  return Array.from({length:7},(_,i)=>{ const d=new Date(mon); d.setDate(mon.getDate()+i); return d; });
+  // 월~금만 (5일)
+  return Array.from({length:5},(_,i)=>{ const d=new Date(mon); d.setDate(mon.getDate()+i); return d; });
 }
 
 // ── 로그인/로그아웃 ──
@@ -334,7 +336,12 @@ async function initApp(level) {
   // 강사 필터 초기화
   buildInstrFilter();
 
-  selectedDate = getTodayStr();
+  // 오늘이 주말이면 가장 가까운 평일로
+  const todayD = new Date();
+  const todayDay = todayD.getDay();
+  if (todayDay === 0) todayD.setDate(todayD.getDate()+1); // 일→월
+  else if (todayDay === 6) todayD.setDate(todayD.getDate()+2); // 토→월
+  selectedDate = toDateStr(todayD);
   weekOffset = 0;
   renderDateTabs();
   await loadSchedules();
@@ -392,7 +399,9 @@ function selectDate(ds) { selectedDate=ds; renderDateTabs(); renderScheduleList(
 function shiftWeek(dir) {
   weekOffset+=dir;
   const dates=getWeekDates(weekOffset);
-  selectedDate=toDateStr(dates[0]);
+  // 선택 날짜가 해당 주 범위 밖이면 첫날(월)로
+  const dateStrs=dates.map(toDateStr);
+  if (!dateStrs.includes(selectedDate)) selectedDate=dateStrs[0];
   renderDateTabs();
   loadSchedules();
 }
@@ -476,9 +485,10 @@ function buildCard(s, memberMap, contractMap, instrMap) {
     </div>
     <div class="card-panel" id="panel-${s.id}">
       <!-- 패널 탭 -->
-      <div class="panel-tabs">
+      <div class="panel-tabs" style="display:flex;align-items:center;">
         <div class="panel-tab active" id="ptab-attend-${s.id}" onclick="switchPanelTab('${s.id}','attend')">${isDone?'수정':'출석체크'}</div>
         <div class="panel-tab" id="ptab-history-${s.id}" onclick="switchPanelTab('${s.id}','history')">히스토리</div>
+        <button class="panel-close-btn" onclick="closeCard('${s.id}')">✕</button>
       </div>
       <!-- 출석체크/수정 탭 내용 -->
       <div class="panel-content" id="pcon-attend-${s.id}">
@@ -548,7 +558,11 @@ async function loadDoneSession(scheduleId, contractId, date, time) {
   } catch(e) {}
 }
 
-// ── 카드 토글 ──
+// ── 카드 토글 / 닫기 ──
+function closeCard(id) {
+  document.getElementById(`panel-${id}`)?.classList.remove('open');
+}
+
 function toggleCard(id) {
   const panel = document.getElementById(`panel-${id}`);
   const isOpen = panel.classList.contains('open');
