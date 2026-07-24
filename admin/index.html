@@ -3725,8 +3725,11 @@ async function loadSessionsLog() {
     // 강사 필터 셀렉트 초기화
     const instrSel = document.getElementById('sl-instructor-filter');
     if (instrSel) {
+      const visibleInstrs = ADMIN_LEVEL === 1
+        ? allInstructors
+        : allInstructors.filter(i => !_l1InstructorIds.has(i.id));
       instrSel.innerHTML = '<option value="">전체 강사</option>' +
-        allInstructors.map(i => `<option value="${i.id}">${i.name}</option>`).join('');
+        visibleInstrs.map(i => `<option value="${i.id}">${i.name}</option>`).join('');
     }
 
     // 회원 드롭다운 — 활성 계약 회원만
@@ -3764,6 +3767,10 @@ async function renderSessionLog() {
   const statusFilter = document.getElementById('sl-status-filter')?.value || '';
 
   let sessions = allSessionsLog;
+  // L2+ 강사: L1 담당 회원 세션 숨김
+  if (ADMIN_LEVEL !== 1) {
+    sessions = sessions.filter(s => !_l1InstructorIds.has(s.instructorId) && !isHiddenForL2(s.memberId));
+  }
   if (memberId) sessions = sessions.filter(s => s.memberId === memberId);
   if (search) sessions = sessions.filter(s => s.memberName.includes(search));
   if (instrFilter) sessions = sessions.filter(s => s.instructorId === instrFilter);
