@@ -2354,17 +2354,20 @@ function renderMemberTable() {
 
   tbody.innerHTML = members.map(m => {
     const contracts = allContractsByMember[m.id] || [];
+    // 진행중/일시정지 우선, 없으면 가장 최근 계약(Trial 포함) 표시
     const activeContract = contracts.find(c => c.status === '진행중') ||
-                           contracts.find(c => c.status === '일시정지');
+                           contracts.find(c => c.status === '일시정지') ||
+                           contracts.sort((a,b) => (b.startDate||'').localeCompare(a.startDate||''))[0];
     const used = activeContract?.usedSessions ?? 0;
     const total = activeContract?.sessions || 0;
     const progName = activeContract?.title || '';
     const lastVisit = allSessionsByMember[m.id] || '—';
     const instructorName = activeContract?.instructorName || '—';
     const status = getMemberStatus(m);
+    const isActive = activeContract?.status === '진행중' || activeContract?.status === '일시정지';
 
     const sessionText = activeContract
-      ? `<span style="${(activeContract.remainingSessions??0)<=5?'color:#E67E22;font-weight:600;':''}">${used}/${total}</span>`
+      ? `<span style="${isActive && (activeContract.remainingSessions??0)<=5?'color:#E67E22;font-weight:600;':''}">${used}/${total}</span>`
       : '—';
 
     return `
