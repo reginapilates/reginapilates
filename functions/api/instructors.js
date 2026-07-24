@@ -40,6 +40,8 @@ export async function onRequest(context) {
         email: page.properties.Email?.email || '',
         level: page.properties.Level?.select?.name || '',
         isActive: page.properties.IsActive?.checkbox || false,
+        loginId: page.properties.LoginId?.rich_text?.[0]?.plain_text || '',
+        loginPassword: page.properties.LoginPassword?.rich_text?.[0]?.plain_text || '',
       }));
 
       return new Response(JSON.stringify({ instructors }), { headers });
@@ -63,6 +65,8 @@ export async function onRequest(context) {
             Email: body.email ? { email: body.email } : undefined,
             Level: body.level ? { select: { name: body.level } } : undefined,
             IsActive: { checkbox: body.isActive !== false },
+            LoginId: body.loginId ? { rich_text: [{ text: { content: body.loginId } }] } : undefined,
+            LoginPassword: body.loginPassword ? { rich_text: [{ text: { content: body.loginPassword } }] } : undefined,
           },
         }),
       });
@@ -90,6 +94,8 @@ export async function onRequest(context) {
             Email: body.email ? { email: body.email } : undefined,
             Level: body.level ? { select: { name: body.level } } : undefined,
             IsActive: { checkbox: body.isActive !== false },
+            LoginId: body.loginId !== undefined ? { rich_text: [{ text: { content: body.loginId } }] } : undefined,
+            LoginPassword: body.loginPassword !== undefined ? { rich_text: [{ text: { content: body.loginPassword } }] } : undefined,
           },
         }),
       });
