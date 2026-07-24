@@ -721,15 +721,48 @@ function initTimeGrid() {
 
 function initMemberSelect() {
   const sel=document.getElementById('ns-member');
+
+  // 내 담당 회원만: 진행중이고 잔여 있는 계약 중 내 instructorId와 일치하는 것
+  let myMemberIds;
+  if (myInstr?.isDirector) {
+    // L1 원장: 전체 진행중 회원
+    myMemberIds = new Set(
+      allContracts.filter(c=>c.status==='진행중'&&(c.remainingSessions??1)>0)
+        .map(c=>c.memberId)
+    );
+  } else {
+    // L2 강사: 본인 instructorId가 있는 진행중 계약 회원
+    myMemberIds = new Set(
+      allContracts.filter(c=>
+        c.status==='진행중' &&
+        (c.remainingSessions??1)>0 &&
+        c.instructorId===myInstr?.id
+      ).map(c=>c.memberId)
+    );
+  }
+
+  const myMembers = allMembers.filter(m=>myMemberIds.has(m.id))
+    .sort((a,b)=>a.name.localeCompare(b.name,'ko'));
+
   sel.innerHTML='<option value="">회원 선택</option>'+
-    allMembers.map(m=>`<option value="${m.id}">${m.name}</option>`).join('');
+    myMembers.map(m=>`<option value="${m.id}">${m.name}</option>`).join('');
 }
 
 async function onNsMemberChange() {
   const memberId=document.getElementById('ns-member').value;
   const sel=document.getElementById('ns-contract');
   if (!memberId) { sel.innerHTML='<option value="">회원을 먼저 선택하세요</option>'; return; }
-  const contracts=allContracts.filter(c=>c.memberId===memberId&&c.status==='진행중');
+
+  // 진행중 + 잔여 있는 계약만 (L2면 본인 담당만)
+  let contracts = allContracts.filter(c=>
+    c.memberId===memberId &&
+    c.status==='진행중' &&
+    (c.remainingSessions??1)>0
+  );
+  if (!myInstr?.isDirector) {
+    contracts = contracts.filter(c=>c.instructorId===myInstr?.id);
+  }
+
   sel.innerHTML=contracts.length
     ?contracts.map(c=>`<option value="${c.id}">${c.title} (잔여 ${c.remainingSessions}회)</option>`).join('')
     :'<option value="">진행중 계약 없음</option>';
