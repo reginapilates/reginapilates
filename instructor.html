@@ -59,18 +59,22 @@ body { font-family:'Noto Sans KR',sans-serif; background:var(--bg); color:var(--
 
 /* ── 카드 ── */
 .schedule-card { background:var(--white); border-radius:var(--radius); overflow:hidden; box-shadow:0 1px 4px rgba(0,0,0,.06); }
-.schedule-card.s-참석 { border-left:4px solid var(--success); opacity:.75; }
-.schedule-card.s-노쇼 { border-left:4px solid var(--danger); opacity:.75; }
+.schedule-card.s-참석 { border-left:4px solid var(--success); background:#FAFFFE; }
+.schedule-card.s-노쇼 { border-left:4px solid var(--danger); background:#FFFAFA; }
 .schedule-card.s-취소 { border-left:4px solid var(--border); opacity:.45; }
 .schedule-card.s-확정 { border-left:4px solid var(--accent); }
+.card-done-banner { display:flex; align-items:center; gap:6px; padding:7px 16px; font-size:13px; font-weight:600; }
+.card-done-banner.done-참석 { background:#EAFAF1; color:var(--success); }
+.card-done-banner.done-노쇼 { background:#FDEDEC; color:var(--danger); }
 .card-main { padding:15px 16px; display:flex; align-items:center; gap:12px; cursor:pointer; user-select:none; }
 .card-main:active { background:var(--surface); }
-.card-time { font-family:'Outfit',sans-serif; font-size:21px; font-weight:300; min-width:56px; }
+.card-time { font-family:'Outfit',sans-serif; font-size:24px; font-weight:300; min-width:60px; }
 .card-info { flex:1; min-width:0; }
-.card-member { font-size:16px; font-weight:700; margin-bottom:2px; }
-.card-sub { font-size:11px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.card-instr { font-size:11px; color:var(--muted); margin-top:1px; }
-.card-badge { flex-shrink:0; font-size:11px; font-weight:600; padding:4px 10px; border-radius:20px; }
+.card-member { font-size:18px; font-weight:700; margin-bottom:3px; }
+.card-sub { font-size:13px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.card-instr { font-size:13px; color:var(--muted); margin-top:2px; }
+.card-phone { font-size:13px; color:var(--accent); margin-top:4px; font-weight:500; }
+.card-badge { flex-shrink:0; font-size:13px; font-weight:600; padding:6px 12px; border-radius:20px; }
 .cb-확정 { background:#F0EDE9; color:var(--muted); }
 .cb-참석 { background:#EAFAF1; color:var(--success); }
 .cb-노쇼 { background:#FDEDEC; color:var(--danger); }
@@ -89,7 +93,7 @@ body { font-family:'Noto Sans KR',sans-serif; background:var(--bg); color:var(--
 
 /* 출석체크 탭 */
 .attend-row { display:flex; gap:8px; margin-bottom:10px; }
-.attend-btn { flex:1; padding:14px 8px; border:none; border-radius:10px; font-size:15px; font-weight:700; font-family:inherit; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px; }
+.attend-btn { flex:1; padding:16px 8px; border:none; border-radius:10px; font-size:17px; font-weight:700; font-family:inherit; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; }
 .attend-btn:active { opacity:.8; transform:scale(.97); }
 .btn-att { background:var(--success); color:#fff; }
 .btn-nos { background:var(--danger); color:#fff; }
@@ -99,11 +103,11 @@ body { font-family:'Noto Sans KR',sans-serif; background:var(--bg); color:var(--
 /* 컨디션 */
 .cond-label { font-size:12px; color:var(--muted); margin-bottom:6px; }
 .cond-row { display:flex; gap:5px; margin-bottom:10px; }
-.cond-btn { flex:1; padding:8px 2px; border:1px solid var(--border); background:var(--white); border-radius:8px; font-size:11px; font-family:inherit; cursor:pointer; text-align:center; }
+.cond-btn { flex:1; padding:10px 2px; border:1px solid var(--border); background:var(--white); border-radius:8px; font-size:13px; font-family:inherit; cursor:pointer; text-align:center; }
 .cond-btn.active { background:var(--accent); color:#fff; border-color:var(--accent); }
 .memo-ta { width:100%; padding:11px 13px; border:1px solid var(--border); border-radius:10px; font-size:14px; font-family:inherit; resize:none; min-height:64px; outline:none; margin-bottom:10px; }
 .memo-ta:focus { border-color:var(--accent); }
-.confirm-btn { width:100%; padding:14px; background:var(--accent); color:#fff; border:none; border-radius:10px; font-size:15px; font-weight:700; font-family:inherit; cursor:pointer; }
+.confirm-btn { width:100%; padding:16px; background:var(--accent); color:#fff; border:none; border-radius:10px; font-size:17px; font-weight:700; font-family:inherit; cursor:pointer; letter-spacing:.02em; }
 .confirm-btn:active { opacity:.85; }
 .confirm-btn.success { background:var(--success); }
 .confirm-btn.danger { background:var(--danger); }
@@ -111,13 +115,13 @@ body { font-family:'Noto Sans KR',sans-serif; background:var(--bg); color:var(--
 /* 히스토리 탭 */
 .history-item { padding:10px 0; border-bottom:1px solid var(--border); display:flex; gap:10px; align-items:flex-start; }
 .history-item:last-child { border-bottom:none; }
-.history-date { font-size:12px; color:var(--muted); min-width:70px; flex-shrink:0; }
+.history-date { font-size:13px; color:var(--muted); min-width:76px; flex-shrink:0; }
 .history-body { flex:1; }
-.history-status { font-size:12px; font-weight:600; margin-bottom:2px; }
+.history-status { font-size:15px; font-weight:700; margin-bottom:4px; }
 .hs-참석 { color:var(--success); } .hs-노쇼 { color:var(--danger); }
-.history-cond { display:inline-block; font-size:11px; background:var(--surface); padding:2px 8px; border-radius:10px; margin-bottom:3px; }
-.history-memo { font-size:12px; color:var(--muted); line-height:1.5; }
-.history-empty { font-size:13px; color:var(--muted); padding:20px 0; text-align:center; }
+.history-cond { display:inline-block; font-size:14px; background:var(--surface); padding:4px 10px; border-radius:10px; margin-bottom:5px; font-weight:500; }
+.history-memo { font-size:15px; color:var(--text); line-height:1.6; }
+.history-empty { font-size:15px; color:var(--muted); padding:20px 0; text-align:center; }
 
 /* ── 신규예약 모달 ── */
 .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:200; align-items:flex-end; }
@@ -447,27 +451,36 @@ function buildCard(s, memberMap, contractMap, instrMap) {
   const c=contractMap[s.contractId]||{};
   const instr=instrMap[s.instructorId]||{};
   const status=s.status||'확정';
-  const label={확정:'예약',참석:'출석',노쇼:'노쇼',취소:'취소'}[status]||status;
+  const label={확정:'예약',참석:'완료',노쇼:'노쇼',취소:'취소'}[status]||status;
   const rem=c.remainingSessions!=null?`잔여 ${c.remainingSessions}회 · `:'';
   const isDone=status==='참석'||status==='노쇼';
+  const phone=m.phone||'';
+
+  // 완료 배너 (참석/노쇼)
+  const doneBanner = isDone ? `
+    <div class="card-done-banner done-${status}">
+      ${status==='참석'?'✓ 출석 완료':'✕ 노쇼'}
+    </div>` : '';
 
   return `<div class="schedule-card s-${status}" id="card-${s.id}">
+    ${doneBanner}
     <div class="card-main" onclick="toggleCard('${s.id}')">
       <div class="card-time">${s.time||'—'}</div>
       <div class="card-info">
         <div class="card-member">${m.name||'—'}</div>
         <div class="card-sub">${rem}${c.title||'—'}</div>
         <div class="card-instr">${instr.name||'—'}</div>
+        ${phone?`<a class="card-phone" href="tel:${phone}" onclick="event.stopPropagation()">📞 ${phone}</a>`:''}
       </div>
       <div class="card-badge cb-${status}">${label}</div>
     </div>
     <div class="card-panel" id="panel-${s.id}">
       <!-- 패널 탭 -->
       <div class="panel-tabs">
-        <div class="panel-tab active" id="ptab-attend-${s.id}" onclick="switchPanelTab('${s.id}','attend')">출석체크</div>
+        <div class="panel-tab active" id="ptab-attend-${s.id}" onclick="switchPanelTab('${s.id}','attend')">${isDone?'수정':'출석체크'}</div>
         <div class="panel-tab" id="ptab-history-${s.id}" onclick="switchPanelTab('${s.id}','history')">히스토리</div>
       </div>
-      <!-- 출석체크 탭 내용 -->
+      <!-- 출석체크/수정 탭 내용 -->
       <div class="panel-content" id="pcon-attend-${s.id}">
         ${buildAttendContent(s, isDone, status)}
       </div>
@@ -483,11 +496,11 @@ function buildAttendContent(s, isDone, status) {
   if (!isDone) {
     return `
       <div class="attend-row">
-        <button class="attend-btn btn-att" onclick="startAttend('${s.id}','참석','${s.memberId}','${s.contractId}','${s.instructorId||''}')">✓ 출석</button>
+        <button class="attend-btn btn-att" onclick="startAttend('${s.id}','참석','${s.memberId}','${s.contractId}','${s.instructorId||''}')">✓ 완료</button>
         <button class="attend-btn btn-nos" onclick="startAttend('${s.id}','노쇼','${s.memberId}','${s.contractId}','${s.instructorId||''}')">✕ 노쇼</button>
       </div>
-      <button class="attend-btn btn-can" style="width:100%;" onclick="cancelSchedule('${s.id}')">취소 처리</button>
-      <div id="attend-form-${s.id}" style="display:none;margin-top:12px;">
+      <button class="attend-btn btn-can" style="width:100%;margin-top:0;" onclick="cancelSchedule('${s.id}')">취소 처리</button>
+      <div id="attend-form-${s.id}" style="display:none;margin-top:14px;">
         <div class="cond-label" id="cond-label-${s.id}">컨디션</div>
         <div class="cond-row" id="cond-row-${s.id}">
           ${['최상','좋음','보통','피로','통증'].map(c=>`<button class="cond-btn" id="cb-${s.id}-${c}" onclick="selectCond('${s.id}','${c}')">${c}</button>`).join('')}
@@ -496,19 +509,43 @@ function buildAttendContent(s, isDone, status) {
         <button class="confirm-btn" id="cfbtn-${s.id}" onclick="">확인</button>
       </div>`;
   } else {
+    // 완료/노쇼 수정 화면 - 기존 세션 데이터는 loadDoneSession()으로 비동기 로드
     return `
-      <div style="margin-bottom:10px;">
-        <select id="cond-edit-${s.id}" class="field-select">
-          <option value="">컨디션 선택</option>
-          ${['최상','좋음','보통','피로','통증'].map(c=>`<option>${c}</option>`).join('')}
-        </select>
+      <div style="margin-bottom:6px;">
+        <div class="cond-label">컨디션</div>
+        <div class="cond-row">
+          ${['최상','좋음','보통','피로','통증'].map(c=>`<button class="cond-btn" id="ce-${s.id}-${c}" onclick="selectCondEdit('${s.id}','${c}')">${c}</button>`).join('')}
+        </div>
       </div>
-      <textarea class="memo-ta" id="memo-edit-${s.id}" placeholder="메모 수정"></textarea>
-      <button class="confirm-btn" style="background:var(--muted);margin-bottom:8px;" onclick="saveMemoEdit('${s.id}','${s.contractId}',this)">메모 저장</button>
+      <div class="cond-label">메모</div>
+      <textarea class="memo-ta" id="memo-edit-${s.id}" placeholder="메모 입력"></textarea>
+      <button class="confirm-btn" style="background:var(--success);margin-bottom:10px;" onclick="saveMemoEdit('${s.id}','${s.contractId}')">저장</button>
       <button class="attend-btn btn-rev" style="width:100%;" onclick="revertStatus('${s.id}','${status}','${s.memberId}','${s.contractId}')">
-        ${status==='참석'?'출석 → 노쇼로 변경':'노쇼 → 출석으로 변경'}
+        ${status==='참석'?'완료 → 노쇼로 변경':'노쇼 → 완료로 변경'}
       </button>`;
   }
+}
+
+function selectCondEdit(id, cond) {
+  document.querySelectorAll(`[id^="ce-${id}-"]`).forEach(b=>b.classList.remove('active'));
+  document.getElementById(`ce-${id}-${cond}`)?.classList.add('active');
+}
+
+// 완료 패널 열릴 때 기존 세션 데이터 로드
+async function loadDoneSession(scheduleId, contractId, date, time) {
+  try {
+    const r = await fetch(`${API}/api/sessions?contractId=${contractId}`);
+    const d = await r.json();
+    const sess = (d.sessions||[]).find(se=>se.date===date&&se.time===time);
+    if (sess) {
+      if (sess.condition) selectCondEdit(scheduleId, sess.condition);
+      const mta = document.getElementById(`memo-edit-${scheduleId}`);
+      if (mta && sess.memo && sess.memo!=='NO-SHOW') mta.value=sess.memo;
+      // 패널 엘리먼트에 sessionId 저장
+      const panel = document.getElementById(`panel-${scheduleId}`);
+      if (panel) panel.dataset.sessionId = sess.id;
+    }
+  } catch(e) {}
 }
 
 // ── 카드 토글 ──
@@ -516,7 +553,16 @@ function toggleCard(id) {
   const panel = document.getElementById(`panel-${id}`);
   const isOpen = panel.classList.contains('open');
   document.querySelectorAll('.card-panel.open').forEach(p=>p.classList.remove('open'));
-  if (!isOpen) panel.classList.add('open');
+  if (!isOpen) {
+    panel.classList.add('open');
+    // 완료/노쇼 상태면 기존 세션 데이터 로드
+    const card = document.getElementById(`card-${id}`);
+    const isDone = card?.classList.contains('s-참석') || card?.classList.contains('s-노쇼');
+    if (isDone && !panel.dataset.sessionId) {
+      const s = allSchedules.find(sc=>sc.id===id);
+      if (s?.contractId) loadDoneSession(id, s.contractId, s.date, s.time);
+    }
+  }
 }
 
 // ── 패널 탭 전환 ──
@@ -623,18 +669,28 @@ async function cancelSchedule(id) {
 }
 
 // ── 메모 저장 ──
-async function saveMemoEdit(scheduleId, contractId, btn) {
-  const cond=document.getElementById(`cond-edit-${scheduleId}`)?.value||'';
-  const memo=document.getElementById(`memo-edit-${scheduleId}`)?.value||'';
-  const s=allSchedules.find(sc=>sc.id===scheduleId);
+async function saveMemoEdit(scheduleId, contractId) {
+  const cond = document.querySelector(`[id^="ce-${scheduleId}-"].active`)?.textContent || '';
+  const memo = document.getElementById(`memo-edit-${scheduleId}`)?.value || '';
+  const panel = document.getElementById(`panel-${scheduleId}`);
+  let sessionId = panel?.dataset.sessionId || '';
+
+  // sessionId 없으면 다시 조회
+  if (!sessionId) {
+    const s = allSchedules.find(sc=>sc.id===scheduleId);
+    try {
+      const sRes = await fetch(`${API}/api/sessions?contractId=${contractId}`);
+      const sData = await sRes.json();
+      const session = (sData.sessions||[]).find(se=>se.date===s?.date&&se.time===s?.time);
+      if (session) sessionId = session.id;
+    } catch(e) {}
+  }
+
+  if (!sessionId) { showToast('세션을 찾을 수 없습니다','error'); return; }
+
   try {
-    const sRes=await fetch(`${API}/api/sessions?contractId=${contractId}`);
-    const sData=await sRes.json();
-    const session=(sData.sessions||[]).find(se=>se.date===s?.date&&se.time===s?.time);
-    if (session) {
-      await fetch(`${API}/api/sessions?id=${session.id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({condition:cond,memo})});
-      showToast('저장 완료','success');
-    } else { showToast('세션을 찾을 수 없습니다','error'); }
+    await fetch(`${API}/api/sessions?id=${sessionId}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({condition:cond,memo})});
+    showToast('저장 완료','success');
   } catch(e) { showToast('저장 실패','error'); }
 }
 
