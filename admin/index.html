@@ -2383,8 +2383,17 @@ function renderMemberTable() {
     const total = activeContract?.sessions || 0;
     // title 형식: '회원명 · 프로그램명 · 날짜' → 프로그램명만 추출
     const rawTitle = activeContract?.title || '';
-    const titleParts = rawTitle.split(' · ');
-    const progName = titleParts.length >= 2 ? titleParts.slice(1).join(' · ') : rawTitle;
+    const progName = (() => {
+      if (!rawTitle) return '';
+      // 신형식: '홍길동 · Private 1:1 Lesson · 2026-07-16'
+      const dotParts = rawTitle.split(' · ');
+      if (dotParts.length >= 3) return dotParts.slice(1, dotParts.length - 1).join(' · ');
+      if (dotParts.length === 2) return dotParts[1];
+      // 구형식: '홍길동 - Private 1:1 Lesson - 15회'
+      const dashParts = rawTitle.split(' - ');
+      if (dashParts.length >= 2) return dashParts.slice(1).join(' - ');
+      return rawTitle;
+    })();
     const lastVisit = allSessionsByMember[m.id] || '—';
     const instructorName = activeContract?.instructorName || '—';
     const status = getMemberStatus(m);
