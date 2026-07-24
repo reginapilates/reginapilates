@@ -1620,12 +1620,11 @@ function maskText(text) {
   return text; // L2+ 강사도 담당 회원 정보 공개
 }
 
-function initApp() {
+async function initApp() {
   // 세션 복원
   const savedLevel = sessionStorage.getItem('adminLevel');
   if (savedLevel) {
     ADMIN_LEVEL = parseInt(savedLevel);
-    // L2 강사의 경우 본인 강사 정보 복원
     const savedInstr = sessionStorage.getItem('adminInstrData');
     if (savedInstr && ADMIN_LEVEL !== 1) {
       try { window._myInstrData = JSON.parse(savedInstr); } catch(e) {}
@@ -1633,6 +1632,17 @@ function initApp() {
   }
 
   document.getElementById('today-date').textContent = new Date().toLocaleDateString('ko-KR', {year:'numeric',month:'long',day:'numeric',weekday:'long'});
+
+  // 강사 목록 먼저 로드 → L1 강사 ID 초기화 → 그 후 캘린더/대시보드 로드
+  try {
+    const instrRes = await fetch(`${API}/api/instructors`);
+    const instrData = await instrRes.json();
+    allInstructors = instrData.instructors || [];
+    initL1InstructorIds(); // L2+ 필터링 기준 확정
+  } catch(e) {
+    console.error('강사 목록 로드 실패:', e);
+  }
+
   loadDashboard();
   loadCalendar();
 }
@@ -4389,6 +4399,7 @@ async function loadCalendar(forceReload = false) {
     if (results[1]) {
       const instrData = await results[1].json();
       allInstructors = instrData.instructors || [];
+      initL1InstructorIds(); // 강사 목록 로드 시 L1 ID 갱신
     }
 
     allSchedules = schData.schedules || [];
