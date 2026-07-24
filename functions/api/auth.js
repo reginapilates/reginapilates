@@ -16,8 +16,16 @@ export async function onRequest(context) {
   const body = await request.json();
   const { password, loginId, loginPassword } = body;
 
-  // ── 강사 ID/PW 로그인 (instructor.html 전용) ──
+  // ── ID/PW 로그인 (admin + instructor 공통) ──
   if (loginId && loginPassword) {
+
+    // 1순위: env 변수 비밀번호 fallback (LoginId 필드 미설정 시 또는 긴급 접근용)
+    // admin ID/PW가 env와 일치하면 바로 통과
+    if (loginId === 'admin' && loginPassword === env.ADMIN_PASSWORD_L1) {
+      return new Response(JSON.stringify({ success: true, level: 1 }), { headers });
+    }
+
+    // 2순위: Notion Instructors DB에서 LoginId 조회
     try {
       const res = await fetch(
         `https://api.notion.com/v1/databases/${env.NOTION_INSTRUCTORS_DB_ID}/query`,
@@ -41,34 +49,32 @@ export async function onRequest(context) {
       const data = await res.json();
       const page = (data.results || [])[0];
 
-      if (!page) {
-        return new Response(JSON.stringify({ success: false, error: 'not_found' }), { headers });
+      if (page) {
+        const storedPw = page.properties.LoginPassword?.rich_text?.[0]?.plain_text || '';
+        if (storedPw && storedPw === loginPassword) {
+          const levelStr = page.properties.Level?.select?.name || '2';
+          const instructor = {
+            id: page.id,
+            name: page.properties.Name?.title?.[0]?.plain_text || '',
+            level: levelStr,
+            isDirector: levelStr === '1',
+          };
+          return new Response(JSON.stringify({
+            success: true,
+            level: parseInt(levelStr) || 2,
+            instructor,
+          }), { headers });
+        }
       }
 
-      const storedPw = page.properties.LoginPassword?.rich_text?.[0]?.plain_text || '';
-      if (storedPw !== loginPassword) {
-        return new Response(JSON.stringify({ success: false, error: 'wrong_password' }), { headers });
-      }
-
-      const instructor = {
-        id: page.id,
-        name: page.properties.Name?.title?.[0]?.plain_text || '',
-        level: page.properties.Level?.select?.name || '2',
-        isDirector: page.properties.Level?.select?.name === '1',
-      };
-
-      return new Response(JSON.stringify({
-        success: true,
-        level: parseInt(instructor.level) || 2,
-        instructor,
-      }), { headers });
+      return new Response(JSON.stringify({ success: false, error: 'invalid_credentials' }), { headers });
 
     } catch(e) {
       return new Response(JSON.stringify({ success: false, error: e.message }), { status: 500, headers });
     }
   }
 
-  // ── 기존 admin 비밀번호 로그인 ──
+  // ── 기존 비밀번호 단독 로그인 (하위 호환) ──
   if (password) {
     if (password === env.ADMIN_PASSWORD_L1) {
       return new Response(JSON.stringify({ success: true, level: 1 }), { headers });
