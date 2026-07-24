@@ -1607,22 +1607,17 @@ function isHiddenForL2(memberId) {
 // 마스킹 함수
 function maskPhone(phone) {
   if (!phone) return '—';
-  if (ADMIN_LEVEL === 1) return phone;
-  return phone.replace(/(\d{3})-?(\d{3,4})-?(\d{4})/, '$1-****-$3');
+  return phone; // L2+ 강사도 담당 회원 정보 공개
 }
 
 function maskEmail(email) {
   if (!email) return '—';
-  if (ADMIN_LEVEL === 1) return email;
-  const [id, domain] = email.split('@');
-  if (!domain) return '****';
-  return id.slice(0,2) + '****@' + domain;
+  return email; // L2+ 강사도 담당 회원 정보 공개
 }
 
 function maskText(text) {
   if (!text) return '—';
-  if (ADMIN_LEVEL === 1) return text;
-  return '••••••';
+  return text; // L2+ 강사도 담당 회원 정보 공개
 }
 
 function initApp() {
@@ -3347,9 +3342,9 @@ function showContractPrint(data) {
   const fmt = n => n ? parseInt(n).toLocaleString() : '0';
   const fmtFloor = n => n ? (Math.floor(parseInt(n) / 1000) * 1000).toLocaleString() : '0';
   // L2는 계약서에서 개인정보 마스킹
-  const safePhone = ADMIN_LEVEL === 1 ? (data.phone||'') : maskPhone(data.phone);
-  const safeAddress = ADMIN_LEVEL === 1 ? (data.address||'') : maskText(data.address);
-  const safeBirth = ADMIN_LEVEL === 1 ? (data.birthDate||'') : (data.birthDate ? data.birthDate.slice(0,4)+'****' : '');
+  const safePhone = data.phone||'';
+  const safeAddress = data.address||'';
+  const safeBirth = data.birthDate||'';
   const chk = b => b ? '■' : '□';
 
   const html = `<!DOCTYPE html>
