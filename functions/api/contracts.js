@@ -188,7 +188,7 @@ export async function onRequest(context) {
         }
       }
 
-      const title = programName;
+      const title = `${memberName} · ${programName} · ${contractData.startDate || new Date().toISOString().split('T')[0]}`;
       const notionRes = await fetch('https://api.notion.com/v1/pages', {
         method: 'POST',
         headers: {
