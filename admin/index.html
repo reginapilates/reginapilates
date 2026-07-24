@@ -2360,7 +2360,10 @@ function renderMemberTable() {
                            [...contracts].sort((a,b) => (b.startDate||'').localeCompare(a.startDate||''))[0];
     const used = activeContract?.usedSessions ?? 0;
     const total = activeContract?.sessions || 0;
-    const progName = activeContract?.title || '';
+    // title 형식: '회원명 · 프로그램명 · 날짜' → 프로그램명만 추출
+    const rawTitle = activeContract?.title || '';
+    const titleParts = rawTitle.split(' · ');
+    const progName = titleParts.length >= 2 ? titleParts.slice(1).join(' · ') : rawTitle;
     const lastVisit = allSessionsByMember[m.id] || '—';
     const instructorName = activeContract?.instructorName || '—';
     const status = getMemberStatus(m);
