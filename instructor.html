@@ -6,462 +6,245 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Regina Pilates — 강사</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #F7F5F2;
-    --white: #FFFFFF;
-    --text: #1A1A1A;
-    --text-muted: #888;
-    --border: #E5E2DE;
-    --accent: #1A1A1A;
-    --success: #27AE60;
-    --danger: #E74C3C;
-    --warning: #E67E22;
-    --surface: #F0EDE9;
-    --radius: 14px;
-    --safe-bottom: env(safe-area-inset-bottom, 0px);
-  }
+:root {
+  --bg: #F7F5F2; --white: #FFFFFF; --text: #1A1A1A; --muted: #888;
+  --border: #E5E2DE; --accent: #1A1A1A; --success: #27AE60;
+  --danger: #E74C3C; --warning: #E67E22; --surface: #F0EDE9;
+  --radius: 14px; --safe-top: env(safe-area-inset-top,0px); --safe-bottom: env(safe-area-inset-bottom,0px);
+}
+* { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+body { font-family:'Noto Sans KR',sans-serif; background:var(--bg); color:var(--text); min-height:100dvh; overflow-x:hidden; }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+/* ── 로그인 ── */
+#login-screen { min-height:100dvh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px 24px; background:var(--accent); }
+.login-logo { font-family:'Outfit',sans-serif; font-weight:300; font-size:22px; letter-spacing:.15em; color:#fff; margin-bottom:6px; }
+.login-sub { font-size:11px; color:rgba(255,255,255,.5); letter-spacing:.1em; margin-bottom:48px; }
+.login-input { width:100%; padding:16px 20px; font-size:16px; border:1px solid rgba(255,255,255,.2); background:rgba(255,255,255,.1); color:#fff; border-radius:var(--radius); outline:none; margin-bottom:12px; font-family:inherit; }
+.login-input::placeholder { color:rgba(255,255,255,.4); }
+.login-btn { width:100%; padding:16px; background:#fff; color:var(--accent); border:none; border-radius:var(--radius); font-size:15px; font-weight:600; font-family:inherit; cursor:pointer; }
+.login-error { display:none; color:#FF6B6B; font-size:13px; text-align:center; margin-top:12px; }
 
-  body {
-    font-family: 'Noto Sans KR', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    min-height: 100dvh;
-    overflow-x: hidden;
-  }
+/* ── 앱 ── */
+#app { display:none; flex-direction:column; min-height:100dvh; }
 
-  /* 로그인 화면 */
-  #login-screen {
-    min-height: 100dvh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 40px 24px;
-    background: var(--accent);
-  }
-  .login-logo {
-    font-family: 'Outfit', sans-serif;
-    font-weight: 300;
-    font-size: 22px;
-    letter-spacing: 0.15em;
-    color: #fff;
-    margin-bottom: 6px;
-  }
-  .login-sub {
-    font-size: 11px;
-    color: rgba(255,255,255,0.5);
-    letter-spacing: 0.1em;
-    margin-bottom: 48px;
-  }
-  .login-box {
-    width: 100%;
-    max-width: 320px;
-  }
-  .login-input {
-    width: 100%;
-    padding: 16px 20px;
-    font-size: 16px;
-    border: 1px solid rgba(255,255,255,0.2);
-    background: rgba(255,255,255,0.1);
-    color: #fff;
-    border-radius: var(--radius);
-    outline: none;
-    margin-bottom: 12px;
-    font-family: inherit;
-  }
-  .login-input::placeholder { color: rgba(255,255,255,0.4); }
-  .login-btn {
-    width: 100%;
-    padding: 16px;
-    background: #fff;
-    color: var(--accent);
-    border: none;
-    border-radius: var(--radius);
-    font-size: 15px;
-    font-weight: 600;
-    font-family: inherit;
-    cursor: pointer;
-    letter-spacing: 0.05em;
-  }
-  .login-error {
-    display: none;
-    color: #FF6B6B;
-    font-size: 13px;
-    text-align: center;
-    margin-top: 12px;
-  }
+/* ── 헤더 ── */
+.app-header { background:var(--accent); color:#fff; padding:16px 20px; padding-top:calc(16px + var(--safe-top)); display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; }
+.header-left .logo { font-family:'Outfit',sans-serif; font-weight:300; font-size:15px; letter-spacing:.1em; }
+.header-left .instr { font-size:11px; color:rgba(255,255,255,.55); margin-top:2px; }
+.header-right { display:flex; gap:8px; align-items:center; }
+.hbtn { background:rgba(255,255,255,.15); border:none; color:#fff; padding:7px 13px; border-radius:20px; font-size:12px; cursor:pointer; font-family:inherit; white-space:nowrap; }
 
-  /* 앱 화면 */
-  #app { display: none; min-height: 100dvh; flex-direction: column; }
+/* ── 날짜 네비 ── */
+.date-nav { background:var(--white); border-bottom:1px solid var(--border); display:flex; align-items:center; padding:0 6px; }
+.date-arrow { background:none; border:none; padding:14px 10px; font-size:20px; color:var(--muted); cursor:pointer; flex-shrink:0; }
+.date-tabs { display:flex; flex:1; gap:4px; padding:8px 2px; overflow-x:auto; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
+.date-tabs::-webkit-scrollbar { display:none; }
+.date-tab { flex-shrink:0; display:flex; flex-direction:column; align-items:center; padding:8px 13px; border-radius:10px; cursor:pointer; min-width:48px; }
+.date-tab.active { background:var(--accent); color:#fff; }
+.date-tab .dday { font-size:10px; opacity:.65; margin-bottom:2px; }
+.date-tab .dnum { font-family:'Outfit',sans-serif; font-size:18px; font-weight:400; line-height:1; }
+.date-tab.today:not(.active) .dnum { color:var(--danger); font-weight:700; }
 
-  /* 헤더 */
-  .app-header {
-    background: var(--accent);
-    color: #fff;
-    padding: 16px 20px;
-    padding-top: calc(16px + env(safe-area-inset-top, 0px));
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-  }
-  .header-logo {
-    font-family: 'Outfit', sans-serif;
-    font-weight: 300;
-    font-size: 16px;
-    letter-spacing: 0.1em;
-  }
-  .header-instructor {
-    font-size: 12px;
-    color: rgba(255,255,255,0.6);
-  }
-  .logout-btn-sm {
-    background: rgba(255,255,255,0.15);
-    border: none;
-    color: #fff;
-    padding: 6px 12px;
-    border-radius: 20px;
-    font-size: 12px;
-    cursor: pointer;
-    font-family: inherit;
-  }
+/* ── 필터 바 ── */
+.filter-bar { background:var(--white); border-bottom:1px solid var(--border); padding:10px 16px; display:flex; gap:8px; overflow-x:auto; scrollbar-width:none; }
+.filter-bar::-webkit-scrollbar { display:none; }
+.filter-chip { flex-shrink:0; padding:6px 14px; border-radius:20px; border:1px solid var(--border); background:var(--white); font-size:12px; font-family:inherit; color:var(--muted); cursor:pointer; white-space:nowrap; transition:all .15s; }
+.filter-chip.active { background:var(--accent); color:#fff; border-color:var(--accent); }
 
-  /* 날짜 네비게이션 */
-  .date-nav {
-    background: var(--white);
-    border-bottom: 1px solid var(--border);
-    padding: 0 8px;
-    display: flex;
-    align-items: center;
-    gap: 0;
-    overflow-x: auto;
-    scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
-  }
-  .date-nav::-webkit-scrollbar { display: none; }
-  .date-nav-arrow {
-    background: none;
-    border: none;
-    padding: 14px 10px;
-    font-size: 18px;
-    color: var(--text-muted);
-    cursor: pointer;
-    flex-shrink: 0;
-  }
-  .date-tabs {
-    display: flex;
-    flex: 1;
-    gap: 4px;
-    padding: 8px 4px;
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-  .date-tabs::-webkit-scrollbar { display: none; }
-  .date-tab {
-    flex-shrink: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 8px 14px;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: background 0.15s;
-    min-width: 52px;
-  }
-  .date-tab.active {
-    background: var(--accent);
-    color: #fff;
-  }
-  .date-tab-day {
-    font-size: 10px;
-    color: inherit;
-    opacity: 0.7;
-    margin-bottom: 2px;
-  }
-  .date-tab.active .date-tab-day { opacity: 0.7; color: #fff; }
-  .date-tab-num {
-    font-family: 'Outfit', sans-serif;
-    font-size: 18px;
-    font-weight: 400;
-    line-height: 1;
-  }
-  .date-tab.today:not(.active) .date-tab-num {
-    color: var(--danger);
-    font-weight: 600;
-  }
+/* ── 스케줄 리스트 ── */
+.schedule-list { flex:1; padding:14px 16px; display:flex; flex-direction:column; gap:10px; }
+.date-header { font-size:13px; color:var(--muted); padding:2px 2px 6px; font-weight:500; }
 
-  /* 스케줄 목록 */
-  .schedule-list {
-    flex: 1;
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
+/* ── 카드 ── */
+.schedule-card { background:var(--white); border-radius:var(--radius); overflow:hidden; box-shadow:0 1px 4px rgba(0,0,0,.06); }
+.schedule-card.s-참석 { border-left:4px solid var(--success); opacity:.75; }
+.schedule-card.s-노쇼 { border-left:4px solid var(--danger); opacity:.75; }
+.schedule-card.s-취소 { border-left:4px solid var(--border); opacity:.45; }
+.schedule-card.s-확정 { border-left:4px solid var(--accent); }
+.card-main { padding:15px 16px; display:flex; align-items:center; gap:12px; cursor:pointer; user-select:none; }
+.card-main:active { background:var(--surface); }
+.card-time { font-family:'Outfit',sans-serif; font-size:21px; font-weight:300; min-width:56px; }
+.card-info { flex:1; min-width:0; }
+.card-member { font-size:16px; font-weight:700; margin-bottom:2px; }
+.card-sub { font-size:11px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.card-instr { font-size:11px; color:var(--muted); margin-top:1px; }
+.card-badge { flex-shrink:0; font-size:11px; font-weight:600; padding:4px 10px; border-radius:20px; }
+.cb-확정 { background:#F0EDE9; color:var(--muted); }
+.cb-참석 { background:#EAFAF1; color:var(--success); }
+.cb-노쇼 { background:#FDEDEC; color:var(--danger); }
+.cb-취소 { background:#F5F5F5; color:#bbb; }
 
-  .empty-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 60px 20px;
-    color: var(--text-muted);
-    gap: 12px;
-  }
-  .empty-state-icon { font-size: 40px; }
-  .empty-state-text { font-size: 14px; }
+/* ── 카드 패널 (펼쳐지는 영역) ── */
+.card-panel { display:none; border-top:1px solid var(--border); }
+.card-panel.open { display:block; }
 
-  /* 스케줄 카드 */
-  .schedule-card {
-    background: var(--white);
-    border-radius: var(--radius);
-    overflow: hidden;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-    transition: transform 0.1s;
-  }
-  .schedule-card:active { transform: scale(0.98); }
-  .schedule-card.status-참석 { border-left: 4px solid var(--success); opacity: 0.75; }
-  .schedule-card.status-노쇼 { border-left: 4px solid var(--danger); opacity: 0.75; }
-  .schedule-card.status-취소 { border-left: 4px solid var(--border); opacity: 0.5; }
-  .schedule-card.status-확정 { border-left: 4px solid var(--accent); }
+/* 탭 */
+.panel-tabs { display:flex; border-bottom:1px solid var(--border); }
+.panel-tab { flex:1; padding:11px 0; text-align:center; font-size:13px; color:var(--muted); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px; }
+.panel-tab.active { color:var(--text); font-weight:600; border-bottom-color:var(--accent); }
 
-  .card-main {
-    padding: 16px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    cursor: pointer;
-  }
-  .card-time {
-    font-family: 'Outfit', sans-serif;
-    font-size: 22px;
-    font-weight: 300;
-    color: var(--text);
-    min-width: 60px;
-    line-height: 1;
-  }
-  .card-info { flex: 1; min-width: 0; }
-  .card-member {
-    font-size: 17px;
-    font-weight: 700;
-    margin-bottom: 3px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .card-program {
-    font-size: 12px;
-    color: var(--text-muted);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .card-sessions {
-    font-size: 11px;
-    color: var(--text-muted);
-    margin-top: 2px;
-  }
-  .card-status {
-    flex-shrink: 0;
-    font-size: 12px;
-    font-weight: 600;
-    padding: 4px 10px;
-    border-radius: 20px;
-  }
-  .card-status.s-확정 { background: #F0EDE9; color: var(--text-muted); }
-  .card-status.s-참석 { background: #EAFAF1; color: var(--success); }
-  .card-status.s-노쇼 { background: #FDEDEC; color: var(--danger); }
-  .card-status.s-취소 { background: #F5F5F5; color: #bbb; }
+.panel-content { padding:16px; }
 
-  /* 출석 버튼 영역 */
-  .card-actions {
-    display: none;
-    padding: 0 16px 16px;
-    gap: 8px;
-    flex-direction: column;
-  }
-  .card-actions.open { display: flex; }
+/* 출석체크 탭 */
+.attend-row { display:flex; gap:8px; margin-bottom:10px; }
+.attend-btn { flex:1; padding:14px 8px; border:none; border-radius:10px; font-size:15px; font-weight:700; font-family:inherit; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px; }
+.attend-btn:active { opacity:.8; transform:scale(.97); }
+.btn-att { background:var(--success); color:#fff; }
+.btn-nos { background:var(--danger); color:#fff; }
+.btn-can { background:var(--surface); color:var(--muted); font-size:13px; font-weight:500; }
+.btn-rev { background:var(--surface); color:var(--muted); font-size:13px; }
 
-  .action-row {
-    display: flex;
-    gap: 8px;
-  }
-  .action-btn {
-    flex: 1;
-    padding: 14px 8px;
-    border: none;
-    border-radius: 10px;
-    font-size: 15px;
-    font-weight: 600;
-    font-family: inherit;
-    cursor: pointer;
-    transition: opacity 0.15s, transform 0.1s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-  }
-  .action-btn:active { transform: scale(0.96); opacity: 0.8; }
-  .btn-attend { background: var(--success); color: #fff; }
-  .btn-noshow { background: var(--danger); color: #fff; }
-  .btn-cancel { background: var(--surface); color: var(--text-muted); font-size: 13px; }
+/* 컨디션 */
+.cond-label { font-size:12px; color:var(--muted); margin-bottom:6px; }
+.cond-row { display:flex; gap:5px; margin-bottom:10px; }
+.cond-btn { flex:1; padding:8px 2px; border:1px solid var(--border); background:var(--white); border-radius:8px; font-size:11px; font-family:inherit; cursor:pointer; text-align:center; }
+.cond-btn.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+.memo-ta { width:100%; padding:11px 13px; border:1px solid var(--border); border-radius:10px; font-size:14px; font-family:inherit; resize:none; min-height:64px; outline:none; margin-bottom:10px; }
+.memo-ta:focus { border-color:var(--accent); }
+.confirm-btn { width:100%; padding:14px; background:var(--accent); color:#fff; border:none; border-radius:10px; font-size:15px; font-weight:700; font-family:inherit; cursor:pointer; }
+.confirm-btn:active { opacity:.85; }
+.confirm-btn.success { background:var(--success); }
+.confirm-btn.danger { background:var(--danger); }
 
-  /* 메모/컨디션 입력 */
-  .memo-section {
-    display: none;
-    padding: 0 16px 16px;
-    gap: 10px;
-    flex-direction: column;
-  }
-  .memo-section.open { display: flex; }
-  .memo-label { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
-  .cond-row {
-    display: flex;
-    gap: 6px;
-  }
-  .cond-btn {
-    flex: 1;
-    padding: 9px 4px;
-    border: 1px solid var(--border);
-    background: var(--white);
-    border-radius: 8px;
-    font-size: 12px;
-    font-family: inherit;
-    cursor: pointer;
-    text-align: center;
-    transition: all 0.15s;
-  }
-  .cond-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
-  .memo-input {
-    width: 100%;
-    padding: 12px 14px;
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    font-size: 14px;
-    font-family: inherit;
-    resize: none;
-    background: var(--white);
-    color: var(--text);
-    outline: none;
-    min-height: 70px;
-  }
-  .memo-input:focus { border-color: var(--accent); }
-  .confirm-btn {
-    width: 100%;
-    padding: 15px;
-    background: var(--accent);
-    color: #fff;
-    border: none;
-    border-radius: 10px;
-    font-size: 16px;
-    font-weight: 700;
-    font-family: inherit;
-    cursor: pointer;
-    letter-spacing: 0.03em;
-  }
-  .confirm-btn:active { opacity: 0.85; }
+/* 히스토리 탭 */
+.history-item { padding:10px 0; border-bottom:1px solid var(--border); display:flex; gap:10px; align-items:flex-start; }
+.history-item:last-child { border-bottom:none; }
+.history-date { font-size:12px; color:var(--muted); min-width:70px; flex-shrink:0; }
+.history-body { flex:1; }
+.history-status { font-size:12px; font-weight:600; margin-bottom:2px; }
+.hs-참석 { color:var(--success); } .hs-노쇼 { color:var(--danger); }
+.history-cond { display:inline-block; font-size:11px; background:var(--surface); padding:2px 8px; border-radius:10px; margin-bottom:3px; }
+.history-memo { font-size:12px; color:var(--muted); line-height:1.5; }
+.history-empty { font-size:13px; color:var(--muted); padding:20px 0; text-align:center; }
 
-  /* 상태 변경 버튼 (이미 처리된 경우) */
-  .revert-btn {
-    width: 100%;
-    padding: 11px;
-    background: var(--surface);
-    color: var(--text-muted);
-    border: none;
-    border-radius: 10px;
-    font-size: 13px;
-    font-family: inherit;
-    cursor: pointer;
-    margin-top: 4px;
-  }
+/* ── 신규예약 모달 ── */
+.modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:200; align-items:flex-end; }
+.modal-overlay.open { display:flex; }
+.modal-sheet { background:var(--white); border-radius:20px 20px 0 0; width:100%; max-height:90dvh; overflow-y:auto; padding-bottom:calc(24px + var(--safe-bottom)); }
+.modal-handle { width:36px; height:4px; background:var(--border); border-radius:2px; margin:12px auto; }
+.modal-title { font-size:16px; font-weight:700; padding:0 20px 16px; border-bottom:1px solid var(--border); }
+.modal-body { padding:20px; display:flex; flex-direction:column; gap:14px; }
+.field-label { font-size:12px; color:var(--muted); margin-bottom:5px; }
+.field-select { width:100%; padding:12px 14px; border:1px solid var(--border); border-radius:10px; font-size:14px; font-family:inherit; background:var(--white); outline:none; }
+.field-input { width:100%; padding:12px 14px; border:1px solid var(--border); border-radius:10px; font-size:14px; font-family:inherit; outline:none; }
+.field-select:focus, .field-input:focus { border-color:var(--accent); }
+.time-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
+.time-chip { padding:9px 4px; border:1px solid var(--border); border-radius:8px; text-align:center; font-size:13px; font-family:inherit; background:var(--white); cursor:pointer; }
+.time-chip.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+.recurring-row { display:flex; align-items:center; gap:10px; }
+.toggle-label { font-size:14px; flex:1; }
+.toggle { position:relative; width:44px; height:24px; flex-shrink:0; }
+.toggle input { opacity:0; width:0; height:0; }
+.toggle-slider { position:absolute; inset:0; background:var(--border); border-radius:12px; cursor:pointer; transition:.2s; }
+.toggle-slider:before { content:''; position:absolute; width:18px; height:18px; left:3px; bottom:3px; background:#fff; border-radius:50%; transition:.2s; }
+.toggle input:checked + .toggle-slider { background:var(--accent); }
+.toggle input:checked + .toggle-slider:before { transform:translateX(20px); }
+.modal-footer { padding:0 20px; display:flex; gap:8px; }
+.modal-btn { flex:1; padding:14px; border:none; border-radius:10px; font-size:15px; font-weight:600; font-family:inherit; cursor:pointer; }
+.modal-btn.primary { background:var(--accent); color:#fff; }
+.modal-btn.secondary { background:var(--surface); color:var(--muted); }
 
-  /* 토스트 */
-  .toast {
-    position: fixed;
-    bottom: calc(24px + var(--safe-bottom));
-    left: 50%;
-    transform: translateX(-50%) translateY(20px);
-    background: var(--accent);
-    color: #fff;
-    padding: 12px 24px;
-    border-radius: 24px;
-    font-size: 14px;
-    font-weight: 500;
-    opacity: 0;
-    transition: all 0.25s;
-    z-index: 9999;
-    white-space: nowrap;
-    pointer-events: none;
-  }
-  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-  .toast.success { background: var(--success); }
-  .toast.error { background: var(--danger); }
+/* ── 로딩/빈 상태 ── */
+.loading-wrap { display:flex; align-items:center; justify-content:center; padding:60px 0; }
+.spinner { width:28px; height:28px; border:3px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin .7s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+.empty-wrap { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:60px 20px; color:var(--muted); gap:10px; }
+.empty-icon { font-size:36px; }
 
-  /* 로딩 */
-  .loading-spinner {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 60px 0;
-  }
-  .spinner {
-    width: 32px; height: 32px;
-    border: 3px solid var(--border);
-    border-top-color: var(--accent);
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  /* 날짜 헤더 */
-  .date-header {
-    font-size: 13px;
-    color: var(--text-muted);
-    padding: 4px 4px 8px;
-    font-weight: 500;
-  }
+/* ── 토스트 ── */
+.toast { position:fixed; bottom:calc(20px + var(--safe-bottom)); left:50%; transform:translateX(-50%) translateY(16px); background:var(--accent); color:#fff; padding:11px 22px; border-radius:22px; font-size:13px; font-weight:500; opacity:0; transition:all .22s; z-index:9999; pointer-events:none; white-space:nowrap; }
+.toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+.toast.success { background:var(--success); }
+.toast.error { background:var(--danger); }
 </style>
 </head>
 <body>
 
-<!-- 로그인 화면 -->
+<!-- 로그인 -->
 <div id="login-screen">
   <div class="login-logo">REGINA PILATES</div>
-  <div class="login-sub">레지나 필라테스 청담 — 강사</div>
-  <div class="login-box">
-    <input class="login-input" type="password" id="pw-input" placeholder="비밀번호"
-      onkeydown="if(event.key==='Enter')doLogin()">
+  <div class="login-sub">레지나 필라테스 청담</div>
+  <div style="width:100%;max-width:320px;">
+    <input class="login-input" type="password" id="pw-input" placeholder="비밀번호" onkeydown="if(event.key==='Enter')doLogin()">
     <button class="login-btn" onclick="doLogin()">로그인</button>
     <div class="login-error" id="login-error">비밀번호가 올바르지 않습니다</div>
   </div>
 </div>
 
-<!-- 앱 화면 -->
+<!-- 앱 -->
 <div id="app">
   <div class="app-header">
-    <div>
-      <div class="login-logo" style="font-size:14px;">REGINA PILATES</div>
-      <div class="header-instructor" id="header-instructor-name"></div>
+    <div class="header-left">
+      <div class="logo">REGINA PILATES</div>
+      <div class="instr" id="header-instr"></div>
     </div>
-    <button class="logout-btn-sm" onclick="doLogout()">로그아웃</button>
+    <div class="header-right">
+      <button class="hbtn" onclick="openNewScheduleModal()">+ 예약</button>
+      <button class="hbtn" onclick="doLogout()">로그아웃</button>
+    </div>
   </div>
 
+  <!-- 날짜 탭 -->
   <div class="date-nav">
-    <button class="date-nav-arrow" onclick="shiftWeek(-1)">‹</button>
+    <button class="date-arrow" onclick="shiftWeek(-1)">‹</button>
     <div class="date-tabs" id="date-tabs"></div>
-    <button class="date-nav-arrow" onclick="shiftWeek(1)">›</button>
+    <button class="date-arrow" onclick="shiftWeek(1)">›</button>
   </div>
 
+  <!-- 강사 필터 -->
+  <div class="filter-bar" id="filter-bar" style="display:none;">
+    <button class="filter-chip active" data-id="" onclick="setInstrFilter('',this)">전체</button>
+  </div>
+
+  <!-- 스케줄 목록 -->
   <div class="schedule-list" id="schedule-list">
-    <div class="loading-spinner"><div class="spinner"></div></div>
+    <div class="loading-wrap"><div class="spinner"></div></div>
+  </div>
+</div>
+
+<!-- 신규 예약 모달 -->
+<div class="modal-overlay" id="modal-new-schedule" onclick="if(event.target===this)closeModal()">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">새 예약 등록</div>
+    <div class="modal-body">
+      <div>
+        <div class="field-label">회원</div>
+        <select class="field-select" id="ns-member" onchange="onNsMemberChange()">
+          <option value="">회원 선택</option>
+        </select>
+      </div>
+      <div>
+        <div class="field-label">계약 (프로그램)</div>
+        <select class="field-select" id="ns-contract"><option value="">회원을 먼저 선택하세요</option></select>
+      </div>
+      <div>
+        <div class="field-label">날짜</div>
+        <input class="field-input" type="date" id="ns-date">
+      </div>
+      <div>
+        <div class="field-label">시간</div>
+        <div class="time-grid" id="ns-time-grid"></div>
+      </div>
+      <div id="ns-recurring-section">
+        <div class="recurring-row">
+          <span class="toggle-label">정기 예약</span>
+          <label class="toggle"><input type="checkbox" id="ns-recurring" onchange="onRecurringChange()"><span class="toggle-slider"></span></label>
+        </div>
+        <div id="ns-recurring-day-row" style="display:none;margin-top:10px;">
+          <div class="field-label">반복 요일</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            ${['월','화','수','목','금'].map(d=>`<button class="time-chip" onclick="selectDay('${d}',this)">${d}</button>`).join('')}
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-btn secondary" onclick="closeModal()">취소</button>
+      <button class="modal-btn primary" onclick="saveNewSchedule()">예약 등록</button>
+    </div>
   </div>
 </div>
 
@@ -469,461 +252,519 @@
 
 <script>
 const API = '';
-let instrInfo = null;         // 로그인한 강사 정보
-let allSchedules = [];        // 전체 스케줄
-let allMembers = [];          // 회원 목록
-let allContracts = [];        // 계약 목록
-let currentDate = new Date(); // 현재 선택된 날짜
-let selectedDateStr = '';
-let weekOffset = 0;           // 주 오프셋
+const TIMES = ['09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00'];
 
-// ── 날짜 유틸 ──
+let myLevel = 0;
+let myInstr = null;          // 로그인한 강사 객체
+let allInstrs = [];          // 전체 강사 목록
+let allMembers = [];
+let allContracts = [];
+let allSchedules = [];
+let selectedDate = '';
+let weekOffset = 0;
+let instrFilter = '';        // 강사 필터 ID
+
+// ── 유틸 ──
 function toDateStr(d) {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
-
 function getTodayStr() { return toDateStr(new Date()); }
-
-function getWeekDates(baseDate, offset = 0) {
-  const d = new Date(baseDate);
-  d.setDate(d.getDate() + offset * 7);
-  const day = d.getDay() === 0 ? 6 : d.getDay() - 1; // 월=0
-  const monday = new Date(d);
-  monday.setDate(d.getDate() - day);
-  return Array.from({length: 7}, (_, i) => {
-    const dd = new Date(monday);
-    dd.setDate(monday.getDate() + i);
-    return dd;
-  });
+function getWeekDates(offset=0) {
+  const base = new Date();
+  base.setDate(base.getDate() + offset*7);
+  const day = base.getDay()===0?6:base.getDay()-1;
+  const mon = new Date(base); mon.setDate(base.getDate()-day);
+  return Array.from({length:7},(_,i)=>{ const d=new Date(mon); d.setDate(mon.getDate()+i); return d; });
 }
 
-// ── 로그인 ──
+// ── 로그인/로그아웃 ──
 async function doLogin() {
   const pw = document.getElementById('pw-input').value;
   if (!pw) return;
   try {
-    const res = await fetch(`${API}/api/auth`, {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ password: pw }),
-    });
+    const res = await fetch(`${API}/api/auth`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pw})});
     const data = await res.json();
     if (res.ok && data.success) {
       sessionStorage.setItem('instrPw', pw);
       sessionStorage.setItem('instrLevel', data.level);
-      await initApp(data.level, pw);
-    } else {
-      document.getElementById('login-error').style.display = 'block';
-    }
-  } catch(e) {
-    document.getElementById('login-error').style.display = 'block';
-  }
+      await initApp(data.level);
+    } else { document.getElementById('login-error').style.display='block'; }
+  } catch(e) { document.getElementById('login-error').style.display='block'; }
 }
-
 function doLogout() {
   sessionStorage.clear();
-  document.getElementById('login-screen').style.display = 'flex';
-  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('app').style.display='none';
 }
 
 // ── 초기화 ──
-async function initApp(level, pw) {
-  document.getElementById('login-screen').style.display = 'none';
-  document.getElementById('app').style.display = 'flex';
+async function initApp(level) {
+  myLevel = level;
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app').style.display='flex';
 
-  // 강사 목록에서 현재 강사 찾기 (L2는 강사, L1은 원장)
-  try {
-    const instrRes = await fetch(`${API}/api/instructors`);
-    const instrData = await instrRes.json();
-    const allInstrs = instrData.instructors || [];
+  // 공통 데이터 로드
+  const [instrRes, mRes, cRes] = await Promise.all([
+    fetch(`${API}/api/instructors`),
+    fetch(`${API}/api/members`),
+    fetch(`${API}/api/contracts`),
+  ]);
+  const instrData = await instrRes.json();
+  const mData = await mRes.json();
+  const cData = await cRes.json();
 
-    if (level === 1) {
-      instrInfo = { name: 'Regina 원장', id: null, isDirector: true };
-    } else {
-      // L2 강사는 비밀번호로 매칭 (혹은 첫 번째 강사)
-      instrInfo = allInstrs[0] || { name: '강사', id: null };
-    }
-    document.getElementById('header-instructor-name').textContent = instrInfo.name;
-  } catch(e) {}
+  allInstrs = instrData.instructors || [];
+  allMembers = mData.members || [];
+  allContracts = cData.contracts || [];
 
-  // 오늘 날짜로 초기화
-  const today = new Date();
-  selectedDateStr = toDateStr(today);
+  // 로그인한 강사 식별 (L2는 첫 번째 매칭 강사, L1은 원장)
+  if (level === 1) {
+    myInstr = { id: '__director__', name: 'Regina 원장', isDirector: true };
+  } else {
+    // L2 강사: 강사 목록 중 Regina(L1) 제외한 첫 번째 (실제로는 비밀번호 매핑이 없으므로 첫 번째 비Regina 강사)
+    myInstr = allInstrs.find(i => !i.isDirector && i.level !== 1) || allInstrs[0] || { id: '', name: '강사' };
+  }
+
+  document.getElementById('header-instr').textContent = myInstr.name;
+
+  // 강사 필터 초기화
+  buildInstrFilter();
+
+  selectedDate = getTodayStr();
   weekOffset = 0;
-
   renderDateTabs();
   await loadSchedules();
+  initTimeGrid();
+  initMemberSelect();
 }
 
-// ── 날짜 탭 렌더 ──
-function renderDateTabs() {
-  const todayStr = getTodayStr();
-  const days = ['일','월','화','수','목','금','토'];
-  const dates = getWeekDates(new Date(), weekOffset);
+// ── 강사 필터 ──
+function buildInstrFilter() {
+  const bar = document.getElementById('filter-bar');
 
-  const tabsEl = document.getElementById('date-tabs');
-  tabsEl.innerHTML = dates.map(d => {
-    const ds = toDateStr(d);
-    const isToday = ds === todayStr;
-    const isSelected = ds === selectedDateStr;
-    return `<div class="date-tab${isSelected?' active':''}${isToday?' today':''}"
-      onclick="selectDate('${ds}')">
-      <span class="date-tab-day">${days[d.getDay()]}</span>
-      <span class="date-tab-num">${d.getDate()}</span>
-    </div>`;
-  }).join('');
+  // 보여줄 강사 목록 결정
+  let visibleInstrs = [];
+  if (myLevel === 1) {
+    // L1: 모든 강사
+    visibleInstrs = allInstrs;
+  } else {
+    // L2: Regina(원장) 제외
+    visibleInstrs = allInstrs.filter(i => !i.isDirector && i.name !== 'Regina' && i.name !== 'Regina 원장');
+  }
 
-  // 선택된 탭으로 스크롤
-  setTimeout(() => {
-    const active = tabsEl.querySelector('.date-tab.active');
-    if (active) active.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-  }, 50);
+  if (visibleInstrs.length <= 1) { bar.style.display='none'; return; }
+  bar.style.display='flex';
+
+  bar.innerHTML = `<button class="filter-chip active" data-id="" onclick="setInstrFilter('',this)">전체</button>` +
+    visibleInstrs.map(i =>
+      `<button class="filter-chip" data-id="${i.id}" onclick="setInstrFilter('${i.id}',this)">${i.name}</button>`
+    ).join('');
 }
 
-function selectDate(dateStr) {
-  selectedDateStr = dateStr;
-  renderDateTabs();
+function setInstrFilter(id, el) {
+  instrFilter = id;
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
   renderScheduleList();
 }
 
+// ── 날짜 탭 ──
+function renderDateTabs() {
+  const todayStr = getTodayStr();
+  const days = ['일','월','화','수','목','금','토'];
+  const dates = getWeekDates(weekOffset);
+  const tabs = document.getElementById('date-tabs');
+  tabs.innerHTML = dates.map(d => {
+    const ds = toDateStr(d);
+    const isT = ds===todayStr, isSel = ds===selectedDate;
+    return `<div class="date-tab${isSel?' active':''}${isT?' today':''}" onclick="selectDate('${ds}')">
+      <span class="dday">${days[d.getDay()]}</span>
+      <span class="dnum">${d.getDate()}</span>
+    </div>`;
+  }).join('');
+  setTimeout(()=>{ const a=tabs.querySelector('.active'); if(a) a.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'}); },50);
+}
+function selectDate(ds) { selectedDate=ds; renderDateTabs(); renderScheduleList(); }
 function shiftWeek(dir) {
-  weekOffset += dir;
-  const dates = getWeekDates(new Date(), weekOffset);
-  selectedDateStr = toDateStr(dates[0]);
+  weekOffset+=dir;
+  const dates=getWeekDates(weekOffset);
+  selectedDate=toDateStr(dates[0]);
   renderDateTabs();
   loadSchedules();
 }
 
 // ── 스케줄 로드 ──
 async function loadSchedules() {
-  document.getElementById('schedule-list').innerHTML =
-    '<div class="loading-spinner"><div class="spinner"></div></div>';
-
-  const dates = getWeekDates(new Date(), weekOffset);
-  const startDate = toDateStr(dates[0]);
-  const endDate = toDateStr(dates[dates.length - 1]);
-
+  document.getElementById('schedule-list').innerHTML='<div class="loading-wrap"><div class="spinner"></div></div>';
+  const dates=getWeekDates(weekOffset);
+  const s=toDateStr(dates[0]), e=toDateStr(dates[dates.length-1]);
   try {
-    const [schRes, mRes, cRes] = await Promise.all([
-      fetch(`${API}/api/schedules?startDate=${startDate}&endDate=${endDate}`),
-      fetch(`${API}/api/members`),
-      fetch(`${API}/api/contracts`),
-    ]);
-    const schData = await schRes.json();
-    const mData = await mRes.json();
-    const cData = await cRes.json();
-
-    allSchedules = (schData.schedules || []).filter(s => s.status !== '취소');
-    allMembers = mData.members || [];
-    allContracts = cData.contracts || [];
-
+    const res = await fetch(`${API}/api/schedules?startDate=${s}&endDate=${e}`);
+    const data = await res.json();
+    allSchedules = data.schedules || [];
     renderScheduleList();
-  } catch(e) {
-    document.getElementById('schedule-list').innerHTML =
-      '<div class="empty-state"><div class="empty-state-icon">⚠️</div><div class="empty-state-text">불러오기 실패</div></div>';
+  } catch(err) {
+    document.getElementById('schedule-list').innerHTML='<div class="empty-wrap"><div class="empty-icon">⚠️</div><div>불러오기 실패</div></div>';
   }
 }
 
 // ── 스케줄 렌더 ──
 function renderScheduleList() {
-  const listEl = document.getElementById('schedule-list');
-  const todayStr = getTodayStr();
+  const list = document.getElementById('schedule-list');
+  const memberMap={}, contractMap={}, instrMap={};
+  allMembers.forEach(m=>memberMap[m.id]=m);
+  allContracts.forEach(c=>contractMap[c.id]=c);
+  allInstrs.forEach(i=>instrMap[i.id]=i);
 
-  // 선택 날짜의 스케줄 (내 담당만, 또는 L1이면 전체)
-  let daySchedules = allSchedules
-    .filter(s => s.date === selectedDateStr)
-    .sort((a, b) => (a.time||'').localeCompare(b.time||''));
+  let items = allSchedules
+    .filter(s=>s.date===selectedDate && s.status!=='취소')
+    .sort((a,b)=>(a.time||'').localeCompare(b.time||''));
 
-  // L2 강사는 본인 스케줄만
-  if (instrInfo && instrInfo.id && !instrInfo.isDirector) {
-    daySchedules = daySchedules.filter(s => s.instructorId === instrInfo.id);
+  // 권한 필터
+  if (myLevel !== 1) {
+    // L2: 레지나 제외 (강사 이름이 Regina인 경우)
+    const reginaIds = allInstrs.filter(i=>i.name==='Regina'||i.name==='Regina 원장').map(i=>i.id);
+    items = items.filter(s=>!reginaIds.includes(s.instructorId));
   }
 
-  if (daySchedules.length === 0) {
-    const isToday = selectedDateStr === todayStr;
-    listEl.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-state-icon">${isToday ? '☀️' : '📅'}</div>
-        <div class="empty-state-text">${isToday ? '오늘은 예약이 없어요' : '예약이 없습니다'}</div>
-      </div>`;
+  // 강사 필터
+  if (instrFilter) items = items.filter(s=>s.instructorId===instrFilter);
+
+  if (items.length===0) {
+    list.innerHTML=`<div class="empty-wrap"><div class="empty-icon">📅</div><div>${selectedDate===getTodayStr()?'오늘은 예약이 없어요':'예약이 없습니다'}</div></div>`;
     return;
   }
 
-  const memberMap = {};
-  allMembers.forEach(m => { memberMap[m.id] = m; });
-  const contractMap = {};
-  allContracts.forEach(c => { contractMap[c.id] = c; });
-
-  listEl.innerHTML = `
-    <div class="date-header">${formatDateLabel(selectedDateStr)}</div>
-    ${daySchedules.map(s => renderCard(s, memberMap, contractMap)).join('')}
-  `;
+  const d=new Date(selectedDate+'T00:00:00');
+  const dayNames=['일','월','화','수','목','금','토'];
+  const todayTag=selectedDate===getTodayStr()?` · 오늘`:'';
+  list.innerHTML=`<div class="date-header">${d.getMonth()+1}월 ${d.getDate()}일 (${dayNames[d.getDay()]})${todayTag}</div>`+
+    items.map(s=>buildCard(s,memberMap,contractMap,instrMap)).join('');
 }
 
-function formatDateLabel(dateStr) {
-  const d = new Date(dateStr + 'T00:00:00');
-  const days = ['일','월','화','수','목','금','토'];
-  const todayStr = getTodayStr();
-  const label = dateStr === todayStr ? ' · 오늘' : '';
-  return `${d.getMonth()+1}월 ${d.getDate()}일 (${days[d.getDay()]})${label}`;
-}
+function buildCard(s, memberMap, contractMap, instrMap) {
+  const m=memberMap[s.memberId]||{};
+  const c=contractMap[s.contractId]||{};
+  const instr=instrMap[s.instructorId]||{};
+  const status=s.status||'확정';
+  const label={확정:'예약',참석:'출석',노쇼:'노쇼',취소:'취소'}[status]||status;
+  const rem=c.remainingSessions!=null?`잔여 ${c.remainingSessions}회 · `:'';
+  const isDone=status==='참석'||status==='노쇼';
 
-function renderCard(s, memberMap, contractMap) {
-  const member = memberMap[s.memberId] || {};
-  const contract = contractMap[s.contractId] || {};
-  const status = s.status || '확정';
-  const remaining = contract.remainingSessions != null ? `잔여 ${contract.remainingSessions}회` : '';
-  const statusLabel = { '확정':'예약', '참석':'출석', '노쇼':'노쇼', '취소':'취소' }[status] || status;
-
-  const isDone = status === '참석' || status === '노쇼';
-
-  return `
-  <div class="schedule-card status-${status}" id="card-${s.id}">
-    <div class="card-main" onclick="toggleCard('${s.id}', '${status}')">
+  return `<div class="schedule-card s-${status}" id="card-${s.id}">
+    <div class="card-main" onclick="toggleCard('${s.id}')">
       <div class="card-time">${s.time||'—'}</div>
       <div class="card-info">
-        <div class="card-member">${member.name || '—'}</div>
-        <div class="card-program">${contract.title || '—'}</div>
-        ${remaining ? `<div class="card-sessions">${remaining}</div>` : ''}
+        <div class="card-member">${m.name||'—'}</div>
+        <div class="card-sub">${rem}${c.title||'—'}</div>
+        <div class="card-instr">${instr.name||'—'}</div>
       </div>
-      <div class="card-status s-${status}">${statusLabel}</div>
+      <div class="card-badge cb-${status}">${label}</div>
     </div>
-
-    ${!isDone ? `
-    <!-- 미처리: 참석/노쇼/취소 버튼 -->
-    <div class="card-actions" id="actions-${s.id}">
-      <div class="action-row">
-        <button class="action-btn btn-attend" onclick="startAttend('${s.id}','참석','${s.memberId}','${s.contractId}','${s.instructorId||''}')">
-          ✓ 출석
-        </button>
-        <button class="action-btn btn-noshow" onclick="startAttend('${s.id}','노쇼','${s.memberId}','${s.contractId}','${s.instructorId||''}')">
-          ✕ 노쇼
-        </button>
+    <div class="card-panel" id="panel-${s.id}">
+      <!-- 패널 탭 -->
+      <div class="panel-tabs">
+        <div class="panel-tab active" id="ptab-attend-${s.id}" onclick="switchPanelTab('${s.id}','attend')">출석체크</div>
+        <div class="panel-tab" id="ptab-history-${s.id}" onclick="switchPanelTab('${s.id}','history')">히스토리</div>
       </div>
-      <button class="action-btn btn-cancel" onclick="cancelSchedule('${s.id}')">취소 처리</button>
-    </div>
-    ` : `
-    <!-- 처리완료: 메모 수정 + 되돌리기 -->
-    <div class="card-actions" id="actions-${s.id}">
-      <div class="memo-label">메모 수정</div>
-      <select class="cond-btn" id="cond-edit-${s.id}" style="padding:10px;border-radius:8px;border:1px solid var(--border);font-size:13px;font-family:inherit;background:var(--white);">
-        <option value="">컨디션 선택</option>
-        <option>최상</option><option>좋음</option><option>보통</option><option>피로</option><option>통증</option>
-      </select>
-      <textarea class="memo-input" id="memo-edit-${s.id}" placeholder="메모 입력"></textarea>
-      <button class="confirm-btn" style="background:var(--text-muted);" onclick="saveMemoEdit('${s.id}','${s.contractId}','${status}')">저장</button>
-      <button class="revert-btn" onclick="revertStatus('${s.id}','${status}','${s.memberId}','${s.contractId}')">
-        ${status === '참석' ? '출석 → 노쇼로 변경' : '노쇼 → 출석으로 변경'}
-      </button>
-    </div>
-    `}
-
-    <!-- 참석/노쇼 처리 시 메모 입력 -->
-    <div class="memo-section" id="memo-${s.id}">
-      <div class="memo-label">컨디션</div>
-      <div class="cond-row">
-        ${['최상','좋음','보통','피로','통증'].map(c =>
-          `<button class="cond-btn" id="cond-${s.id}-${c}" onclick="selectCond('${s.id}','${c}')">${c}</button>`
-        ).join('')}
+      <!-- 출석체크 탭 내용 -->
+      <div class="panel-content" id="pcon-attend-${s.id}">
+        ${buildAttendContent(s, isDone, status)}
       </div>
-      <textarea class="memo-input" id="memo-${s.id}-text" placeholder="수업 메모 (선택사항)"></textarea>
-      <button class="confirm-btn" id="confirm-btn-${s.id}" onclick="">확인</button>
+      <!-- 히스토리 탭 내용 -->
+      <div class="panel-content" id="pcon-history-${s.id}" style="display:none;">
+        <div class="loading-wrap" style="padding:20px 0;"><div class="spinner"></div></div>
+      </div>
     </div>
   </div>`;
 }
 
-// ── 카드 열기/닫기 ──
-function toggleCard(id, status) {
-  const actionsEl = document.getElementById(`actions-${id}`);
-  if (!actionsEl) return;
-  const isOpen = actionsEl.classList.contains('open');
-  // 다른 카드 닫기
-  document.querySelectorAll('.card-actions.open, .memo-section.open').forEach(el => {
-    el.classList.remove('open');
+function buildAttendContent(s, isDone, status) {
+  if (!isDone) {
+    return `
+      <div class="attend-row">
+        <button class="attend-btn btn-att" onclick="startAttend('${s.id}','참석','${s.memberId}','${s.contractId}','${s.instructorId||''}')">✓ 출석</button>
+        <button class="attend-btn btn-nos" onclick="startAttend('${s.id}','노쇼','${s.memberId}','${s.contractId}','${s.instructorId||''}')">✕ 노쇼</button>
+      </div>
+      <button class="attend-btn btn-can" style="width:100%;" onclick="cancelSchedule('${s.id}')">취소 처리</button>
+      <div id="attend-form-${s.id}" style="display:none;margin-top:12px;">
+        <div class="cond-label" id="cond-label-${s.id}">컨디션</div>
+        <div class="cond-row" id="cond-row-${s.id}">
+          ${['최상','좋음','보통','피로','통증'].map(c=>`<button class="cond-btn" id="cb-${s.id}-${c}" onclick="selectCond('${s.id}','${c}')">${c}</button>`).join('')}
+        </div>
+        <textarea class="memo-ta" id="memo-${s.id}" placeholder="메모 (선택사항)"></textarea>
+        <button class="confirm-btn" id="cfbtn-${s.id}" onclick="">확인</button>
+      </div>`;
+  } else {
+    return `
+      <div style="margin-bottom:10px;">
+        <select id="cond-edit-${s.id}" class="field-select">
+          <option value="">컨디션 선택</option>
+          ${['최상','좋음','보통','피로','통증'].map(c=>`<option>${c}</option>`).join('')}
+        </select>
+      </div>
+      <textarea class="memo-ta" id="memo-edit-${s.id}" placeholder="메모 수정"></textarea>
+      <button class="confirm-btn" style="background:var(--muted);margin-bottom:8px;" onclick="saveMemoEdit('${s.id}','${s.contractId}',this)">메모 저장</button>
+      <button class="attend-btn btn-rev" style="width:100%;" onclick="revertStatus('${s.id}','${status}','${s.memberId}','${s.contractId}')">
+        ${status==='참석'?'출석 → 노쇼로 변경':'노쇼 → 출석으로 변경'}
+      </button>`;
+  }
+}
+
+// ── 카드 토글 ──
+function toggleCard(id) {
+  const panel = document.getElementById(`panel-${id}`);
+  const isOpen = panel.classList.contains('open');
+  document.querySelectorAll('.card-panel.open').forEach(p=>p.classList.remove('open'));
+  if (!isOpen) panel.classList.add('open');
+}
+
+// ── 패널 탭 전환 ──
+function switchPanelTab(id, tab) {
+  ['attend','history'].forEach(t=>{
+    document.getElementById(`ptab-${t}-${id}`)?.classList.toggle('active', t===tab);
+    const con=document.getElementById(`pcon-${t}-${id}`);
+    if (con) con.style.display = t===tab?'block':'none';
   });
-  if (!isOpen) actionsEl.classList.add('open');
+  if (tab==='history') loadHistory(id);
+}
+
+// ── 히스토리 로드 ──
+async function loadHistory(scheduleId) {
+  const s = allSchedules.find(sc=>sc.id===scheduleId);
+  if (!s?.contractId) {
+    document.getElementById(`pcon-history-${scheduleId}`).innerHTML='<div class="history-empty">계약 정보 없음</div>';
+    return;
+  }
+  try {
+    const res = await fetch(`${API}/api/sessions?contractId=${s.contractId}`);
+    const data = await res.json();
+    const sessions = (data.sessions||[])
+      .filter(se=>se.attendanceStatus==='참석'||se.attendanceStatus==='노쇼')
+      .sort((a,b)=>b.date.localeCompare(a.date));
+
+    if (sessions.length===0) {
+      document.getElementById(`pcon-history-${scheduleId}`).innerHTML='<div class="history-empty">수업 기록 없음</div>';
+      return;
+    }
+    document.getElementById(`pcon-history-${scheduleId}`).innerHTML = sessions.map(se=>`
+      <div class="history-item">
+        <div class="history-date">${se.date}<br><span style="font-size:11px;">${se.time||''}</span></div>
+        <div class="history-body">
+          <div class="history-status hs-${se.attendanceStatus}">${se.attendanceStatus==='참석'?'출석':'노쇼'}</div>
+          ${se.condition?`<span class="history-cond">${se.condition}</span>`:''}
+          ${se.memo&&se.memo!=='NO-SHOW'?`<div class="history-memo">${se.memo}</div>`:''}
+        </div>
+      </div>`).join('');
+  } catch(e) {
+    document.getElementById(`pcon-history-${scheduleId}`).innerHTML='<div class="history-empty">불러오기 실패</div>';
+  }
 }
 
 // ── 컨디션 선택 ──
-function selectCond(scheduleId, cond) {
-  document.querySelectorAll(`[id^="cond-${scheduleId}-"]`).forEach(btn => btn.classList.remove('active'));
-  document.getElementById(`cond-${scheduleId}-${cond}`)?.classList.add('active');
+function selectCond(id, cond) {
+  document.querySelectorAll(`[id^="cb-${id}-"]`).forEach(b=>b.classList.remove('active'));
+  document.getElementById(`cb-${id}-${cond}`)?.classList.add('active');
 }
 
-// ── 참석/노쇼 처리 시작 ──
+// ── 출석 처리 시작 ──
 function startAttend(scheduleId, status, memberId, contractId, instructorId) {
-  // 액션 닫고 메모 섹션 열기
-  const actionsEl = document.getElementById(`actions-${scheduleId}`);
-  const memoEl = document.getElementById(`memo-${scheduleId}`);
-  if (actionsEl) actionsEl.classList.remove('open');
-  if (memoEl) memoEl.classList.add('open');
-
-  // 노쇼는 컨디션 없이 바로 확인 버튼 표시
-  const condRow = memoEl?.querySelector('.cond-row');
-  const condLabel = memoEl?.querySelector('.memo-label');
-  if (status === '노쇼') {
-    if (condRow) condRow.style.display = 'none';
-    if (condLabel) condLabel.style.display = 'none';
+  const form = document.getElementById(`attend-form-${scheduleId}`);
+  if (!form) return;
+  form.style.display='block';
+  const condRow=document.getElementById(`cond-row-${scheduleId}`);
+  const condLabel=document.getElementById(`cond-label-${scheduleId}`);
+  if (status==='노쇼') {
+    if(condRow) condRow.style.display='none';
+    if(condLabel) condLabel.style.display='none';
   } else {
-    if (condRow) condRow.style.display = 'flex';
-    if (condLabel) condLabel.style.display = 'block';
-    // 기본 컨디션 '보통' 선택
-    selectCond(scheduleId, '보통');
+    if(condRow) condRow.style.display='flex';
+    if(condLabel) condLabel.style.display='block';
+    selectCond(scheduleId,'보통');
   }
-
-  // 확인 버튼에 함수 바인딩
-  const confirmBtn = document.getElementById(`confirm-btn-${scheduleId}`);
-  if (confirmBtn) {
-    confirmBtn.textContent = status === '참석' ? '✓ 출석 완료' : '✕ 노쇼 처리';
-    confirmBtn.onclick = () => confirmAttend(scheduleId, status, memberId, contractId, instructorId);
+  const btn=document.getElementById(`cfbtn-${scheduleId}`);
+  if (btn) {
+    btn.textContent = status==='참석'?'✓ 출석 완료':'✕ 노쇼 처리';
+    btn.className=`confirm-btn ${status==='참석'?'success':'danger'}`;
+    btn.onclick=()=>confirmAttend(scheduleId,status,memberId,contractId,instructorId);
   }
 }
 
 // ── 출석/노쇼 확정 ──
 async function confirmAttend(scheduleId, status, memberId, contractId, instructorId) {
-  const s = allSchedules.find(sc => sc.id === scheduleId);
-  const member = allMembers.find(m => m.id === memberId);
-  const condition = status === '참석'
-    ? (document.querySelector(`[id^="cond-${scheduleId}-"].active`)?.textContent || '보통')
-    : '';
-  const memo = document.getElementById(`memo-${scheduleId}-text`)?.value || '';
-
+  const s=allSchedules.find(sc=>sc.id===scheduleId);
+  const member=allMembers.find(m=>m.id===memberId);
+  const condition=status==='참석'?(document.querySelector(`[id^="cb-${scheduleId}-"].active`)?.textContent||'보통'):'';
+  const memo=document.getElementById(`memo-${scheduleId}`)?.value||'';
   showToast('처리 중...');
-
   try {
-    // 1. 스케줄 상태 업데이트
-    await fetch(`${API}/api/schedules?id=${scheduleId}`, {
-      method: 'PUT',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ status }),
-    });
-
-    // 2. 세션 생성
-    await fetch(`${API}/api/sessions`, {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({
-        memberName: member?.name || '',
-        memberId,
-        contractId,
-        instructorId,
-        scheduleId,
-        date: s?.date || selectedDateStr,
-        time: s?.time || '',
-        attendanceStatus: status,
-        condition,
-        memo: status === '노쇼' ? (memo || 'NO-SHOW') : memo,
-      }),
-    });
-
-    showToast(status === '참석' ? '출석 처리 완료!' : '노쇼 처리 완료', status === '참석' ? 'success' : 'error');
+    await Promise.all([
+      fetch(`${API}/api/schedules?id=${scheduleId}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({status})}),
+      fetch(`${API}/api/sessions`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+        memberName:member?.name||'',memberId,contractId,instructorId,scheduleId,
+        date:s?.date||selectedDate,time:s?.time||'',
+        attendanceStatus:status,condition,
+        memo:status==='노쇼'?(memo||'NO-SHOW'):memo,
+      })})
+    ]);
+    showToast(status==='참석'?'출석 처리 완료!':'노쇼 처리 완료',status==='참석'?'success':'error');
     await loadSchedules();
-  } catch(e) {
-    showToast('처리 실패', 'error');
-  }
+  } catch(e) { showToast('처리 실패','error'); }
 }
 
-// ── 취소 처리 ──
-async function cancelSchedule(scheduleId) {
-  if (!confirm('이 예약을 취소하시겠습니까?')) return;
+// ── 취소 ──
+async function cancelSchedule(id) {
+  if(!confirm('이 예약을 취소하시겠습니까?')) return;
   try {
-    await fetch(`${API}/api/schedules?id=${scheduleId}`, {
-      method: 'PUT',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ status: '취소' }),
-    });
+    await fetch(`${API}/api/schedules?id=${id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:'취소'})});
     showToast('취소 처리 완료');
     await loadSchedules();
-  } catch(e) {
-    showToast('처리 실패', 'error');
-  }
+  } catch(e) { showToast('처리 실패','error'); }
 }
 
-// ── 메모 수정 저장 ──
-async function saveMemoEdit(scheduleId, contractId, currentStatus) {
-  const cond = document.getElementById(`cond-edit-${scheduleId}`)?.value || '';
-  const memo = document.getElementById(`memo-edit-${scheduleId}`)?.value || '';
-
+// ── 메모 저장 ──
+async function saveMemoEdit(scheduleId, contractId, btn) {
+  const cond=document.getElementById(`cond-edit-${scheduleId}`)?.value||'';
+  const memo=document.getElementById(`memo-edit-${scheduleId}`)?.value||'';
+  const s=allSchedules.find(sc=>sc.id===scheduleId);
   try {
-    // 해당 세션 찾아서 수정
-    const sRes = await fetch(`${API}/api/sessions?contractId=${contractId}`);
-    const sData = await sRes.json();
-    const s = allSchedules.find(sc => sc.id === scheduleId);
-    const session = (sData.sessions||[]).find(sess =>
-      sess.date === s?.date && sess.time === s?.time
-    );
-
+    const sRes=await fetch(`${API}/api/sessions?contractId=${contractId}`);
+    const sData=await sRes.json();
+    const session=(sData.sessions||[]).find(se=>se.date===s?.date&&se.time===s?.time);
     if (session) {
-      await fetch(`${API}/api/sessions?id=${session.id}`, {
-        method: 'PUT',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ condition: cond, memo }),
-      });
-      showToast('저장 완료', 'success');
-    } else {
-      showToast('세션 정보를 찾을 수 없습니다', 'error');
-    }
-  } catch(e) {
-    showToast('저장 실패', 'error');
-  }
+      await fetch(`${API}/api/sessions?id=${session.id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({condition:cond,memo})});
+      showToast('저장 완료','success');
+    } else { showToast('세션을 찾을 수 없습니다','error'); }
+  } catch(e) { showToast('저장 실패','error'); }
 }
 
-// ── 상태 되돌리기 (참석↔노쇼) ──
+// ── 상태 되돌리기 ──
 async function revertStatus(scheduleId, currentStatus, memberId, contractId) {
-  const newStatus = currentStatus === '참석' ? '노쇼' : '참석';
-  if (!confirm(`${currentStatus} → ${newStatus}로 변경하시겠습니까?`)) return;
-
+  const newStatus=currentStatus==='참석'?'노쇼':'참석';
+  if(!confirm(`${currentStatus} → ${newStatus}로 변경하시겠습니까?`)) return;
+  const s=allSchedules.find(sc=>sc.id===scheduleId);
   try {
-    // 스케줄 상태 변경
-    await fetch(`${API}/api/schedules?id=${scheduleId}`, {
-      method: 'PUT',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ status: newStatus }),
-    });
-
-    // 세션 상태 변경 + UsedSessions 조정
-    const sRes = await fetch(`${API}/api/sessions?contractId=${contractId}`);
-    const sData = await sRes.json();
-    const s = allSchedules.find(sc => sc.id === scheduleId);
-    const session = (sData.sessions||[]).find(sess =>
-      sess.date === s?.date && sess.time === s?.time
-    );
+    const sRes=await fetch(`${API}/api/sessions?contractId=${contractId}`);
+    const sData=await sRes.json();
+    const session=(sData.sessions||[]).find(se=>se.date===s?.date&&se.time===s?.time);
+    await fetch(`${API}/api/schedules?id=${scheduleId}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:newStatus})});
     if (session) {
-      await fetch(`${API}/api/sessions?id=${session.id}`, {
-        method: 'PUT',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({
-          attendanceStatus: newStatus,
-          prevAttendanceStatus: currentStatus,
-          contractId,
-        }),
-      });
+      await fetch(`${API}/api/sessions?id=${session.id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({attendanceStatus:newStatus,prevAttendanceStatus:currentStatus,contractId})});
     }
-
-    showToast(`${newStatus}로 변경 완료`, 'success');
+    showToast(`${newStatus}로 변경 완료`,'success');
     await loadSchedules();
-  } catch(e) {
-    showToast('변경 실패', 'error');
-  }
+  } catch(e) { showToast('변경 실패','error'); }
+}
+
+// ── 신규 예약 모달 ──
+function initTimeGrid() {
+  document.getElementById('ns-time-grid').innerHTML = TIMES.map(t=>
+    `<button class="time-chip" onclick="selectTime('${t}',this)">${t}</button>`
+  ).join('');
+}
+
+function initMemberSelect() {
+  const sel=document.getElementById('ns-member');
+  sel.innerHTML='<option value="">회원 선택</option>'+
+    allMembers.map(m=>`<option value="${m.id}">${m.name}</option>`).join('');
+}
+
+async function onNsMemberChange() {
+  const memberId=document.getElementById('ns-member').value;
+  const sel=document.getElementById('ns-contract');
+  if (!memberId) { sel.innerHTML='<option value="">회원을 먼저 선택하세요</option>'; return; }
+  const contracts=allContracts.filter(c=>c.memberId===memberId&&c.status==='진행중');
+  sel.innerHTML=contracts.length
+    ?contracts.map(c=>`<option value="${c.id}">${c.title} (잔여 ${c.remainingSessions}회)</option>`).join('')
+    :'<option value="">진행중 계약 없음</option>';
+}
+
+function selectTime(t,el) {
+  document.querySelectorAll('#ns-time-grid .time-chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function selectDay(d,el) {
+  document.querySelectorAll('#ns-recurring-day-row .time-chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function onRecurringChange() {
+  const checked=document.getElementById('ns-recurring').checked;
+  document.getElementById('ns-recurring-day-row').style.display=checked?'block':'none';
+}
+
+function openNewScheduleModal() {
+  // 오늘 날짜 기본값
+  document.getElementById('ns-date').value=selectedDate||getTodayStr();
+  document.getElementById('ns-member').value='';
+  document.getElementById('ns-contract').innerHTML='<option value="">회원을 먼저 선택하세요</option>';
+  document.getElementById('ns-recurring').checked=false;
+  document.getElementById('ns-recurring-day-row').style.display='none';
+  document.querySelectorAll('#ns-time-grid .time-chip').forEach(c=>c.classList.remove('active'));
+  document.getElementById('modal-new-schedule').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modal-new-schedule').classList.remove('open');
+}
+
+async function saveNewSchedule() {
+  const memberId=document.getElementById('ns-member').value;
+  const contractId=document.getElementById('ns-contract').value;
+  const date=document.getElementById('ns-date').value;
+  const timeEl=document.querySelector('#ns-time-grid .time-chip.active');
+  const time=timeEl?.textContent||'';
+  const isRecurring=document.getElementById('ns-recurring').checked;
+  const recurringDay=document.querySelector('#ns-recurring-day-row .time-chip.active')?.textContent||'';
+
+  if (!memberId) { showToast('회원을 선택하세요','error'); return; }
+  if (!contractId) { showToast('계약을 선택하세요','error'); return; }
+  if (!date) { showToast('날짜를 선택하세요','error'); return; }
+  if (!time) { showToast('시간을 선택하세요','error'); return; }
+  if (isRecurring && !recurringDay) { showToast('반복 요일을 선택하세요','error'); return; }
+
+  const member=allMembers.find(m=>m.id===memberId);
+  const contract=allContracts.find(c=>c.id===contractId);
+  // 로그인한 강사의 instructorId 사용
+  const instructorId = myInstr?.isDirector ? (allInstrs.find(i=>i.name==='Regina')?.id||'') : myInstr?.id||'';
+  const instrName = myInstr?.name||'';
+
+  showToast('등록 중...');
+  try {
+    const res=await fetch(`${API}/api/schedules`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+      memberId,contractId,instructorId,
+      memberName:member?.name||'',
+      instructorName:instrName,
+      date,time,
+      type:'회원예약',
+      isRecurring,
+      recurringDay:isRecurring?recurringDay:'',
+      contractEndDate:isRecurring?(contract?.endDate||''):'',
+      status:'확정',
+    })});
+    const data=await res.json();
+    if (res.ok) {
+      closeModal();
+      showToast(`예약 ${data.count||1}건 등록 완료`,'success');
+      await loadSchedules();
+    } else { showToast('등록 실패: '+(data.error||'오류'),'error'); }
+  } catch(e) { showToast('등록 실패','error'); }
 }
 
 // ── 토스트 ──
-let toastTimer = null;
-function showToast(msg, type = '') {
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.className = `toast show${type ? ' '+type : ''}`;
+let toastTimer=null;
+function showToast(msg,type='') {
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.className=`toast show${type?' '+type:''}`;
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
+  toastTimer=setTimeout(()=>el.classList.remove('show'),2200);
 }
 
-// ── 세션 복원 ──
-window.addEventListener('DOMContentLoaded', async () => {
-  const savedLevel = sessionStorage.getItem('instrLevel');
-  const savedPw = sessionStorage.getItem('instrPw');
-  if (savedLevel && savedPw) {
-    await initApp(parseInt(savedLevel), savedPw);
-  }
+// ── 자동 로그인 복원 ──
+window.addEventListener('DOMContentLoaded', async()=>{
+  const level=sessionStorage.getItem('instrLevel');
+  if (level) await initApp(parseInt(level));
 });
 </script>
 </body>
