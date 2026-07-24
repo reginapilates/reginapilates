@@ -91,6 +91,7 @@ export async function onRequest(context) {
         pauseDate: page.properties.PauseDate?.date?.start || '',
         resumeDate: page.properties.ResumeDate?.date?.start || '',
         note: page.properties.Note?.rich_text?.[0]?.plain_text || '',
+        alertDismissed: page.properties.AlertDismissed?.checkbox || false,
       }));
 
       // 2. Programs → Instructors 병렬 조회 (순차 N번 → 병렬 1라운드)
@@ -202,6 +203,7 @@ export async function onRequest(context) {
             Program: contractData.programId ? { relation: [{ id: contractData.programId }] } : undefined,
             Sessions: { number: contractData.sessions || 0 },
             UsedSessions: { number: 0 }, // 신규 계약은 0으로 초기화
+            AlertDismissed: { checkbox: false },
             TotalAmount: { number: contractData.totalAmount || 0 },
             PaymentMethod: contractData.paymentMethod ? { select: { name: contractData.paymentMethod } } : undefined,
             StartDate: contractData.startDate ? { date: { start: contractData.startDate } } : undefined,
@@ -244,6 +246,7 @@ export async function onRequest(context) {
       else if (body.resumeDate === null) properties.ResumeDate = { date: null };
       if (body.endDate) properties.EndDate = { date: { start: body.endDate } };
       if (body.note !== undefined) properties.Note = { rich_text: [{ text: { content: body.note } }] };
+      if (body.alertDismissed !== undefined) properties.AlertDismissed = { checkbox: body.alertDismissed };
 
       const response = await fetch(`https://api.notion.com/v1/pages/${contractId}`, {
         method: 'PATCH',
