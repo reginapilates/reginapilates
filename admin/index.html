@@ -1575,15 +1575,33 @@ function showTab(tab, el) {
 }
 
 // ── INIT ──
+let _l1InstructorIds = new Set(); // L1 강사(레벨1)의 instructorId 집합
+
 function applyPermissions() {
   if (ADMIN_LEVEL === 1) return; // L1 원장은 모든 권한
 
-  // L2 강사: 프로그램/계약/강사 관리 메뉴 숨기기
+  // L2+ 강사: 프로그램/계약/강사 관리 메뉴 숨기기
   document.querySelectorAll('.l1-only').forEach(el => {
     el.style.display = 'none';
   });
+}
 
+// L1 강사 ID 목록 초기화 (allInstructors 로드 후 호출)
+function initL1InstructorIds() {
+  _l1InstructorIds = new Set(
+    allInstructors.filter(i => i.level === '1').map(i => i.id)
+  );
+}
 
+// L2+ 강사가 볼 수 없는 회원인지 (L1 강사 담당 회원)
+function isHiddenForL2(memberId) {
+  if (ADMIN_LEVEL === 1) return false;
+  const contracts = allContractsByMember[memberId] || [];
+  // 진행중 또는 가장 최근 계약의 담당강사가 L1이면 숨김
+  const activeC = contracts.find(c => c.status === '진행중') ||
+    [...contracts].sort((a,b) => (b.startDate||'').localeCompare(a.startDate||''))[0];
+  if (!activeC) return false;
+  return _l1InstructorIds.has(activeC.instructorId);
 }
 
 // 마스킹 함수
@@ -2354,11 +2372,17 @@ async function loadMembers() {
       }
     });
 
-    // 강사 필터 셀렉트 초기화
+    // L1 강사 ID 초기화
+    initL1InstructorIds();
+
+    // 강사 필터 셀렉트 초기화 (L2+는 L1 강사 제외)
     const instrSel = document.getElementById('member-filter-instructor');
     if (instrSel && allInstructors.length) {
+      const visibleInstrs = ADMIN_LEVEL === 1
+        ? allInstructors
+        : allInstructors.filter(i => !_l1InstructorIds.has(i.id));
       instrSel.innerHTML = '<option value="">전체 강사</option>';
-      allInstructors.forEach(i => {
+      visibleInstrs.forEach(i => {
         instrSel.innerHTML += `<option value="${i.id}">${i.name}</option>`;
       });
     }
@@ -2398,6 +2422,9 @@ function renderMemberTable() {
   const filterInstructor = document.getElementById('member-filter-instructor')?.value || '';
 
   let members = allMembers.filter(m => {
+    // L2+ 강사: L1 담당 회원 숨김
+    if (isHiddenForL2(m.id)) return false;
+
     const matchSearch = !search ||
       m.name.includes(search) ||
       (m.phone||'').includes(search);
@@ -4400,7 +4427,8 @@ function renderCalendar() {
   });
 
   // 강사 범례 (필터 겸용)
-  const activeInstrs = allInstructors.filter(i => i.isActive);
+  // L2+ 강사: 필터 버튼에서 L1 강사 제외
+  const activeInstrs = allInstructors.filter(i => i.isActive && (ADMIN_LEVEL === 1 || !_l1InstructorIds.has(i.id)));
   ['instructor-filter','instructor-filter2'].forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
@@ -4440,7 +4468,9 @@ function renderCalendar() {
       const slots = allSchedules.filter(s =>
         s.time === time && s.date === dateStr &&
         s.status !== '취소' &&
-        (filteredInstrs.length === 0 || filteredInstrs.some(fi => fi.id === s.instructorId))
+        (filteredInstrs.length === 0 || filteredInstrs.some(fi => fi.id === s.instructorId)) &&
+        // L2+ 강사: L1 담당 예약 숨김
+        (ADMIN_LEVEL === 1 || !_l1InstructorIds.has(s.instructorId))
       );
 
       const blocks = slots.map(s => {
