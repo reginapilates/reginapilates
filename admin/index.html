@@ -2069,8 +2069,7 @@ function downloadReportExcel(type) {
 
 // ── 알람 해제 ──
 async function dismissAlert(contractId) {
-  if (!confirm('이 알람을 해제하시겠습니까?
-해제 후에도 재계약 시 자동으로 해제됩니다.')) return;
+  if (!confirm('이 알람을 해제하시겠습니까? 해제 후에도 재계약 시 자동으로 초기화됩니다.')) return;
   try {
     const res = await fetch(`${API}/api/contracts?id=${contractId}`, {
       method: 'PUT',
