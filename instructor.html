@@ -193,9 +193,12 @@ body { font-family:'Noto Sans KR',sans-serif; background:var(--bg); color:var(--
 
   <!-- 날짜 탭 -->
   <div class="date-nav">
-    <button class="date-arrow" onclick="shiftWeek(-1)">‹</button>
+    <button class="date-arrow" onclick="shiftDates(-1)">‹</button>
     <div class="date-tabs" id="date-tabs"></div>
-    <button class="date-arrow" onclick="shiftWeek(1)">›</button>
+    <button class="date-arrow" onclick="shiftDates(1)">›</button>
+  </div>
+  <div style="background:var(--white);border-bottom:1px solid var(--border);padding:6px 16px;">
+    <button onclick="goToday()" style="background:var(--accent);color:#fff;border:none;border-radius:20px;padding:7px 18px;font-size:13px;font-family:inherit;font-weight:600;cursor:pointer;letter-spacing:.03em;">오늘</button>
   </div>
 
   <!-- 강사 필터 -->
@@ -266,7 +269,7 @@ let allMembers = [];
 let allContracts = [];
 let allSchedules = [];
 let selectedDate = '';
-let weekOffset = 0;
+let dateOffset = 0; // 오늘 기준 날짜 이동 (일 단위, 평일만)
 let instrFilter = '';        // 강사 필터 ID
 
 // ── 유틸 ──
@@ -274,13 +277,31 @@ function toDateStr(d) {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 function getTodayStr() { return toDateStr(new Date()); }
-function getWeekDates(offset=0) {
-  const base = new Date();
-  base.setDate(base.getDate() + offset*7);
-  const day = base.getDay()===0?6:base.getDay()-1;
-  const mon = new Date(base); mon.setDate(base.getDate()-day);
-  // 월~금만 (5일)
-  return Array.from({length:5},(_,i)=>{ const d=new Date(mon); d.setDate(mon.getDate()+i); return d; });
+// 날짜 기준으로 앞뒤 포함 평일 7개 윈도우 반환 (중심: centerDate)
+function getDateWindow(centerDateStr) {
+  const center = new Date(centerDateStr + 'T00:00:00');
+  const result = [];
+  // 앞으로 최대 30일 탐색해서 평일 7개 수집 (중심 포함)
+  // 중심 기준 앞 3일 + 중심 + 뒤 3일 = 7개 평일
+  const weekdays = [];
+  // 중심에서 앞으로 충분히 수집
+  for (let i = -10; i <= 10; i++) {
+    const d = new Date(center); d.setDate(center.getDate() + i);
+    if (d.getDay() !== 0 && d.getDay() !== 6) weekdays.push(new Date(d));
+  }
+  // 중심 날짜 인덱스 찾기
+  const ci = weekdays.findIndex(d => toDateStr(d) === centerDateStr);
+  if (ci < 0) return weekdays.slice(0, 7);
+  // 중심 기준 앞3 + 중심 + 뒤3 = 7개
+  const start = Math.max(0, ci - 3);
+  return weekdays.slice(start, start + 7);
+}
+
+// 평일만 이동 (dir: +1 다음 평일, -1 이전 평일)
+function getNextWeekday(dateStr, dir) {
+  const d = new Date(dateStr + 'T00:00:00');
+  do { d.setDate(d.getDate() + dir); } while (d.getDay() === 0 || d.getDay() === 6);
+  return toDateStr(d);
 }
 
 // ── 로그인/로그아웃 ──
@@ -339,10 +360,10 @@ async function initApp(level) {
   // 오늘이 주말이면 가장 가까운 평일로
   const todayD = new Date();
   const todayDay = todayD.getDay();
-  if (todayDay === 0) todayD.setDate(todayD.getDate()+1); // 일→월
-  else if (todayDay === 6) todayD.setDate(todayD.getDate()+2); // 토→월
+  if (todayDay === 0) todayD.setDate(todayD.getDate()+1);
+  else if (todayDay === 6) todayD.setDate(todayD.getDate()+2);
   selectedDate = toDateStr(todayD);
-  weekOffset = 0;
+  dateOffset = 0;
   renderDateTabs();
   await loadSchedules();
   initTimeGrid();
@@ -383,7 +404,7 @@ function setInstrFilter(id, el) {
 function renderDateTabs() {
   const todayStr = getTodayStr();
   const days = ['일','월','화','수','목','금','토'];
-  const dates = getWeekDates(weekOffset);
+  const dates = getDateWindow(selectedDate);
   const tabs = document.getElementById('date-tabs');
   tabs.innerHTML = dates.map(d => {
     const ds = toDateStr(d);
@@ -395,13 +416,25 @@ function renderDateTabs() {
   }).join('');
   setTimeout(()=>{ const a=tabs.querySelector('.active'); if(a) a.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'}); },50);
 }
-function selectDate(ds) { selectedDate=ds; renderDateTabs(); renderScheduleList(); }
-function shiftWeek(dir) {
-  weekOffset+=dir;
-  const dates=getWeekDates(weekOffset);
-  // 선택 날짜가 해당 주 범위 밖이면 첫날(월)로
-  const dateStrs=dates.map(toDateStr);
-  if (!dateStrs.includes(selectedDate)) selectedDate=dateStrs[0];
+
+function selectDate(ds) {
+  selectedDate = ds;
+  renderDateTabs();
+  loadSchedules();
+}
+
+function shiftDates(dir) {
+  // dir: +1 다음 평일, -1 이전 평일
+  selectedDate = getNextWeekday(selectedDate, dir);
+  renderDateTabs();
+  loadSchedules();
+}
+
+function goToday() {
+  const todayD = new Date();
+  if (todayD.getDay()===0) todayD.setDate(todayD.getDate()+1);
+  else if (todayD.getDay()===6) todayD.setDate(todayD.getDate()+2);
+  selectedDate = toDateStr(todayD);
   renderDateTabs();
   loadSchedules();
 }
@@ -409,8 +442,11 @@ function shiftWeek(dir) {
 // ── 스케줄 로드 ──
 async function loadSchedules() {
   document.getElementById('schedule-list').innerHTML='<div class="loading-wrap"><div class="spinner"></div></div>';
-  const dates=getWeekDates(weekOffset);
-  const s=toDateStr(dates[0]), e=toDateStr(dates[dates.length-1]);
+  // 선택 날짜 전후 2주 범위를 한 번에 로드
+  const center = new Date(selectedDate+'T00:00:00');
+  const from = new Date(center); from.setDate(center.getDate()-14);
+  const to = new Date(center); to.setDate(center.getDate()+14);
+  const s=toDateStr(from), e=toDateStr(to);
   try {
     const res = await fetch(`${API}/api/schedules?startDate=${s}&endDate=${e}`);
     const data = await res.json();
