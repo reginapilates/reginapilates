@@ -140,7 +140,8 @@ export async function onRequest(context) {
         // 자동 만료 처리 (진행중인 계약만)
         if (c.status === '진행중') {
           const isExpired = c.endDate && c.endDate < today;
-          const isDepleted = remainingSessions === 0 && c.sessions > 0;
+          // 잔여 0회이지만 AlertDismissed=false면 알람 유지를 위해 자동 완료 처리 안 함
+          const isDepleted = remainingSessions === 0 && c.sessions > 0 && c.alertDismissed;
           if (isExpired || isDepleted) {
             autoExpirePromises.push(
               fetch(`https://api.notion.com/v1/pages/${c.id}`, {
