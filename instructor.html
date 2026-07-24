@@ -41,9 +41,11 @@ body { font-family:'Noto Sans KR',sans-serif; background:var(--bg); color:var(--
 .date-arrow { background:none; border:none; padding:14px 10px; font-size:20px; color:var(--muted); cursor:pointer; flex-shrink:0; }
 .date-tabs { display:flex; flex:1; gap:4px; padding:8px 2px; overflow-x:auto; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
 .date-tabs::-webkit-scrollbar { display:none; }
-.date-tab { flex-shrink:0; display:flex; flex-direction:column; align-items:center; padding:8px 13px; border-radius:10px; cursor:pointer; min-width:48px; }
+.date-tab { flex-shrink:0; display:flex; flex-direction:column; align-items:center; padding:8px 10px; border-radius:10px; cursor:pointer; min-width:48px; }
 .date-tab.active { background:var(--accent); color:#fff; }
-.date-tab .dday { font-size:10px; opacity:.65; margin-bottom:2px; }
+.date-tab .dmonth { font-size:9px; color:var(--success); font-weight:700; letter-spacing:.03em; height:12px; line-height:12px; margin-bottom:1px; }
+.date-tab.active .dmonth { color:rgba(255,255,255,0.8); }
+.date-tab .dday { font-size:10px; opacity:.65; margin-bottom:1px; }
 .date-tab .dnum { font-family:'Outfit',sans-serif; font-size:18px; font-weight:400; line-height:1; }
 .date-tab.today:not(.active) .dnum { color:var(--danger); font-weight:700; }
 
@@ -406,10 +408,17 @@ function renderDateTabs() {
   const days = ['일','월','화','수','목','금','토'];
   const dates = getDateWindow(selectedDate);
   const tabs = document.getElementById('date-tabs');
-  tabs.innerHTML = dates.map(d => {
+
+  tabs.innerHTML = dates.map((d, i) => {
     const ds = toDateStr(d);
     const isT = ds===todayStr, isSel = ds===selectedDate;
+    // 첫 번째 탭이거나 월이 바뀌는 경우 월 표시
+    const prevMonth = i > 0 ? dates[i-1].getMonth() : -1;
+    const showMonth = i === 0 || d.getMonth() !== prevMonth;
+    const monthLabel = showMonth ? `${d.getMonth()+1}월` : '';
+
     return `<div class="date-tab${isSel?' active':''}${isT?' today':''}" onclick="selectDate('${ds}')">
+      <span class="dmonth">${monthLabel}</span>
       <span class="dday">${days[d.getDay()]}</span>
       <span class="dnum">${d.getDate()}</span>
     </div>`;
