@@ -2357,7 +2357,7 @@ function renderMemberTable() {
     // 진행중/일시정지 우선, 없으면 가장 최근 계약(Trial 포함) 표시
     const activeContract = contracts.find(c => c.status === '진행중') ||
                            contracts.find(c => c.status === '일시정지') ||
-                           contracts.sort((a,b) => (b.startDate||'').localeCompare(a.startDate||''))[0];
+                           [...contracts].sort((a,b) => (b.startDate||'').localeCompare(a.startDate||''))[0];
     const used = activeContract?.usedSessions ?? 0;
     const total = activeContract?.sessions || 0;
     const progName = activeContract?.title || '';
