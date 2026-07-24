@@ -1627,19 +1627,32 @@ function initApp() {
 // ── REPORTS ──
 let rptAllMembers = [];
 let rptAllContracts = [];
+let rptLastVisitMap = {}; // 회원ID → 마지막 참석/노쇼 날짜
 let rptDataLoaded = false;
 
 async function loadReports() {
   if (!rptDataLoaded) {
     try {
-      const [mRes, cRes] = await Promise.all([
+      const [mRes, cRes, sRes] = await Promise.all([
         fetch(`${API}/api/members`),
         fetch(`${API}/api/contracts`),
+        fetch(`${API}/api/sessions?lastVisitOnly=true`),
       ]);
       const mData = await mRes.json();
       const cData = await cRes.json();
+      const sData = await sRes.json();
       rptAllMembers = mData.members || [];
       rptAllContracts = cData.contracts || [];
+      // 회원별 마지막 참석/노쇼 날짜
+      rptLastVisitMap = {};
+      (sData.sessions || []).forEach(s => {
+        if (!s.memberId) return;
+        if (s.attendanceStatus === '참석' || s.attendanceStatus === '노쇼') {
+          if (!rptLastVisitMap[s.memberId] || s.date > rptLastVisitMap[s.memberId]) {
+            rptLastVisitMap[s.memberId] = s.date;
+          }
+        }
+      });
       rptDataLoaded = true;
     } catch(e) {
       console.error('Report load error:', e);
@@ -1727,6 +1740,13 @@ function loadReportMonthly() {
 
   const totalAmount = contracts.reduce((s,c) => s + (c.totalAmount||0), 0);
 
+  const extractProg = (t) => {
+    if(!t||t==='—') return '—';
+    if(t.includes(' · ')){const p=t.split(' · ');return p.length>=3?p.slice(1,p.length-1).join(' · '):p[1]||t;}
+    if(t.includes(' - ')){const p=t.split(' - ');return p.slice(1).join(' - ');}
+    return t;
+  };
+
   const rows = contracts.map((c,i) => {
     const m = memberMap[c.memberId] || {};
     return `<tr>
@@ -1734,7 +1754,7 @@ function loadReportMonthly() {
       <td>${c.startDate||'—'}</td>
       <td style="cursor:pointer;color:var(--accent);" onclick="openMemberById('${c.memberId}')">${m.name||'—'}</td>
       <td>${maskPhone(m.phone||'')}</td>
-      <td>${c.title||'—'}</td>
+      <td>${extractProg(c.title)}</td>
       <td style="text-align:center;">${c.sessions||0}회</td>
       <td style="text-align:right;">${(c.totalAmount||0).toLocaleString()}원</td>
       <td>${c.startDate||''} ~ ${c.endDate||''}</td>
@@ -1747,7 +1767,7 @@ function loadReportMonthly() {
     <div style="margin-bottom:8px;font-size:13px;color:var(--text-muted);">${year}년 ${parseInt(month)}월 등록 회원 — 총 ${contracts.length}건</div>
     <table class="member-table" id="rpt-monthly-table">
       <thead><tr>
-        <th>연번</th><th>날짜</th><th>이름</th><th>전화번호</th>
+        <th>연번</th><th>계약일</th><th>이름</th><th>전화번호</th>
         <th>프로그램</th><th>횟수</th><th>가격</th><th>유효기간</th>
         <th>담당강사</th><th>비고</th>
       </tr></thead>
@@ -1764,6 +1784,13 @@ function loadReportMonthly() {
 function loadReportActive() {
   const memberMap = getMemberMap();
 
+  const extractProg = (t) => {
+    if(!t||t==='—') return '—';
+    if(t.includes(' · ')){const p=t.split(' · ');return p.length>=3?p.slice(1,p.length-1).join(' · '):p[1]||t;}
+    if(t.includes(' - ')){const p=t.split(' - ');return p.slice(1).join(' - ');}
+    return t;
+  };
+
   // 회원별 진행중 계약 중 가장 최근 것
   const activeMemberMap = {};
   rptAllContracts
@@ -1773,7 +1800,7 @@ function loadReportActive() {
       if (!activeMemberMap[c.memberId]) activeMemberMap[c.memberId] = c;
     });
 
-  // 회원별 최초 등록일 (가장 오래된 계약 startDate)
+  // 회원별 최초 계약일 (가장 오래된 계약 startDate)
   const firstContractMap = {};
   rptAllContracts
     .filter(c => c.startDate)
@@ -1789,13 +1816,18 @@ function loadReportActive() {
     const m = memberMap[c.memberId] || {};
     const firstDate = firstContractMap[c.memberId] || '—';
     const isReReg = firstDate !== c.startDate;
+    const progName = extractProg(c.title);
+    const remaining = c.remainingSessions ?? '—';
+    const remColor = remaining <= 5 ? 'color:#E67E22;font-weight:600;' : '';
     return `<tr>
       <td style="text-align:center;">${i+1}</td>
       <td style="cursor:pointer;color:var(--accent);" onclick="openMemberById('${c.memberId}')">${m.name||'—'}</td>
       <td>${maskPhone(m.phone||'')}</td>
+      <td>${progName}</td>
+      <td style="text-align:center;">${c.sessions||0}회</td>
+      <td style="text-align:center;${remColor}">${remaining}회</td>
       <td>${firstDate}</td>
       <td>${isReReg ? c.startDate : '—'}</td>
-      <td style="text-align:right;">${(c.totalAmount||0).toLocaleString()}원</td>
       <td>${c.instructorName||'—'}</td>
       <td>${c.note||''}</td>
     </tr>`;
@@ -1805,10 +1837,11 @@ function loadReportActive() {
     <div style="margin-bottom:8px;font-size:13px;color:var(--text-muted);">현재 진행중 계약 회원 — 총 ${activeList.length}명</div>
     <table class="member-table" id="rpt-active-table">
       <thead><tr>
-        <th>연번</th><th>이름</th><th>전화번호</th><th>최초등록일</th>
-        <th>재등록일</th><th>마지막등록가격</th><th>담당강사</th><th>비고</th>
+        <th>연번</th><th>이름</th><th>전화번호</th><th>프로그램</th>
+        <th style="text-align:center;">총 세션</th><th style="text-align:center;">잔여</th>
+        <th>최초계약일</th><th>재계약일</th><th>담당강사</th><th>비고</th>
       </tr></thead>
-      <tbody>${rows || '<tr><td colspan="8" class="loading">유효 회원이 없습니다</td></tr>'}</tbody>
+      <tbody>${rows || '<tr><td colspan="10" class="loading">유효 회원이 없습니다</td></tr>'}</tbody>
     </table>`;
 }
 
@@ -1840,14 +1873,24 @@ function loadReportExpired() {
 
   Object.keys(byYear).sort((a,b) => b.localeCompare(a)).forEach(yr => {
     const list = byYear[yr];
+    const extractProgE = (t) => {
+      if(!t||t==='—') return '—';
+      if(t.includes(' · ')){const p=t.split(' · ');return p.length>=3?p.slice(1,p.length-1).join(' · '):p[1]||t;}
+      if(t.includes(' - ')){const p=t.split(' - ');return p.slice(1).join(' - ');}
+      return t;
+    };
+
     const yearRows = list.map((c,i) => {
       const m = memberMap[c.memberId] || {};
+      const lastVisit = rptLastVisitMap[c.memberId] || '—';
       return `<tr>
         <td style="text-align:center;">${i+1}</td>
         <td style="cursor:pointer;color:var(--accent);" onclick="openMemberById('${c.memberId}')">${m.name||'—'}</td>
         <td>${maskPhone(m.phone||'')}</td>
+        <td>${extractProgE(c.title)}</td>
         <td>${firstContractMap[c.memberId]||'—'}</td>
         <td>${c.endDate||'—'}</td>
+        <td>${lastVisit}</td>
         <td style="text-align:right;">${(c.totalAmount||0).toLocaleString()}원</td>
         <td>${c.instructorName||'—'}</td>
         <td>${c.note||''}</td>
@@ -1858,8 +1901,8 @@ function loadReportExpired() {
       <div style="font-weight:600;font-size:14px;padding:8px 0;border-bottom:2px solid var(--text);margin-bottom:0;">${yr}년</div>
       <table class="member-table rpt-expired-${yr}">
         <thead><tr>
-          <th>연번</th><th>이름</th><th>전화번호</th><th>최초등록일</th>
-          <th>마지막운동일</th><th>마지막등록가격</th><th>담당강사</th><th>비고</th>
+          <th>연번</th><th>이름</th><th>전화번호</th><th>프로그램</th><th>최초계약일</th>
+          <th>만료일</th><th>마지막 운동일</th><th>마지막등록가격</th><th>담당강사</th><th>비고</th>
         </tr></thead>
         <tbody>${yearRows}</tbody>
       </table>
@@ -1981,10 +2024,16 @@ function downloadReportExcel(type) {
     const contracts = rptAllContracts.filter(c => c.startDate?.startsWith(prefix))
       .sort((a,b) => a.startDate.localeCompare(b.startDate));
 
-    rows = [['연번','날짜','이름','전화번호','프로그램','횟수','가격','유효기간시작','유효기간종료','담당강사','비고']];
+    const exProg = (t) => {
+      if(!t||t==='—') return '—';
+      if(t.includes(' · ')){const p=t.split(' · ');return p.length>=3?p.slice(1,p.length-1).join(' · '):p[1]||t;}
+      if(t.includes(' - ')){const p=t.split(' - ');return p.slice(1).join(' - ');}
+      return t;
+    };
+    rows = [['연번','계약일','이름','전화번호','프로그램','횟수','가격','유효기간시작','유효기간종료','담당강사','비고']];
     contracts.forEach((c,i) => {
       const m = memberMap[c.memberId] || {};
-      rows.push([i+1, c.startDate||'', m.name||'', m.phone||'', c.title||'', c.sessions||0,
+      rows.push([i+1, c.startDate||'', m.name||'', m.phone||'', exProg(c.title), c.sessions||0,
         c.totalAmount||0, c.startDate||'', c.endDate||'', c.instructorName||'', c.note||'']);
     });
     rows.push(['합계','','','','','', contracts.reduce((s,c)=>s+(c.totalAmount||0),0),'','','','']);
@@ -2005,12 +2054,19 @@ function downloadReportExcel(type) {
     const list = Object.values(activeMemberMap)
       .sort((a,b)=>(firstContractMap[a.memberId]||'').localeCompare(firstContractMap[b.memberId]||''));
 
-    rows = [['연번','이름','전화번호','최초등록일','재등록일','마지막등록가격','담당강사','비고']];
+    const exProg = (t) => {
+      if(!t||t==='—') return '—';
+      if(t.includes(' · ')){const p=t.split(' · ');return p.length>=3?p.slice(1,p.length-1).join(' · '):p[1]||t;}
+      if(t.includes(' - ')){const p=t.split(' - ');return p.slice(1).join(' - ');}
+      return t;
+    };
+    rows = [['연번','이름','전화번호','프로그램','총세션','잔여세션','최초계약일','재계약일','담당강사','비고']];
     list.forEach((c,i) => {
       const m = memberMap[c.memberId] || {};
       const firstDate = firstContractMap[c.memberId] || '';
-      rows.push([i+1, m.name||'', m.phone||'', firstDate,
-        firstDate!==c.startDate?c.startDate:'', c.totalAmount||0, c.instructorName||'', c.note||'']);
+      rows.push([i+1, m.name||'', m.phone||'', exProg(c.title), c.sessions||0,
+        c.remainingSessions??'', firstDate,
+        firstDate!==c.startDate?c.startDate:'', c.instructorName||'', c.note||'']);
     });
     filename = `유효회원_${today}`;
   }
@@ -2026,11 +2082,18 @@ function downloadReportExcel(type) {
       .filter(c => (c.status==='완료'||c.status==='만료') && (!selectedYear||c.endDate?.startsWith(selectedYear)))
       .sort((a,b)=>(a.endDate||'').localeCompare(b.endDate||''));
 
-    rows = [['연번','이름','전화번호','최초등록일','마지막운동일','마지막등록가격','담당강사','비고']];
+    const exProg = (t) => {
+      if(!t||t==='—') return '—';
+      if(t.includes(' · ')){const p=t.split(' · ');return p.length>=3?p.slice(1,p.length-1).join(' · '):p[1]||t;}
+      if(t.includes(' - ')){const p=t.split(' - ');return p.slice(1).join(' - ');}
+      return t;
+    };
+    rows = [['연번','이름','전화번호','프로그램','최초계약일','만료일','마지막운동일','마지막등록가격','담당강사','비고']];
     expired.forEach((c,i) => {
       const m = memberMap[c.memberId] || {};
-      rows.push([i+1, m.name||'', m.phone||'', firstContractMap[c.memberId]||'',
-        c.endDate||'', c.totalAmount||0, c.instructorName||'', c.note||'']);
+      rows.push([i+1, m.name||'', m.phone||'', exProg(c.title),
+        firstContractMap[c.memberId]||'', c.endDate||'', rptLastVisitMap[c.memberId]||'',
+        c.totalAmount||0, c.instructorName||'', c.note||'']);
     });
     filename = `만료회원_${selectedYear||'전체'}_${today}`;
   }
