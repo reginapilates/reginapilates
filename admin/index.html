@@ -341,7 +341,7 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
 
         <!-- 3. 계약만료 예정 (잔여 5회 이하) -->
         <div style="background:var(--white);border:1px solid var(--border);padding:20px;">
-          <div style="font-size:13px;font-weight:600;color:var(--text-muted);letter-spacing:0.05em;margin-bottom:14px;">■ 계약만료 예정 <span style="font-weight:400;font-size:11px;">(잔여 5회 이하)</span></div>
+          <div style="font-size:13px;font-weight:600;color:var(--text-muted);letter-spacing:0.05em;margin-bottom:14px;">■ 계약만료 예정 <span style="font-weight:400;font-size:11px;">(잔여 5회 이하)</span><span id="expiring-count" style="font-size:11px;color:var(--danger);margin-left:6px;"></span></div>
           <div id="expiring-list"><div style="color:var(--text-muted);font-size:13px;">불러오는 중...</div></div>
         </div>
 
@@ -2063,6 +2063,29 @@ function downloadReportExcel(type) {
   a.click();
 }
 
+// ── 알람 해제 ──
+async function dismissAlert(contractId) {
+  if (!confirm('이 알람을 해제하시겠습니까?
+해제 후에도 재계약 시 자동으로 해제됩니다.')) return;
+  try {
+    const res = await fetch(`${API}/api/contracts?id=${contractId}`, {
+      method: 'PUT',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ alertDismissed: true }),
+    });
+    if (res.ok) {
+      showToast('알람이 해제되었습니다', 'success');
+      // 대시보드 새로고침
+      rptDataLoaded = false;
+      await loadDashboard();
+    } else {
+      showToast('해제 실패', 'error');
+    }
+  } catch(e) {
+    showToast('해제 실패', 'error');
+  }
+}
+
 // ── DASHBOARD ──
 async function loadDashboard() {
   try {
@@ -2106,10 +2129,18 @@ async function loadDashboard() {
     const memberMap = {};
     allMembers.forEach(m => { memberMap[m.id] = m.name; });
 
-    // 3. 계약만료 예정 (잔여 5회 이하, 진행중)
+    // 3. 계약만료 예정 (잔여 5회 이하 또는 0회, 해제 안 된 것)
     const expiring = dashContracts.filter(c =>
-      c.status === '진행중' && typeof c.remainingSessions === 'number' && c.remainingSessions <= 5
+      c.status === '진행중' &&
+      typeof c.remainingSessions === 'number' &&
+      c.remainingSessions <= 5 &&
+      !c.alertDismissed
     ).sort((a,b) => a.remainingSessions - b.remainingSessions);
+
+    // 알람 카운트 표시 (0회 포함)
+    const zeroCount = expiring.filter(c => c.remainingSessions === 0).length;
+    const countEl = document.getElementById('expiring-count');
+    if (countEl) countEl.textContent = zeroCount > 0 ? `🔴 잔여 0회 ${zeroCount}건` : '';
 
     const expiringEl = document.getElementById('expiring-list');
     if (expiring.length === 0) {
@@ -2124,6 +2155,7 @@ async function loadDashboard() {
               <th style="text-align:left;padding:6px 4px;font-weight:500;">담당강사</th>
               <th style="text-align:center;padding:6px 4px;font-weight:500;">잔여/전체</th>
               <th style="text-align:left;padding:6px 4px;font-weight:500;">만료일</th>
+              <th style="text-align:center;padding:6px 4px;font-weight:500;">알람</th>
             </tr>
           </thead>
           <tbody>
@@ -2131,13 +2163,24 @@ async function loadDashboard() {
               const name = memberMap[c.memberId] || '—';
               const remaining = c.remainingSessions ?? '—';
               const total = c.sessions ?? '—';
-              const color = remaining === 0 ? 'color:#E74C3C;font-weight:600;' : remaining <= 2 ? 'color:#E67E22;font-weight:600;' : 'color:#F39C12;font-weight:600;';
-              return `<tr style="border-bottom:1px solid var(--border);">
-                <td style="padding:7px 4px;cursor:pointer;" onclick="openMemberById('${c.memberId}')">${name}</td>
+              const isZero = remaining === 0;
+              const rowBg = isZero ? 'background:#FFF5F5;' : '';
+              const color = isZero
+                ? 'color:#E74C3C;font-weight:700;'
+                : remaining <= 2 ? 'color:#E67E22;font-weight:600;'
+                : 'color:#F39C12;font-weight:600;';
+              const alarmBadge = isZero
+                ? `<span style="background:#E74C3C;color:#fff;font-size:10px;padding:2px 6px;border-radius:4px;margin-right:4px;">0회</span>`
+                : '';
+              return `<tr style="border-bottom:1px solid var(--border);${rowBg}">
+                <td style="padding:7px 4px;cursor:pointer;" onclick="openMemberById('${c.memberId}')">${alarmBadge}<b>${name}</b></td>
                 <td style="padding:7px 4px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${c.title||'—'}</td>
                 <td style="padding:7px 4px;">${c.instructorName||'—'}</td>
                 <td style="padding:7px 4px;text-align:center;${color}">${remaining}/${total}</td>
                 <td style="padding:7px 4px;">${c.endDate||'—'}</td>
+                <td style="padding:7px 4px;text-align:center;">
+                  <button onclick="dismissAlert('${c.id}')" style="font-size:11px;padding:3px 8px;border:1px solid var(--border);background:var(--white);border-radius:4px;cursor:pointer;color:var(--text-muted);" title="알람 해제">해제</button>
+                </td>
               </tr>`;
             }).join('')}
           </tbody>
