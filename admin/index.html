@@ -4397,10 +4397,18 @@ function renderCalendar() {
           statusTag = '<span style="font-size:9px;background:#CCC;color:#fff;border-radius:2px;padding:0 3px;margin-left:3px;vertical-align:middle;">취소</span>';
         }
 
-        const memberName = s.name.split(' - ')[0] || s.name;
+        // 회원명 추출: 'memberName · instrName date time' 또는 구형식 'memberName - date time'
+        const extractMemberName = (name) => {
+          if (!name) return '—';
+          if (name.includes(' · ')) return name.split(' · ')[0];
+          if (name.includes(' - ')) return name.split(' - ')[0];
+          return name;
+        };
+        const memberName = s.memberName || extractMemberName(s.name);
+        const instrName = s.instructorName || instr?.name || '';
         const baseLabel = s.type === '예약불가' ? '🚫 불가' :
-          s.type === '가용일정' ? `✓ ${instr?.name||''}` :
-          `${memberName}${instr ? ' · '+instr.name : ''}`;
+          s.type === '가용일정' ? `✓ ${instrName}` :
+          `${memberName}${instrName ? ' · ' + instrName : ''}`;
         const label = baseLabel + statusTag;
 
         return `<div onclick="openScheduleDetail('${s.id}')" title="${s.name} (${s.status||'확정'})"
@@ -4784,9 +4792,13 @@ async function saveSchedule() {
 
   showToast('예약 등록 중...', '');
 
+  const instrSel = document.getElementById('ns-instructor');
+  const instructorName = instrSel?.options[instrSel?.selectedIndex]?.text || '';
+
   const body = {
     memberId, contractId, instructorId,
     memberName,
+    instructorName,
     date, time,
     type: '회원예약',
     isRecurring,
@@ -4828,7 +4840,13 @@ async function openScheduleDetail(id) {
   document.getElementById('sd-status').dataset.prevStatus = s.status || '확정';
 
   const instr = allInstructors.find(i => i.id === s.instructorId);
-  let memberName = s.name.split(' - ')[0] || '—';
+  // memberName 추출: memberName 필드 우선, 없으면 name에서 파싱
+  let memberName = s.memberName || (() => {
+    if (!s.name) return '—';
+    if (s.name.includes(' · ')) return s.name.split(' · ')[0];
+    if (s.name.includes(' - ')) return s.name.split(' - ')[0];
+    return s.name;
+  })();
   let remainingSessions = '—';
 
   // 회원/계약 정보 + 기존 세션 데이터 동시 조회
@@ -4909,7 +4927,12 @@ async function updateSchedule() {
 
   const prevStatus = document.getElementById('sd-status').dataset.prevStatus || '확정';
   const existingSessionId = document.getElementById('sd-session-created').value;
-  const memberName = document.getElementById('sd-title').textContent.split(' - ')[0];
+  const sdTitle = document.getElementById('sd-title').textContent;
+  const memberName = (() => {
+    if (sdTitle.includes(' · ')) return sdTitle.split(' · ')[0];
+    if (sdTitle.includes(' - ')) return sdTitle.split(' - ')[0];
+    return sdTitle;
+  })();
   const condition = document.getElementById('sd-condition').value;
   const memo = document.getElementById('sd-memo').value;
   const isNowCounted = status === '참석' || status === '노쇼';
