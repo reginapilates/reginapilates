@@ -174,9 +174,10 @@ body { font-family:'Noto Sans KR',sans-serif; background:var(--bg); color:var(--
   <div class="login-logo">REGINA PILATES</div>
   <div class="login-sub">레지나 필라테스 청담</div>
   <div style="width:100%;max-width:320px;">
-    <input class="login-input" type="password" id="pw-input" placeholder="비밀번호" onkeydown="if(event.key==='Enter')doLogin()">
+    <input class="login-input" type="text" id="login-id" placeholder="아이디" autocomplete="username" onkeydown="if(event.key==='Enter')document.getElementById('login-pw').focus()">
+    <input class="login-input" type="password" id="login-pw" placeholder="비밀번호" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
     <button class="login-btn" onclick="doLogin()">로그인</button>
-    <div class="login-error" id="login-error">비밀번호가 올바르지 않습니다</div>
+    <div class="login-error" id="login-error">아이디 또는 비밀번호가 올바르지 않습니다</div>
   </div>
 </div>
 
@@ -308,15 +309,19 @@ function getNextWeekday(dateStr, dir) {
 
 // ── 로그인/로그아웃 ──
 async function doLogin() {
-  const pw = document.getElementById('pw-input').value;
-  if (!pw) return;
+  const loginId = document.getElementById('login-id').value.trim();
+  const loginPassword = document.getElementById('login-pw').value;
+  if (!loginId || !loginPassword) return;
+  document.getElementById('login-error').style.display='none';
   try {
-    const res = await fetch(`${API}/api/auth`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pw})});
+    const res = await fetch(`${API}/api/auth`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({loginId,loginPassword})});
     const data = await res.json();
     if (res.ok && data.success) {
-      sessionStorage.setItem('instrPw', pw);
+      sessionStorage.setItem('instrLoginId', loginId);
+      sessionStorage.setItem('instrLoginPw', loginPassword);
       sessionStorage.setItem('instrLevel', data.level);
-      await initApp(data.level);
+      sessionStorage.setItem('instrData', JSON.stringify(data.instructor));
+      await initApp(data.level, data.instructor);
     } else { document.getElementById('login-error').style.display='block'; }
   } catch(e) { document.getElementById('login-error').style.display='block'; }
 }
@@ -327,7 +332,7 @@ function doLogout() {
 }
 
 // ── 초기화 ──
-async function initApp(level) {
+async function initApp(level, instrObj) {
   myLevel = level;
   document.getElementById('login-screen').style.display='none';
   document.getElementById('app').style.display='flex';
@@ -346,12 +351,19 @@ async function initApp(level) {
   allMembers = mData.members || [];
   allContracts = cData.contracts || [];
 
-  // 로그인한 강사 식별 (L2는 첫 번째 매칭 강사, L1은 원장)
-  if (level === 1) {
-    myInstr = { id: '__director__', name: 'Regina 원장', isDirector: true };
+  // 로그인한 강사 설정 (auth에서 반환된 instructor 객체 우선)
+  if (instrObj) {
+    myInstr = instrObj;
+  } else if (level === 1) {
+    myInstr = { id: null, name: 'Regina 원장', isDirector: true };
   } else {
-    // L2 강사: 강사 목록 중 Regina(L1) 제외한 첫 번째 (실제로는 비밀번호 매핑이 없으므로 첫 번째 비Regina 강사)
-    myInstr = allInstrs.find(i => !i.isDirector && i.level !== 1) || allInstrs[0] || { id: '', name: '강사' };
+    myInstr = allInstrs[0] || { id: '', name: '강사' };
+  }
+
+  // allInstrs에서 상세 정보 보완 (instructorId 매칭)
+  if (myInstr.id) {
+    const full = allInstrs.find(i => i.id === myInstr.id);
+    if (full) myInstr = { ...myInstr, ...full };
   }
 
   document.getElementById('header-instr').textContent = myInstr.name;
@@ -912,7 +924,11 @@ function showToast(msg,type='') {
 // ── 자동 로그인 복원 ──
 window.addEventListener('DOMContentLoaded', async()=>{
   const level=sessionStorage.getItem('instrLevel');
-  if (level) await initApp(parseInt(level));
+  const instrData=sessionStorage.getItem('instrData');
+  if (level) {
+    const instrObj = instrData ? JSON.parse(instrData) : null;
+    await initApp(parseInt(level), instrObj);
+  }
 });
 </script>
 </body>
