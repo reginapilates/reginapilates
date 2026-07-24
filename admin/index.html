@@ -1512,9 +1512,13 @@ async function runMigration() {
 }
 
 function doLogout() {
+  sessionStorage.removeItem('adminLevel');
+  sessionStorage.removeItem('adminLoginId');
+  sessionStorage.removeItem('adminInstrData');
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('app').style.display = 'none';
-  document.getElementById('pw-input').value = '';
+  document.getElementById('login-id').value = '';
+  document.getElementById('login-pw').value = '';
 }
 
 // ── NAV ──
