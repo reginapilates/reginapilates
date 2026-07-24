@@ -3871,7 +3871,13 @@ async function renderSessionLog() {
       <td style="white-space:nowrap;font-size:13px;${isPast&&isScheduleOnly?'color:#E67E22;font-weight:600;':''}">${s.date||'—'}${isPast&&isScheduleOnly?' ⚠':''}</td>
       <td style="white-space:nowrap;">${s.time||'—'}</td>
       <td><b>${s.memberName}</b></td>
-      <td style="font-size:12px;color:var(--text-muted);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.contractTitle||'—'}</td>
+      <td style="font-size:12px;color:var(--text-muted);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${(()=>{
+        const t=s.contractTitle||'';
+        if(!t||t==='—') return '—';
+        if(t.includes(' · ')){const p=t.split(' · ');return p.length>=3?p.slice(1,p.length-1).join(' · '):p[1]||t;}
+        if(t.includes(' - ')){const p=t.split(' - ');return p.slice(1).join(' - ');}
+        return t;
+      })()}</td>
       <td style="text-align:center;font-size:13px;">${usedTotal}</td>
       <td style="white-space:nowrap;">${s.instructorName}</td>
       <td>${condDot}</td>
