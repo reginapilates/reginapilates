@@ -542,12 +542,33 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
       <div class="page-header">
         <div class="page-title">계약 관리</div>
       </div>
+      <div class="toolbar" style="flex-wrap:wrap;gap:8px;margin-bottom:16px;">
+        <input class="search-input" id="contract-search" placeholder="이름 또는 연락처 검색..." oninput="filterContracts()" style="min-width:200px;">
+        <select id="contract-filter-status" class="form-select" style="width:130px;height:36px;font-size:13px;" onchange="filterContracts()">
+          <option value="">전체 상태</option>
+          <option value="진행중">진행중</option>
+          <option value="일시정지">일시정지</option>
+          <option value="완료">완료</option>
+        </select>
+      </div>
       <table class="member-table">
         <thead>
-          <tr><th>계약명</th><th>서명일</th><th>기간</th><th>잔여</th><th>금액</th><th>상태</th><th>계약서</th></tr>
+          <tr>
+            <th>계약일</th>
+            <th>이름</th>
+            <th>연락처</th>
+            <th>프로그램</th>
+            <th>담당강사</th>
+            <th>기간</th>
+            <th style="text-align:center;">총 세션</th>
+            <th style="text-align:center;">잔여</th>
+            <th style="text-align:right;">금액</th>
+            <th>상태</th>
+            <th>계약서</th>
+          </tr>
         </thead>
         <tbody id="contracts-table-body">
-          <tr><td colspan="8" class="loading">불러오는 중...</td></tr>
+          <tr><td colspan="11" class="loading">불러오는 중...</td></tr>
         </tbody>
       </table>
     </div>
@@ -2511,36 +2532,98 @@ async function loadMemberContracts() {
       }).join('');
 }
 
+let _allContractsForPage = [];
+
 async function loadAllContracts() {
   const tbody = document.getElementById('contracts-table-body');
+  tbody.innerHTML = '<tr><td colspan="11" class="loading">불러오는 중...</td></tr>';
   try {
-    const res = await fetch(`${API}/api/contracts`);
-    const data = await res.json();
-    const contracts = data.contracts || [];
-    if (contracts.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><p>계약 내역이 없습니다</p></div></td></tr>';
-      return;
-    }
-    // 계약 데이터를 전역에 캐시
-    window._allContractsCache = contracts;
+    const [cRes, mRes] = await Promise.all([
+      fetch(`${API}/api/contracts`),
+      fetch(`${API}/api/members`),
+    ]);
+    const cData = await cRes.json();
+    const mData = await mRes.json();
+    const contracts = cData.contracts || [];
+    const members = mData.members || [];
 
-    tbody.innerHTML = contracts.map((c, idx) => `
-      <tr>
-        <td><b>${c.title}</b></td>
-        <td>${c.signedAt||'—'}</td>
-        <td>${c.startDate||'—'} ~ ${c.endDate||'—'}</td>
-        <td>${c.remainingSessions}/${c.sessions}회</td>
-        <td>${c.totalAmount?.toLocaleString()||0}원</td>
-        <td><span class="badge ${c.status==='진행중'?'badge-active':c.status==='완료'?'badge-muted':'badge-warning'}">${c.status}</span></td>
-        <td>
-          ${ADMIN_LEVEL === 1 ? `<button class="btn btn-secondary btn-sm" onclick="viewContractById(${idx})">계약서 보기</button>` : ''}
-          ${c.driveLink?`<a href="${c.driveLink}" target="_blank" style="color:var(--accent);font-size:11px;margin-left:4px">🔗</a>`:''}
-        </td>
-      </tr>
-    `).join('');
+    // 회원 맵
+    const memberMap = {};
+    members.forEach(m => { memberMap[m.id] = m; });
+
+    // 계약에 회원 정보 합치기
+    _allContractsForPage = contracts.map((c, idx) => ({
+      ...c,
+      _idx: idx,
+      _member: memberMap[c.memberId] || {},
+    })).sort((a, b) => (b.startDate||'').localeCompare(a.startDate||''));
+
+    window._allContractsCache = contracts;
+    renderContractsTable();
   } catch(e) {
-    tbody.innerHTML = '<tr><td colspan="8" class="loading">불러오기 실패</td></tr>';
+    document.getElementById('contracts-table-body').innerHTML =
+      '<tr><td colspan="11" class="loading">불러오기 실패</td></tr>';
   }
+}
+
+function filterContracts() { renderContractsTable(); }
+
+function renderContractsTable() {
+  const search = (document.getElementById('contract-search')?.value || '').toLowerCase();
+  const statusFilter = document.getElementById('contract-filter-status')?.value || '';
+  const tbody = document.getElementById('contracts-table-body');
+
+  let list = _allContractsForPage.filter(c => {
+    const name = (c._member.name || '').toLowerCase();
+    const phone = (c._member.phone || '').replace(/-/g,'');
+    const matchSearch = !search || name.includes(search) || phone.includes(search.replace(/-/g,''));
+    const matchStatus = !statusFilter || c.status === statusFilter;
+    return matchSearch && matchStatus;
+  });
+
+  if (list.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="11"><div class="empty-state"><p>계약 내역이 없습니다</p></div></td></tr>';
+    return;
+  }
+
+  // title에서 프로그램명만 추출 ('회원명 · 프로그램명 · 날짜' 또는 기존 형식)
+  function extractProgName(title) {
+    if (!title) return '—';
+    const parts = title.split(' · ');
+    if (parts.length >= 3) return parts.slice(1, parts.length - 1).join(' · ');
+    if (parts.length === 2) return parts[1];
+    // 구형식: '홍길동 - Private 1:1 Lesson - 15회'
+    const dashParts = title.split(' - ');
+    if (dashParts.length >= 2) return dashParts.slice(1).join(' - ');
+    return title;
+  }
+
+  tbody.innerHTML = list.map(c => {
+    const m = c._member;
+    const progName = extractProgName(c.title);
+    const remaining = c.remainingSessions ?? '—';
+    const remColor = remaining === 0 ? 'color:#E74C3C;font-weight:700;' :
+      remaining <= 5 ? 'color:#E67E22;font-weight:600;' : '';
+    const badgeClass = c.status === '진행중' ? 'badge-active' :
+      c.status === '완료' ? 'badge-muted' : 'badge-warning';
+
+    return `<tr onclick="openMemberById('${c.memberId}')" style="cursor:pointer;">
+      <td style="font-size:12px;color:var(--text-muted);">${c.startDate||'—'}</td>
+      <td><b>${m.name||'—'}</b></td>
+      <td style="font-size:12px;">${m.phone ? maskPhone(m.phone) : '—'}</td>
+      <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${progName}</td>
+      <td>${c.instructorName||'—'}</td>
+      <td style="font-size:12px;">${c.startDate||'—'} ~ ${c.endDate||'—'}</td>
+      <td style="text-align:center;">${c.sessions||0}회</td>
+      <td style="text-align:center;${remColor}">${remaining}회</td>
+      <td style="text-align:right;">${(c.totalAmount||0).toLocaleString()}원</td>
+      <td><span class="badge ${badgeClass}">${c.status}</span></td>
+      <td onclick="event.stopPropagation();">
+        ${ADMIN_LEVEL === 1 ? `<button class="btn btn-secondary btn-sm" onclick="viewContractById(${c._idx})">계약서</button>` : ''}
+        ${c.driveLink ? `<a href="${c.driveLink}" target="_blank" style="color:var(--accent);font-size:11px;margin-left:4px;">🔗</a>` : ''}
+      </td>
+    </tr>`;
+  }).join('');
 }
 
 // ── SESSIONS ──
