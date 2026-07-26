@@ -71,7 +71,7 @@ export async function onRequest(context) {
         startCursor = data.next_cursor;
       }
 
-      let schedules = allResults.map(page => ({
+      const rawSchedules = allResults.map(page => ({
         id: page.id,
         name: page.properties.Name?.title?.[0]?.plain_text || '',
         instructorId: page.properties.Instructor?.relation?.[0]?.id || '',
@@ -85,6 +85,39 @@ export async function onRequest(context) {
         isRecurring: page.properties.IsRecurring?.checkbox || false,
         recurringDay: page.properties.RecurringDay?.select?.name || '',
         status: page.properties.Status?.select?.name || '',
+      }));
+
+      // Instructor/Member relation에서 실시간 이름 조회 (이름 변경 자동 반영)
+      const instrIds = [...new Set(rawSchedules.map(s => s.instructorId).filter(Boolean))];
+      const memberIds = [...new Set(rawSchedules.map(s => s.memberId).filter(Boolean))];
+
+      const [instrPages, memberPages] = await Promise.all([
+        Promise.all(instrIds.map(id =>
+          fetch(`https://api.notion.com/v1/pages/${id}`, {
+            headers: { 'Authorization': `Bearer ${env.NOTION_API_KEY}`, 'Notion-Version': '2022-06-28' }
+          }).then(r => r.json()).catch(() => null)
+        )),
+        Promise.all(memberIds.map(id =>
+          fetch(`https://api.notion.com/v1/pages/${id}`, {
+            headers: { 'Authorization': `Bearer ${env.NOTION_API_KEY}`, 'Notion-Version': '2022-06-28' }
+          }).then(r => r.json()).catch(() => null)
+        ))
+      ]);
+
+      const instrNameMap = {};
+      instrIds.forEach((id, i) => {
+        instrNameMap[id] = instrPages[i]?.properties?.Name?.title?.[0]?.plain_text || '';
+      });
+      const memberNameMap = {};
+      memberIds.forEach((id, i) => {
+        memberNameMap[id] = memberPages[i]?.properties?.Name?.title?.[0]?.plain_text || '';
+      });
+
+      let schedules = rawSchedules.map(s => ({
+        ...s,
+        // relation에서 실시간 이름 우선 (이름 변경 자동 반영)
+        instructorName: instrNameMap[s.instructorId] || '',
+        memberName: memberNameMap[s.memberId] || '',
       }));
 
       // instructorId 필터는 JS에서 (Notion relation 필터 복잡도 회피)
