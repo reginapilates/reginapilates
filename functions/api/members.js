@@ -68,6 +68,7 @@ export async function onRequest(context) {
         adConsent: page.properties.AdConsent?.checkbox || false,
         createdAt: page.properties.CreatedAt?.date?.start || '',
         token: page.properties.Token?.rich_text?.[0]?.plain_text || '',
+        assignedInstructorId: page.properties.AssignedInstructor?.relation?.[0]?.id || '',
       }));
 
       const url = new URL(request.url);
@@ -126,6 +127,7 @@ export async function onRequest(context) {
             MarketingConsent: { checkbox: body.marketingConsent || false },
             AdConsent: { checkbox: body.adConsent || false },
             Token: body.token ? { rich_text: [{ text: { content: body.token } }] } : undefined,
+            AssignedInstructor: body.assignedInstructorId ? { relation: [{ id: body.assignedInstructorId }] } : undefined,
             CreatedAt: { date: { start: new Date().toISOString().split('T')[0] } },
           },
         }),
@@ -184,6 +186,9 @@ export async function onRequest(context) {
             MarketingConsent: { checkbox: body.marketingConsent || false },
             AdConsent: { checkbox: body.adConsent || false },
             Token: body.token ? { rich_text: [{ text: { content: body.token } }] } : undefined,
+            AssignedInstructor: body.assignedInstructorId !== undefined
+              ? (body.assignedInstructorId ? { relation: [{ id: body.assignedInstructorId }] } : { relation: [] })
+              : undefined,
           },
         }),
       });
