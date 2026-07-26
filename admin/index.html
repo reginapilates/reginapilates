@@ -2632,7 +2632,7 @@ async function loadMemberContracts() {
             <span style="font-size:12px;color:var(--text-muted)">잔여 ${c.remainingSessions}회</span>
           </div>
           <div class="contract-actions">
-            ${ADMIN_LEVEL === 1 ? `<button class="btn btn-secondary btn-sm" onclick="viewContractData(${JSON.stringify(c).replace(/'"'/g,'&quot;')})">계약서 보기</button>` : ''}
+            ${ADMIN_LEVEL === 1 ? `<button class="btn btn-secondary btn-sm" onclick="viewContractById2('${c.id}')">계약서 보기</button>` : ''}
             ${ADMIN_LEVEL === 1 ? `<button class="btn btn-secondary btn-sm" onclick="openExtendDateModal('${c.id}','${c.endDate||''}','${c.title}')">📅 기간 수정</button>` : ''}
             ${c.driveLink ? `<a href="${c.driveLink}" target="_blank" class="btn btn-secondary btn-sm">🔗</a>` : ''}
             ${c.status==='진행중' ? `<button class="btn btn-secondary btn-sm" onclick="openPauseModal('${c.id}')">일시정지</button>` : ''}
@@ -3324,7 +3324,7 @@ async function saveContract() {
   } catch(e) { showToast('저장 실패: ' + e.message, 'error'); }
 }
 
-// 계약 관리 탭에서 계약서 보기
+// 계약 관리 탭에서 계약서 보기 (idx 기반)
 function viewContractById(idx) {
   const contracts = window._allContractsCache || [];
   const c = contracts[idx];
@@ -3332,11 +3332,45 @@ function viewContractById(idx) {
   viewContractData(c);
 }
 
+// 회원 상세에서 계약서 보기 (id 기반)
+async function viewContractById2(contractId) {
+  // allContractsByMember 또는 캐시에서 찾기
+  let c = null;
+  if (window._allContractsCache) {
+    c = window._allContractsCache.find(ct => ct.id === contractId);
+  }
+  if (!c && currentMember) {
+    const contracts = allContractsByMember[currentMember.id] || [];
+    c = contracts.find(ct => ct.id === contractId);
+  }
+  if (!c) {
+    // 직접 API 조회
+    try {
+      const res = await fetch(`${API}/api/contracts?memberId=${currentMember?.id||''}`);
+      const data = await res.json();
+      c = (data.contracts||[]).find(ct => ct.id === contractId);
+    } catch(e) {}
+  }
+  if (!c) { showToast('계약서를 불러올 수 없습니다', 'error'); return; }
+  viewContractData(c);
+}
+
 // 계약 데이터로 계약서 렌더링
 async function viewContractData(c) {
-  const parts = c.title ? c.title.split(' - ') : [];
-  const memberName = parts[0] || '—';
-  let programName = parts.slice(1).join(' - ') || c.title || '—';
+  // title 파싱: '회원명 · 프로그램명 · 날짜' 또는 '회원명 - 프로그램명' 형식 처리
+  let memberName = '—';
+  let programName = c.title || '—';
+  if (c.title) {
+    if (c.title.includes(' · ')) {
+      const parts = c.title.split(' · ');
+      memberName = parts[0] || '—';
+      programName = parts.length >= 3 ? parts.slice(1, parts.length-1).join(' · ') : (parts[1] || c.title);
+    } else if (c.title.includes(' - ')) {
+      const parts = c.title.split(' - ');
+      memberName = parts[0] || '—';
+      programName = parts.slice(1).join(' - ') || c.title;
+    }
+  }
 
   // 1. 서명 데이터
   let sigData = c.signatureData || null;
