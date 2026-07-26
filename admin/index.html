@@ -885,6 +885,16 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
         </div>
         <div class="form-group"><label class="form-label">최종 결제 금액 <small style="color:var(--text-muted);font-size:10px">(수정 가능)</small></label><input class="form-input" id="nc-amount" type="number" placeholder="프로그램 선택 시 자동 입력"></div>
       </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">추가 할인 금액 <small style="color:var(--text-muted);font-size:10px">(선택)</small></label>
+          <input class="form-input" id="nc-extra-discount" type="number" placeholder="0" oninput="onExtraDiscountInput()" style="border-color:var(--warning);">
+        </div>
+        <div class="form-group">
+          <label class="form-label">추가 할인 후 최종 금액</label>
+          <input class="form-input" id="nc-final-amount" type="number" readonly style="background:var(--surface);font-weight:600;color:var(--accent);" placeholder="추가 할인 입력 시 자동 계산">
+        </div>
+      </div>
       <div class="form-row full">
         <div class="form-group"><label class="form-label">비고</label><textarea class="form-textarea" id="nc-note" placeholder="특이사항"></textarea></div>
       </div>
@@ -3211,12 +3221,15 @@ function onProgramSelect() {
   const total = parseInt(opt.dataset.total)||0;
   const discount = parseInt(opt.dataset.discount)||0;
   const final = parseInt(opt.dataset.final)||0;
+  const baseAmount = Math.floor(final / 1000) * 1000;
 
-  document.getElementById('nc-amount').value = Math.floor(final / 1000) * 1000;
+  document.getElementById('nc-amount').value = baseAmount;
+  document.getElementById('nc-extra-discount').value = '';
+  document.getElementById('nc-final-amount').value = '';
   document.getElementById('nc-program-info').style.display = 'block';
   document.getElementById('nc-program-detail').innerHTML =
     `회당 ${pps.toLocaleString()}원 × ${sessions}회 = ${total.toLocaleString()}원
-     ${discount > 0 ? `<span style="color:var(--danger)"> → 할인 ${discount}% 적용 → 최종 <b>${final.toLocaleString()}원</b></span>` : ''}`;
+     ${discount > 0 ? `<span style="color:var(--danger)"> → 할인 ${discount}% 적용 → 기본가 <b>${baseAmount.toLocaleString()}원</b></span>` : ''}`;
 
   // 종료일 자동 계산 (프로그램 duration 기반)
   const duration = parseInt(opt.dataset.duration)||0;
@@ -3225,6 +3238,13 @@ function onProgramSelect() {
     start.setMonth(start.getMonth() + duration);
     document.getElementById('nc-end').value = start.toISOString().split('T')[0];
   }
+}
+
+function onExtraDiscountInput() {
+  const base = parseInt(document.getElementById('nc-amount').value)||0;
+  const extra = parseInt(document.getElementById('nc-extra-discount').value)||0;
+  const finalAmt = Math.max(0, base - extra);
+  document.getElementById('nc-final-amount').value = finalAmt;
 }
 
 async function saveContract() {
@@ -3245,7 +3265,10 @@ async function saveContract() {
   const discountRatio = parseInt(selOpt.dataset.discount)||0;
   let finalPrice = parseInt(selOpt.dataset.final)||0;
   const sessions = parseInt(selOpt.dataset.sessions)||0;
-  const totalAmount = parseInt(document.getElementById('nc-amount').value)||0;
+  // 추가 할인 반영: nc-final-amount가 있으면 그 값 사용
+  const totalAmount = (extraDiscount > 0 && finalAmountEl)
+    ? parseInt(finalAmountEl)||0
+    : parseInt(document.getElementById('nc-amount').value)||0;
 
   // Fallback 계산 (수식 필드가 0인 경우)
   if (finalPrice === 0) finalPrice = totalAmount;
@@ -3280,6 +3303,10 @@ async function saveContract() {
   const startDate = document.getElementById('nc-start').value;
   const endDate = document.getElementById('nc-end').value;
   const note = document.getElementById('nc-note').value;
+
+  // 추가 할인 반영 최종 금액
+  const extraDiscount = parseInt(document.getElementById('nc-extra-discount').value)||0;
+  const finalAmountEl = document.getElementById('nc-final-amount').value;
   const signedAt = new Date().toISOString().split('T')[0];
   const marketingConsent = false;
   const adConsent = false;
