@@ -772,6 +772,15 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
         </div>
       </div>
 
+      <div class="form-section">■ 담당 강사</div>
+      <div class="form-row full">
+        <div class="form-group">
+          <label class="form-label">담당 강사</label>
+          <select class="form-select" id="nm-assigned-instructor">
+            <option value="">선택 (나중에 지정 가능)</option>
+          </select>
+        </div>
+      </div>
       <div class="form-section">■ 방문 경로 및 운동 가능 시간</div>
       <div class="form-row">
         <div class="form-group">
@@ -1601,15 +1610,21 @@ function initL1InstructorIds() {
   );
 }
 
-// L2+ 강사가 볼 수 없는 회원인지 (L1 강사 담당 회원)
+// L2+ 강사가 볼 수 없는 회원인지 (Members DB의 assignedInstructorId 기준)
 function isHiddenForL2(memberId) {
   if (ADMIN_LEVEL === 1) return false;
-  const contracts = allContractsByMember[memberId] || [];
-  // 진행중 또는 가장 최근 계약의 담당강사가 L1이면 숨김
-  const activeC = contracts.find(c => c.status === '진행중') ||
-    [...contracts].sort((a,b) => (b.startDate||'').localeCompare(a.startDate||''))[0];
-  if (!activeC) return false;
-  return _l1InstructorIds.has(activeC.instructorId);
+  const member = allMembers.find(m => m.id === memberId);
+  if (!member) return false;
+  // assignedInstructorId가 L1이면 숨김
+  if (member.assignedInstructorId && _l1InstructorIds.has(member.assignedInstructorId)) return true;
+  // assignedInstructorId 미설정 시 계약 기반으로 fallback
+  if (!member.assignedInstructorId) {
+    const contracts = allContractsByMember[memberId] || [];
+    const activeC = contracts.find(c => c.status === '진행중') ||
+      [...contracts].sort((a,b) => (b.startDate||'').localeCompare(a.startDate||''))[0];
+    if (activeC) return _l1InstructorIds.has(activeC.instructorId);
+  }
+  return false;
 }
 
 // 마스킹 함수
@@ -2444,12 +2459,10 @@ function renderMemberTable() {
     const status = getMemberStatus(m);
     const matchStatus = !filterStatus || status === filterStatus;
 
-    // 담당강사 필터: 진행중 계약의 instructorId로 매칭
+    // 담당강사 필터: Members DB의 assignedInstructorId 기준
     let matchInstructor = true;
     if (filterInstructor) {
-      const contracts = allContractsByMember[m.id] || [];
-      const activeC = contracts.find(c => c.status === '진행중');
-      matchInstructor = activeC?.instructorId === filterInstructor;
+      matchInstructor = m.assignedInstructorId === filterInstructor;
     }
     return matchSearch && matchStatus && matchInstructor;
   });
@@ -2498,7 +2511,9 @@ function renderMemberTable() {
       return rawTitle;
     })();
     const lastVisit = allSessionsByMember[m.id] || '—';
-    const instructorName = activeContract?.instructorName || '—';
+    // 담당강사: Members DB의 assignedInstructorId 우선, 없으면 계약 기반
+    const assignedInstr = allInstructors.find(i => i.id === m.assignedInstructorId);
+    const instructorName = assignedInstr?.name || activeContract?.instructorName || '—';
     const status = getMemberStatus(m);
     const isActive = activeContract?.status === '진행중' || activeContract?.status === '일시정지';
 
@@ -2582,6 +2597,7 @@ function renderProfile() {
         <div class="field-row"><span class="field-label">신장 / 체중</span><span class="field-value">${m.height?m.height+'cm':''} ${m.weight?'/ '+m.weight+'kg':''||'—'}</span></div>
         <div class="field-row"><span class="field-label">방문 경로</span><span class="field-value">${m.visitSource||'—'}</span></div>
         <div class="field-row"><span class="field-label">등록일</span><span class="field-value">${m.createdAt||'—'}</span></div>
+        <div class="field-row"><span class="field-label">담당 강사</span><span class="field-value">${(()=>{const i=allInstructors.find(i=>i.id===m.assignedInstructorId);return i?i.name:'—';})()}</span></div>
         <div class="field-row"><span class="field-label">마케팅 동의</span><span class="field-value">${m.marketingConsent?'✅ 동의':'미동의'}</span></div>
         <div class="field-row"><span class="field-label">광고 수신</span><span class="field-value">${m.adConsent?'✅ 동의':'미동의'}</span></div>
       </div>
@@ -2932,7 +2948,7 @@ async function generateMemberToken() {
 }
 
 // ── EDIT MEMBER ──
-function openEditMemberModal(m) {
+async function openEditMemberModal(m) {
   if (!m) return;
   // 신규 회원 모달 재활용 - 값 채워넣기
   document.getElementById('nm-name').value = m.name || '';
@@ -2985,6 +3001,9 @@ function openEditMemberModal(m) {
   restoreEtc('medical-etc', 'nm-medical', m.medicalHistoryEtc);
   restoreEtc('pain-etc', 'nm-pain', m.painAreasEtc);
 
+  // 담당강사 셀렉트 로드 + 복원
+  await loadInstructorOptions('nm-assigned-instructor', m.assignedInstructorId || '');
+
   // 모달 제목 변경 + 저장 버튼을 수정으로
   document.querySelector('#modal-new-member .modal-title').textContent = '회원 정보 수정';
   const saveBtn = document.querySelector('#modal-new-member .modal-footer .btn-primary');
@@ -3024,6 +3043,7 @@ async function updateMember(id) {
     availableDays: getChecked('nm-avail-days'),
     marketingConsent: document.getElementById('nm-marketing').checked,
     adConsent: document.getElementById('nm-ad').checked,
+    assignedInstructorId: document.getElementById('nm-assigned-instructor')?.value || '',
   };
   try {
     const res = await fetch(`${API}/api/members?id=${id}`, {
@@ -3105,6 +3125,7 @@ async function saveMember() {
     adConsent: document.getElementById('nm-ad').checked,
     privacyConsent: document.getElementById('nm-privacy').checked,
     token: currentMember?.token || '',
+    assignedInstructorId: document.getElementById('nm-assigned-instructor')?.value || '',
   };
 
   if (!body.privacyConsent) {
@@ -3420,8 +3441,19 @@ async function viewContractData(c) {
   if (totalPrice === 0) totalPrice = finalPrice;
   if (pricePerSession === 0 && (c.sessions || 0) > 0) pricePerSession = Math.round(totalPrice / c.sessions);
 
+  const assignedInstrName = (() => {
+    if (c.instructorName) return c.instructorName;
+    const m = allMembers.find(mb => mb.id === c.memberId);
+    if (m?.assignedInstructorId) {
+      const instr = allInstructors.find(i => i.id === m.assignedInstructorId);
+      return instr?.name || '';
+    }
+    return '';
+  })();
+
   showContractPrint({
     memberName, phone, address, birthDate, programName,
+    instructorName: assignedInstrName,
     sessions: c.sessions || 0,
     pricePerSession, totalPrice, discountRatio, finalPrice,
     totalAmount: c.totalAmount || 0,
@@ -3507,7 +3539,9 @@ function showContractPrint(data) {
   </tr>
   <tr>
     <td class="label">프로그램</td>
-    <td colspan="5" class="val"><b>${data.programName}</b></td>
+    <td colspan="2" class="val"><b>${data.programName}</b></td>
+    <td class="label">담당강사</td>
+    <td colspan="2" class="val"><b>${data.instructorName||'—'}</b></td>
   </tr>
   <tr>
     <td class="label">회당레슨비</td>
@@ -4397,7 +4431,10 @@ function clearSig() {
 }
 
 // ── MODALS ──
-function openNewMemberModal() { document.getElementById('modal-new-member').style.display='flex'; }
+async function openNewMemberModal() {
+  await loadInstructorOptions('nm-assigned-instructor', '');
+  document.getElementById('modal-new-member').style.display='flex';
+}
 async function loadInstructorOptions(selectId, selectedValue) {
   const sel = document.getElementById(selectId);
   if (!sel) return;
