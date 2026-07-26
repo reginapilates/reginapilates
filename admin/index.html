@@ -5070,11 +5070,12 @@ async function saveSchedule() {
 
   showToast('예약 등록 중...', '');
 
-  const instrSel = document.getElementById('ns-instructor');
-  const instructorName = instrSel?.options[instrSel?.selectedIndex]?.text || '';
+  const instructorId_val = document.getElementById('ns-instructor').value || '';
+  const instructorName = allInstructors.find(i => i.id === instructorId_val)?.name || '';
 
   const body = {
-    memberId, contractId, instructorId,
+    memberId, contractId,
+    instructorId: instructorId_val || instructorId,
     memberName,
     instructorName,
     date, time,
