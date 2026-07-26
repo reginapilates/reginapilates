@@ -4940,11 +4940,9 @@ async function openNewScheduleModal() {
   const mData = await mRes.json();
   const cData = await cRes.json();
 
-  // 진행중 계약 회원 ID 목록
+  // 진행중 계약 (항상 최신 데이터로 로드)
   const activeContracts = (cData.contracts||[]).filter(c => c.status === '진행중');
   const activeMemberIds = new Set(activeContracts.map(c => c.memberId));
-
-  // 계약 데이터 캐시 (회원ID → 계약)
   window._scheduleContracts = activeContracts;
 
   const memberSel = document.getElementById('ns-member');
@@ -5173,6 +5171,8 @@ async function saveSchedule() {
     if (res.ok) {
       closeModal('modal-new-schedule');
       showToast(`예약 ${data.count}개 등록 완료`, 'success');
+      // 캐시 초기화 - 다음 예약 시 최신 계약 데이터 로드
+      window._scheduleContracts = null;
       loadCalendar();
     } else showToast('등록 실패: ' + (data.error||'오류'), 'error');
   } catch(e) { showToast('등록 실패: ' + e.message, 'error'); }
