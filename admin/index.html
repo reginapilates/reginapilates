@@ -3322,6 +3322,7 @@ async function saveContract() {
     instructorName: selectedInstructorName,
     sessions,
     totalAmount,
+    extraDiscount: extraDiscount || 0,
     paymentMethod,
     startDate,
     endDate,
@@ -3351,11 +3352,13 @@ async function saveContract() {
       address: currentMember.address || '',
       visitSource: currentMember.visitSource || '',
       programName,
+      instructorName: selectedInstructorName,
       sessions,
       pricePerSession,
       totalPrice,
       discountRatio,
       finalPrice,
+      extraDiscount,
       totalAmount,
       paymentMethod,
       startDate,
@@ -3483,6 +3486,7 @@ async function viewContractData(c) {
     instructorName: assignedInstrName,
     sessions: c.sessions || 0,
     pricePerSession, totalPrice, discountRatio, finalPrice,
+    extraDiscount: c.extraDiscount || 0,
     totalAmount: c.totalAmount || 0,
     paymentMethod: c.paymentMethod || '—',
     startDate: c.startDate || '—',
@@ -3581,16 +3585,22 @@ function showContractPrint(data) {
   <tr>
     <td class="label">할인율</td>
     <td class="val">${data.discountRatio||0}%</td>
-    <td class="label">최종금액</td>
-    <td class="val"><b>${fmtFloor(data.finalPrice||data.totalAmount)}원</b></td>
+    <td class="label">기본금액</td>
+    <td class="val">${fmtFloor(data.finalPrice||data.totalAmount)}원</td>
     <td class="label">결제방법</td>
     <td class="val">${data.paymentMethod==='카드'?'■':'□'}카드 ${data.paymentMethod==='현금'?'■':'□'}현금 ${data.paymentMethod==='계좌이체'?'■':'□'}이체</td>
   </tr>
   <tr>
-    <td class="label">유효기간</td>
-    <td colspan="3" class="val">${data.startDate||''} ~ ${data.endDate||''}</td>
+    <td class="label">추가할인</td>
+    <td class="val">${data.extraDiscount ? fmt(data.extraDiscount)+'원' : '—'}</td>
+    <td class="label">최종금액</td>
+    <td class="val"><b style="color:#C0392B">${fmtFloor(data.totalAmount)}원</b></td>
     <td class="label">결제일</td>
     <td class="val">${data.signedAt||''}</td>
+  </tr>
+  <tr>
+    <td class="label">유효기간</td>
+    <td colspan="5" class="val">${data.startDate||''} ~ ${data.endDate||''}</td>
   </tr>
   ${data.note ? `<tr><td class="label">비&nbsp;&nbsp;고</td><td colspan="5" class="val-wrap">${data.note}</td></tr>` : ''}
 </table>
