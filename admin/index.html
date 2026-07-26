@@ -845,9 +845,17 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
       <div class="form-section">프로그램 선택</div>
       <div class="form-row full">
         <div class="form-group">
+          <label class="form-label required">담당 강사</label>
+          <select class="form-select" id="nc-instructor" onchange="onInstructorSelect()">
+            <option value="">강사를 먼저 선택하세요</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row full">
+        <div class="form-group">
           <label class="form-label required">프로그램</label>
-          <select class="form-select" id="nc-program" onchange="onProgramSelect()">
-            <option value="">프로그램을 선택하세요</option>
+          <select class="form-select" id="nc-program" onchange="onProgramSelect()" disabled>
+            <option value="">강사를 선택하면 프로그램이 표시됩니다</option>
           </select>
         </div>
       </div>
@@ -3118,18 +3126,59 @@ async function saveMember() {
 }
 
 // ── NEW CONTRACT ──
+let _ncAllPrograms = []; // 프로그램 전체 캐시
+
 async function openNewContractModal() {
-  // 프로그램 목록 불러오기
-  const res = await fetch(`${API}/api/programs`);
-  const data = await res.json();
-  const programs = data.programs || [];
-  const sel = document.getElementById('nc-program');
-  sel.innerHTML = '<option value="">프로그램을 선택하세요</option>' +
-    programs.map(p => `<option value="${p.id}" data-price="${p.finalPrice}" data-sessions="${p.sessions}" data-pps="${p.pricePerSession}" data-total="${p.totalPrice}" data-discount="${p.discount}" data-final="${p.finalPrice}" data-name="${p.name}" data-duration="${p.duration||0}">${p.name} — ${p.finalPrice?.toLocaleString()}원</option>`).join('');
+  // 강사 + 프로그램 목록 로드
+  const [pRes] = await Promise.all([fetch(`${API}/api/programs`)]);
+  const pData = await pRes.json();
+  _ncAllPrograms = pData.all || pData.programs || [];
+
+  // 강사 드롭다운 초기화 (L1 포함 전체, 단 L2 로그인 시 본인만)
+  const instrSel = document.getElementById('nc-instructor');
+  const visibleInstrs = ADMIN_LEVEL === 1
+    ? allInstructors.filter(i => i.isActive)
+    : allInstructors.filter(i => i.isActive && !_l1InstructorIds.has(i.id));
+  instrSel.innerHTML = '<option value="">강사를 먼저 선택하세요</option>' +
+    visibleInstrs.map(i => `<option value="${i.id}" data-name="${i.name}">${i.name}</option>`).join('');
+
+  // 프로그램 드롭다운 초기화
+  const progSel = document.getElementById('nc-program');
+  progSel.innerHTML = '<option value="">강사를 선택하면 프로그램이 표시됩니다</option>';
+  progSel.disabled = true;
+
   document.getElementById('nc-start').value = new Date().toISOString().split('T')[0];
   document.getElementById('nc-program-info').style.display = 'none';
   initSigPad();
   document.getElementById('modal-new-contract').style.display = 'flex';
+}
+
+function onInstructorSelect() {
+  const instrSel = document.getElementById('nc-instructor');
+  const instrId = instrSel.value;
+  const progSel = document.getElementById('nc-program');
+
+  document.getElementById('nc-program-info').style.display = 'none';
+
+  if (!instrId) {
+    progSel.innerHTML = '<option value="">강사를 선택하면 프로그램이 표시됩니다</option>';
+    progSel.disabled = true;
+    return;
+  }
+
+  // 선택한 강사의 프로그램만 필터링
+  const filtered = _ncAllPrograms.filter(p => p.instructorId === instrId && p.isActive !== false);
+
+  if (filtered.length === 0) {
+    progSel.innerHTML = '<option value="">해당 강사의 프로그램이 없습니다</option>';
+    progSel.disabled = true;
+    return;
+  }
+
+  progSel.innerHTML = '<option value="">프로그램을 선택하세요</option>' +
+    filtered.map(p => `<option value="${p.id}" data-price="${p.finalPrice}" data-sessions="${p.sessions}" data-pps="${p.pricePerSession}" data-total="${p.totalPrice}" data-discount="${p.discount}" data-final="${p.finalPrice}" data-name="${p.name}" data-duration="${p.duration||0}">${p.name} — ${p.finalPrice?.toLocaleString()}원</option>`).join('');
+  progSel.disabled = false;
+  progSel.value = '';
 }
 
 function onProgramSelect() {
@@ -3200,6 +3249,12 @@ async function saveContract() {
 
   const programId = sel.value;
   const programName = selOpt.dataset.name || sel.options[sel.selectedIndex]?.text || '';
+
+  // 선택한 강사 정보
+  const instrSelEl = document.getElementById('nc-instructor');
+  const selectedInstructorId = instrSelEl?.value || '';
+  const selectedInstructorName = instrSelEl?.options[instrSelEl?.selectedIndex]?.dataset.name || '';
+
   const paymentMethod = document.getElementById('nc-payment').value;
   const startDate = document.getElementById('nc-start').value;
   const endDate = document.getElementById('nc-end').value;
@@ -3215,6 +3270,8 @@ async function saveContract() {
     memberId: currentMember.id,
     programId,
     programName,
+    instructorId: selectedInstructorId,
+    instructorName: selectedInstructorName,
     sessions,
     totalAmount,
     paymentMethod,
