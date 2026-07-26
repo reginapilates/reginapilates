@@ -4988,39 +4988,118 @@ async function onScheduleMemberChange() {
     return;
   }
 
-  // 캐시에서 해당 회원의 진행중 계약 찾기
-  const contracts = (window._scheduleContracts||[]).filter(c => c.memberId === memberId);
-  if (!contracts.length) {
+  const allContracts = (window._scheduleContracts||[]).filter(c => c.memberId === memberId);
+  if (!allContracts.length) {
     document.getElementById('ns-auto-info').innerHTML = '⚠️ 진행중인 계약이 없습니다.';
     document.getElementById('ns-auto-info').style.display = 'block';
     return;
   }
 
-  const contract = contracts[0]; // 첫 번째 진행중 계약
-  document.getElementById('ns-contract').value = contract.id;
+  // 해당 회원의 확정 예약 수 조회 (contractId별)
+  let pendingCountMap = {}; // contractId → 확정 예약 수
+  try {
+    const schRes = await fetch(`${API}/api/schedules?memberId=${memberId}`);
+    const schData = await schRes.json();
+    (schData.schedules||[])
+      .filter(s => s.status === '확정')
+      .forEach(s => {
+        if (s.contractId) pendingCountMap[s.contractId] = (pendingCountMap[s.contractId]||0) + 1;
+      });
+  } catch(e) {}
 
-  // 계약의 프로그램에서 강사 조회
-  let instructorName = '—';
-  let instructorId = '';
-  if (contract.programId) {
+  // 실제 예약 가능한 계약: 참석+노쇼+확정예약 < 전체 세션
+  const bookableContracts = allContracts.filter(c => {
+    const used = c.usedSessions || 0;
+    const pending = pendingCountMap[c.id] || 0;
+    return (used + pending) < (c.sessions || 0);
+  });
+
+  const infoEl = document.getElementById('ns-auto-info');
+
+  if (!bookableContracts.length) {
+    infoEl.innerHTML = '⚠️ 모든 계약의 예약 가능 횟수가 소진되었습니다.';
+    infoEl.style.display = 'block';
+    document.getElementById('ns-contract').value = '';
+    document.getElementById('ns-instructor').value = '';
+    return;
+  }
+
+  // 계약이 1개면 자동 선택, 여러개면 선택 드롭다운 표시
+  if (bookableContracts.length === 1) {
+    await selectScheduleContract(bookableContracts[0], pendingCountMap);
+  } else {
+    // 여러 계약 선택 UI
+    infoEl.innerHTML = `
+      <div style="margin-bottom:8px;font-weight:600;">계약 선택</div>
+      <select class="form-select" id="ns-contract-sel" onchange="onScheduleContractSelect(this)" style="margin-bottom:8px;">
+        <option value="">계약을 선택하세요</option>
+        ${bookableContracts.map(c => {
+          const used = c.usedSessions||0;
+          const pending = pendingCountMap[c.id]||0;
+          const avail = c.sessions - used - pending;
+          const title = c.title.includes(' · ') ? c.title.split(' · ').slice(1,-1).join(' · ') :
+                        c.title.includes(' - ') ? c.title.split(' - ').slice(1).join(' - ') : c.title;
+          return `<option value="${c.id}">${title} (예약가능 ${avail}회)</option>`;
+        }).join('')}
+      </select>
+      <div id="ns-contract-detail"></div>`;
+    infoEl.style.display = 'block';
+    document.getElementById('ns-contract').value = '';
+    document.getElementById('ns-instructor').value = '';
+    // 첫 번째 계약 자동 선택
+    const selEl = document.getElementById('ns-contract-sel');
+    if (selEl) { selEl.value = bookableContracts[0].id; selEl.dispatchEvent(new Event('change')); }
+  }
+}
+
+async function onScheduleContractSelect(sel) {
+  const contractId = sel.value;
+  const contract = (window._scheduleContracts||[]).find(c => c.id === contractId);
+  if (!contract) return;
+  await selectScheduleContract(contract, window._pendingCountMap||{});
+}
+
+async function selectScheduleContract(contract, pendingCountMap) {
+  document.getElementById('ns-contract').value = contract.id;
+  window._pendingCountMap = pendingCountMap;
+
+  const used = contract.usedSessions || 0;
+  const pending = pendingCountMap[contract.id] || 0;
+  const avail = contract.sessions - used - pending;
+
+  // 강사 정보
+  let instructorName = contract.instructorName || '—';
+  let instructorId = contract.instructorId || '';
+
+  if (!instructorId && contract.programId) {
     try {
       const pRes = await fetch(`${API}/api/programs`);
       const pData = await pRes.json();
       const program = (pData.all||[]).find(p => p.id === contract.programId);
       if (program?.instructorId) {
         instructorId = program.instructorId;
-        instructorName = program.instructor || program.instructorId;
+        const instr = allInstructors.find(i => i.id === instructorId);
+        instructorName = instr?.name || instructorName;
       }
     } catch(e) {}
   }
   document.getElementById('ns-instructor').value = instructorId;
 
-  // 자동 입력 정보 표시
-  document.getElementById('ns-auto-info').innerHTML = `
-    <div>📋 계약: <b>${contract.title}</b></div>
+  const title = contract.title.includes(' · ') ? contract.title.split(' · ').slice(1,-1).join(' · ') :
+                contract.title.includes(' - ') ? contract.title.split(' - ').slice(1).join(' - ') : contract.title;
+
+  const detailEl = document.getElementById('ns-contract-detail') || document.getElementById('ns-auto-info');
+  const html = `
+    <div>📋 계약: <b>${title}</b></div>
     <div>🎯 강사: <b>${instructorName}</b></div>
-    <div>📊 잔여: <b>${contract.remainingSessions}회</b> (~${contract.endDate})</div>
-  `;
+    <div>📊 잔여: <b>${avail}회</b> (완료 ${used}회 + 예약중 ${pending}회 / 전체 ${contract.sessions}회)</div>
+    <div style="font-size:11px;color:var(--text-muted);">(~${contract.endDate})</div>`;
+
+  if (detailEl.id === 'ns-contract-detail') {
+    detailEl.innerHTML = html;
+  } else {
+    document.getElementById('ns-auto-info').innerHTML = html;
+  }
   document.getElementById('ns-auto-info').style.display = 'block';
 
   // 정기일정 요일 자동 업데이트
