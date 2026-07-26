@@ -3258,6 +3258,10 @@ async function saveContract() {
 
   showToast('계약서 생성 중...', '');
 
+  // 추가 할인 금액 먼저 선언
+  const extraDiscount = parseInt(document.getElementById('nc-extra-discount').value)||0;
+  const finalAmountEl = document.getElementById('nc-final-amount').value;
+
   // 프로그램 가격 정보
   const selOpt = sel.options[sel.selectedIndex];
   let pricePerSession = parseInt(selOpt.dataset.pps)||0;
@@ -3304,9 +3308,6 @@ async function saveContract() {
   const endDate = document.getElementById('nc-end').value;
   const note = document.getElementById('nc-note').value;
 
-  // 추가 할인 반영 최종 금액
-  const extraDiscount = parseInt(document.getElementById('nc-extra-discount').value)||0;
-  const finalAmountEl = document.getElementById('nc-final-amount').value;
   const signedAt = new Date().toISOString().split('T')[0];
   const marketingConsent = false;
   const adConsent = false;
