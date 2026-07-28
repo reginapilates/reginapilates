@@ -134,8 +134,8 @@ body{font-family:'Nanum Gothic',sans-serif;background:var(--bg);color:var(--text
 .contract-actions{display:flex;gap:8px;}
 
 /* ── SESSIONS ── */
-.session-list{display:flex;flex-direction:column;gap:8px;width:100%;}
-.session-item{background:var(--white);border:1px solid var(--border);padding:14px 18px;display:flex;align-items:flex-start;gap:16px;width:100%;box-sizing:border-box;}
+.session-list{display:block;width:100%;}
+.session-item{background:var(--white);border:1px solid var(--border);padding:14px 18px;display:flex;align-items:flex-start;gap:16px;width:100%;box-sizing:border-box;clear:both;margin-bottom:8px;min-height:0;}
 .session-no{font-family:'Outfit',sans-serif;font-weight:300;font-size:20px;color:var(--accent);width:36px;flex-shrink:0;}
 .session-info{flex:1;}
 .session-date{font-size:13px;font-weight:700;}
@@ -2929,7 +2929,7 @@ async function loadMemberSessions() {
             <div class="session-condition" style="margin-top:2px;">
               ${s.condition && s.condition !== '—' ? `<span class="condition-dot cond-${s.condition}"></span>${s.condition}` : ''}
               ${instrName ? `<span style="margin-left:4px;color:var(--text-muted)">· ${instrName} 강사</span>` : ''}
-              ${contract ? `<span style="margin-left:4px;color:var(--text-muted)">· ${contract.title} (${contract.startDate||''}~${contract.endDate||''})</span>` : ''}
+              ${contract ? `<span style="margin-left:4px;color:var(--text-muted);white-space:nowrap;">· ${contract.title.includes(' · ') ? contract.title.split(' · ').slice(1,-1).join(' · ') : contract.title.includes(' - ') ? contract.title.split(' - ').slice(1).join(' - ') : contract.title} (${contract.startDate||''}~${contract.endDate||''})</span>` : ''}
             </div>
             ${s.memo && s.memo !== 'NO-SHOW' ? `<div style="font-size:12px;color:var(--text-muted);margin-top:2px">📝 ${s.memo}</div>` : ''}
             ${s.memo === 'NO-SHOW' ? `<div style="font-size:12px;color:var(--danger);margin-top:2px">❌ NO-SHOW</div>` : ''}
