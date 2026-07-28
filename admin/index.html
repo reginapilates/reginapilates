@@ -134,8 +134,8 @@ body{font-family:'Nanum Gothic',sans-serif;background:var(--bg);color:var(--text
 .contract-actions{display:flex;gap:8px;}
 
 /* ── SESSIONS ── */
-.session-list{display:block;width:100%;}
-.session-item{background:var(--white);border:1px solid var(--border);padding:14px 18px;display:flex;align-items:flex-start;gap:16px;width:100%;box-sizing:border-box;clear:both;margin-bottom:8px;min-height:0;}
+.session-list{display:block;width:100%;overflow:hidden;}
+.session-item{background:var(--white);border:1px solid var(--border);padding:14px 18px;display:flex;align-items:flex-start;gap:16px;width:100% !important;box-sizing:border-box !important;float:none !important;clear:both;margin-bottom:8px;}
 .session-no{font-family:'Outfit',sans-serif;font-weight:300;font-size:20px;color:var(--accent);width:36px;flex-shrink:0;}
 .session-info{flex:1;}
 .session-date{font-size:13px;font-weight:700;}
@@ -656,6 +656,45 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
       </div>
     </div>
 
+  </div>
+</div>
+
+<!-- MODAL: 취소 처리 -->
+<div class="modal-overlay" id="modal-cancel-schedule" style="display:none">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-header">
+      <div class="modal-title">예약 취소 처리</div>
+      <button class="modal-close" onclick="closeModal('modal-cancel-schedule')">×</button>
+    </div>
+    <div style="padding:20px 24px;display:flex;flex-direction:column;gap:16px;">
+      <div>
+        <label class="form-label">취소 사유 <small style="color:var(--text-muted)">(선택)</small></label>
+        <input class="form-input" id="cancel-memo" placeholder="취소 사유를 입력하세요">
+      </div>
+      <div>
+        <label class="form-label">세션 차감 여부</label>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:6px;">
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:12px;border:1px solid var(--border);border-radius:8px;">
+            <input type="radio" name="cancel-deduct" value="0" checked>
+            <div>
+              <div style="font-size:14px;font-weight:600;">차감 없이 취소 <span style="font-size:11px;color:var(--success);font-weight:400;">✓ 세션 유지</span></div>
+              <div style="font-size:12px;color:var(--text-muted);">사전 연락 취소 — 세션 수 변동 없이 취소 기록만 남김</div>
+            </div>
+          </label>
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:12px;border:1px solid var(--border);border-radius:8px;">
+            <input type="radio" name="cancel-deduct" value="1">
+            <div>
+              <div style="font-size:14px;font-weight:600;">취소 + 1회 차감 <span style="font-size:11px;color:var(--danger);font-weight:400;">-1회</span></div>
+              <div style="font-size:12px;color:var(--text-muted);">당일 취소 등 — 세션 1회 차감 후 취소 기록</div>
+            </div>
+          </label>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-cancel-schedule')">닫기</button>
+      <button class="btn btn-danger" onclick="confirmCancelSchedule()">취소 처리</button>
+    </div>
   </div>
 </div>
 
@@ -2901,12 +2940,16 @@ async function loadMemberSessions() {
   }
 
   // 세션 번호 순 정렬
-  const sortedSessions = [...sessions].sort((a, b) => (a.sessionNo||0) - (b.sessionNo||0));
+  const sortedSessions = [...sessions].sort((a, b) => {
+    const dateA = (a.date||'') + (a.time||'');
+    const dateB = (b.date||'') + (b.time||'');
+    return dateA.localeCompare(dateB);
+  });
   const totalSessions = sortedSessions.length;
 
   document.getElementById('tab-sessions').innerHTML = sessions.length === 0
     ? '<div class="empty-state"><p>세션 기록이 없습니다</p></div>'
-    : `<div class="session-list">${sortedSessions.map((s, idx) => {
+    : `<div style="display:flex;flex-direction:column;gap:8px;width:100%;">${sortedSessions.map((s, idx) => {
         const statusColor = s.attendanceStatus === '참석' ? 'var(--success)' :
           s.attendanceStatus === '노쇼' ? 'var(--danger)' : 'var(--text-muted)';
         const instrName = instrMap[s.instructorId] || '';
@@ -2915,7 +2958,7 @@ async function loadMemberSessions() {
         const seqNo = idx + 1;
 
         return `
-        <div class="session-item">
+        <div style="background:var(--white);border:1px solid var(--border);padding:14px 18px;display:flex;align-items:flex-start;gap:16px;width:100%;box-sizing:border-box;margin-bottom:0;">
           <div class="session-no" style="text-align:center;min-width:44px;">
             <div style="font-family:Outfit,sans-serif;font-weight:300;font-size:18px;color:var(--accent)">#${s.sessionNo||seqNo}</div>
             ${totalContractSessions ? `<div style="font-size:10px;color:var(--text-muted)">${seqNo}/${totalContractSessions}</div>` : ''}
@@ -4195,7 +4238,7 @@ async function renderSessionLog() {
                         <button class="btn btn-sm" style="background:#FDEDEC;color:var(--danger);border:1px solid #F5B7B1;padding:4px 10px;"
                           onclick="openAttendanceModal('${s.id}','노쇼','${memberId}')">노쇼</button>` : ''}
                         <button class="btn btn-sm" style="background:var(--surface);color:var(--text-muted);border:1px solid var(--border);padding:4px 10px;"
-                          onclick="quickStatusChange('${s.id}','취소','${memberId}')">취소</button>
+                          onclick="openCancelModal('${s.id}','${memberId}','${s.contractId||''}')">취소</button>
                       </div>` : `
                       <div style="font-size:11px;color:var(--text-muted)">처리완료</div>`}
                     </div>`;
@@ -4377,6 +4420,63 @@ function openAttendanceModal(scheduleId, status, memberId) {
   `;
 
   document.getElementById('modal-schedule-detail').style.display = 'flex';
+}
+
+// ── 취소 모달 ──
+let _cancelScheduleData = {};
+
+function openCancelModal(scheduleId, memberId, contractId) {
+  _cancelScheduleData = { scheduleId, memberId, contractId };
+  document.getElementById('cancel-memo').value = '';
+  document.querySelectorAll('input[name="cancel-deduct"]').forEach(r => r.checked = r.value === '0');
+  document.getElementById('modal-cancel-schedule').style.display = 'flex';
+}
+
+async function confirmCancelSchedule() {
+  const { scheduleId, memberId, contractId } = _cancelScheduleData;
+  const memo = document.getElementById('cancel-memo').value.trim();
+  const deduct = document.querySelector('input[name="cancel-deduct"]:checked')?.value === '1';
+  const schedule = allSchedules.find(s => s.id === scheduleId);
+  const member = allMembers.find(m => m.id === memberId) || allMembersForLog?.find(m => m.id === memberId);
+
+  closeModal('modal-cancel-schedule');
+  showToast('취소 처리 중...', '');
+
+  try {
+    // 1. 스케줄 상태 → 취소
+    await fetch(`${API}/api/schedules?id=${scheduleId}`, {
+      method: 'PUT',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ status: '취소' })
+    });
+
+    // 2. 세션 기록 생성 (차감 여부에 따라 attendanceStatus 다르게)
+    if (schedule) {
+      await fetch(`${API}/api/sessions`, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          memberName: member?.name || '',
+          memberId,
+          contractId: contractId || schedule.contractId,
+          instructorId: schedule.instructorId,
+          scheduleId,
+          date: schedule.date,
+          time: schedule.time,
+          condition: '',
+          attendanceStatus: '취소',
+          deductSession: deduct, // 차감 여부 플래그
+          memo: memo ? `${memo} (${deduct ? '1회 차감' : '차감 없음'})` : (deduct ? '취소 (1회 차감)' : '취소 (차감 없음)'),
+        })
+      });
+    }
+
+    showToast(deduct ? '취소 처리 완료 (1회 차감)' : '취소 처리 완료 (차감 없음)', 'success');
+    await loadCalendar();
+    if (typeof renderSessionLog === 'function') await renderSessionLog();
+  } catch(e) {
+    showToast('처리 실패: ' + e.message, 'error');
+  }
 }
 
 async function quickStatusChange(scheduleId, status, memberId) {
