@@ -141,7 +141,7 @@ export async function onRequest(context) {
         sessionNo = currentUsed + 1;
       }
 
-      const isAttended = body.attendanceStatus === '참석' || body.attendanceStatus === '노쇼';
+      const isAttended = body.attendanceStatus === '참석' || body.attendanceStatus === '노쇼' || (body.attendanceStatus === '취소' && body.deductSession === true);
       const title = `${memberName} #${sessionNo}`;
 
       // 세션 생성 + (참석일 때만) UsedSessions +1 병렬 실행
@@ -201,8 +201,8 @@ export async function onRequest(context) {
       // 출석 상태 변경 시 UsedSessions 조정
       // prevAttendanceStatus: 이전 상태를 클라이언트에서 전달
       if (body.attendanceStatus && body.prevAttendanceStatus !== undefined && body.contractId) {
-        const wasAttended = body.prevAttendanceStatus === '참석' || body.prevAttendanceStatus === '노쇼';
-        const isNowAttended = body.attendanceStatus === '참석' || body.attendanceStatus === '노쇼';
+        const wasAttended = body.prevAttendanceStatus === '참석' || body.prevAttendanceStatus === '노쇼' || (body.prevAttendanceStatus === '취소' && body.prevDeductSession === true);
+        const isNowAttended = body.attendanceStatus === '참석' || body.attendanceStatus === '노쇼' || (body.attendanceStatus === '취소' && body.deductSession === true);
 
         if (!wasAttended && isNowAttended) {
           // 결석/취소 → 참석: +1
