@@ -4106,12 +4106,14 @@ async function renderSessionLog() {
   const search = document.getElementById('session-member-search')?.value || '';
   const memberId = slSelectedMemberId;
 
-  // 계약 필터 드롭다운 갱신 (회원 기준)
-  updateSlContractFilter();
-
+  // 필터 값 먼저 읽기 (updateSlContractFilter 호출 전에)
   const instrFilter = document.getElementById('sl-instructor-filter')?.value || '';
   const statusFilter = document.getElementById('sl-status-filter')?.value || '';
   const contractFilter = document.getElementById('sl-contract-filter')?.value || '';
+
+  // 계약 필터 드롭다운 갱신 (선택값 보존 후 재구성)
+  updateSlContractFilter();
+  if (contractFilter) document.getElementById('sl-contract-filter').value = contractFilter;
 
   let sessions = allSessionsLog;
   // L2+ 강사: L1 담당 회원 세션 숨김
