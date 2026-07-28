@@ -4444,10 +4444,12 @@ function openCancelModal(scheduleId, memberId, contractId) {
 
 async function confirmCancelSchedule() {
   const { scheduleId, memberId, contractId } = _cancelScheduleData;
+  // closeModal 전에 값 먼저 읽기
   const memo = document.getElementById('cancel-memo').value.trim();
   const deduct = document.querySelector('input[name="cancel-deduct"]:checked')?.value === '1';
   const schedule = allSchedules.find(s => s.id === scheduleId);
   const member = allMembers.find(m => m.id === memberId) || allMembersForLog?.find(m => m.id === memberId);
+  const finalMemo = memo ? `${memo} (${deduct ? '1회 차감' : '차감 없음'})` : (deduct ? '취소 (1회 차감)' : '취소 (차감 없음)');
 
   closeModal('modal-cancel-schedule');
   showToast('취소 처리 중...', '');
@@ -4476,7 +4478,7 @@ async function confirmCancelSchedule() {
           condition: '',
           attendanceStatus: '취소',
           deductSession: deduct, // 차감 여부 플래그
-          memo: memo ? `${memo} (${deduct ? '1회 차감' : '차감 없음'})` : (deduct ? '취소 (1회 차감)' : '취소 (차감 없음)'),
+          memo: finalMemo,
         })
       });
     }
