@@ -4565,7 +4565,7 @@ async function confirmCancelSchedule() {
       date: sessionDate,
       time: sessionTime,
       condition: '',
-      attendanceStatus: '취소',
+      attendanceStatus: deduct ? '취소_차감' : '취소',
       deductSession: deduct,
       memo: finalMemo,
     };
