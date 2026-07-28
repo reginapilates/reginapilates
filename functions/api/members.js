@@ -71,6 +71,7 @@ export async function onRequest(context) {
         assignedInstructorId: page.properties.AssignedInstructor?.relation?.[0]?.id || '',
         remarks: page.properties.Remarks?.rich_text?.[0]?.plain_text || '',
         stopReasonEtc: page.properties.StopReasonEtc?.rich_text?.[0]?.plain_text || '',
+        visitSourceEtc: page.properties.VisitSourceEtc?.rich_text?.[0]?.plain_text || '',
       }));
 
       const url = new URL(request.url);
@@ -132,6 +133,7 @@ export async function onRequest(context) {
             AssignedInstructor: body.assignedInstructorId ? { relation: [{ id: body.assignedInstructorId }] } : undefined,
             Remarks: body.remarks ? { rich_text: [{ text: { content: body.remarks } }] } : undefined,
             StopReasonEtc: body.stopReasonEtc ? { rich_text: [{ text: { content: body.stopReasonEtc } }] } : undefined,
+            VisitSourceEtc: body.visitSourceEtc ? { rich_text: [{ text: { content: body.visitSourceEtc } }] } : undefined,
             CreatedAt: { date: { start: new Date().toISOString().split('T')[0] } },
           },
         }),
@@ -195,6 +197,7 @@ export async function onRequest(context) {
               : undefined,
             Remarks: body.remarks !== undefined ? { rich_text: [{ text: { content: body.remarks || '' } }] } : undefined,
             StopReasonEtc: body.stopReasonEtc !== undefined ? { rich_text: [{ text: { content: body.stopReasonEtc || '' } }] } : undefined,
+            VisitSourceEtc: body.visitSourceEtc !== undefined ? { rich_text: [{ text: { content: body.visitSourceEtc || '' } }] } : undefined,
           },
         }),
       });
