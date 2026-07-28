@@ -4267,11 +4267,11 @@ async function renderSessionLog() {
   const statusColors = { '참석':'var(--success)','노쇼':'var(--danger)' };
 
   const statusBadge = {
-    '참석': '<span style="color:var(--success);font-weight:700;font-size:12px;">출석</span>',
-    '노쇼':  '<span style="color:var(--danger);font-weight:700;font-size:12px;">노쇼</span>',
-    '취소':  '<span style="color:var(--text-muted);font-weight:700;font-size:12px;">취소</span>',
-    '취소_차감': '<span style="color:var(--danger);font-weight:700;font-size:12px;">취소(차감)</span>',
-    '확정':  '<span style="color:var(--accent);font-weight:700;font-size:12px;">예약</span>',
+    '참석':     '<span style="background:#D4EFDF;color:#1E8449;font-weight:700;font-size:12px;padding:2px 8px;border-radius:10px;">✓ 출석</span>',
+    '노쇼':     '<span style="background:#FADBD8;color:#C0392B;font-weight:700;font-size:12px;padding:2px 8px;border-radius:10px;">✕ 노쇼</span>',
+    '취소':     '<span style="background:#EAECEE;color:#808B96;font-weight:700;font-size:12px;padding:2px 8px;border-radius:10px;">취소</span>',
+    '취소_차감':'<span style="background:#FADBD8;color:#C0392B;font-weight:600;font-size:12px;padding:2px 8px;border-radius:10px;">취소-1회</span>',
+    '확정':     '<span style="background:#D6EAF8;color:#1A5276;font-weight:700;font-size:12px;padding:2px 8px;border-radius:10px;">예약</span>',
   };
 
   const today = new Date().toISOString().slice(0,10);
@@ -4283,16 +4283,24 @@ async function renderSessionLog() {
     const condDot = s.condition && s.condition !== '—'
       ? `<span style="display:inline-flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:50%;background:${condColors[s.condition]||'#ccc'};display:inline-block;flex-shrink:0;"></span>${s.condition}</span>`
       : (isScheduleOnly ? '' : '—');
-    const statusKey = s.attendanceStatus || '확정';
-    const badge = statusBadge[statusKey] || `<span style="font-size:12px;color:var(--text-muted);">${statusKey}</span>`;
+    // 상태별 배지 (statusKey는 아래에서 선언)
     // 확정(예약) 상태는 회차 표시 안 함, 세션은 sessionNo/전체
     const usedTotal = (!isScheduleOnly && s.sessionNo && s.contractSessions)
       ? `#${s.sessionNo} / ${s.contractSessions}회`
       : '';
-    const rowStyle = isScheduleOnly
-      ? (isPast ? 'background:#FFF8F0;' : 'background:#F8FBFF;')
-      : '';
+    // 상태별 행 배경색
+    const statusKey = s.attendanceStatus || '확정';
+    const rowStyle = (() => {
+      if (statusKey === '참석') return 'background:#F0FFF4;';          // 연초록 - 출석
+      if (statusKey === '노쇼') return 'background:#FFF5F5;';          // 연빨강 - 노쇼
+      if (statusKey === '취소') return 'background:#F5F5F5;opacity:.8;'; // 회색 - 취소(차감없음)
+      if (statusKey === '취소_차감') return 'background:#FFF0F0;opacity:.8;'; // 연빨강 - 취소(차감)
+      if (isScheduleOnly && isPast) return 'background:#FFF8F0;';      // 연주황 - 예약+지난날
+      if (isScheduleOnly) return 'background:#F0F8FF;';                // 연파랑 - 예약
+      return '';
+    })();
     // 클릭: 세션이면 sessionId+scheduleId, 예약확정이면 scheduleId만
+    const badge = statusBadge[statusKey] || `<span style="font-size:12px;color:var(--text-muted);">${statusKey}</span>`;
     const clickFn = isScheduleOnly
       ? `onclick="openSessionLogDetail('${s.id}', null)"`
       : `onclick="openSessionLogDetail('${s.scheduleId||''}', '${s.id}')"`;
