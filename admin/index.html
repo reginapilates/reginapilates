@@ -5515,7 +5515,9 @@ function onStatusChange() {
 
 async function updateSchedule() {
   const id = document.getElementById('sd-id').value;
-  const status = document.getElementById('sd-status').value;
+  const statusRaw = document.getElementById('sd-status').value;
+  const status = statusRaw === '취소_차감' ? '취소' : statusRaw;
+  const deductOnCancel = statusRaw === '취소_차감';
   const date = document.getElementById('sd-date').value;
   const time = document.getElementById('sd-time').value;
   const memberId = document.getElementById('sd-member-id').value;
