@@ -121,7 +121,7 @@ export async function onRequest(context) {
               properties: {
                 AttendanceStatus: body.attendanceStatus ? { select: { name: body.attendanceStatus } } : undefined,
                 Condition: (body.condition && body.condition !== '—') ? { select: { name: body.condition } } : undefined,
-                Memo: { rich_text: [{ text: { content: body.memo || '' } }] },
+                Memo: body.memo !== undefined ? { rich_text: [{ text: { content: body.memo || '' } }] } : undefined,
               },
             }),
           });
@@ -141,8 +141,11 @@ export async function onRequest(context) {
         sessionNo = currentUsed + 1;
       }
 
-      const isAttended = body.attendanceStatus === '참석' || body.attendanceStatus === '노쇼' || (body.attendanceStatus === '취소' && body.deductSession === true);
-      const title = `${memberName} #${sessionNo}`;
+      const isAttended = body.attendanceStatus === '참석' || body.attendanceStatus === '노쇼' || body.attendanceStatus === '취소_차감';
+      // 취소(차감없음)은 세션 번호 부여 안 함
+      const isCancelNoDeduct = body.attendanceStatus === '취소' && !body.deductSession;
+      if (isCancelNoDeduct) sessionNo = 0;
+      const title = isCancelNoDeduct ? `${memberName} 취소` : `${memberName} #${sessionNo}`;
 
       // 세션 생성 + (참석일 때만) UsedSessions +1 병렬 실행
       const [sessionRes] = await Promise.all([
@@ -159,10 +162,10 @@ export async function onRequest(context) {
               Name: { title: [{ text: { content: title } }] },
               Contract: contractId ? { relation: [{ id: contractId }] } : undefined,
               Member: memberId ? { relation: [{ id: memberId }] } : undefined,
-              SessionNo: { number: sessionNo },
+              SessionNo: isCancelNoDeduct ? undefined : { number: sessionNo },
               Date: { date: { start: body.date || new Date().toISOString().split('T')[0] } },
               Condition: (body.condition && body.condition !== '—') ? { select: { name: body.condition } } : undefined,
-              Memo: { rich_text: [{ text: { content: body.memo || '' } }] },
+              Memo: body.memo !== undefined ? { rich_text: [{ text: { content: body.memo || '' } }] } : undefined,
               AttendanceStatus: body.attendanceStatus ? { select: { name: body.attendanceStatus } } : undefined,
               Time: body.time ? { select: { name: body.time } } : undefined,
               Instructor: body.instructorId ? { relation: [{ id: body.instructorId }] } : undefined,
@@ -201,8 +204,8 @@ export async function onRequest(context) {
       // 출석 상태 변경 시 UsedSessions 조정
       // prevAttendanceStatus: 이전 상태를 클라이언트에서 전달
       if (body.attendanceStatus && body.prevAttendanceStatus !== undefined && body.contractId) {
-        const wasAttended = body.prevAttendanceStatus === '참석' || body.prevAttendanceStatus === '노쇼' || (body.prevAttendanceStatus === '취소' && body.prevDeductSession === true);
-        const isNowAttended = body.attendanceStatus === '참석' || body.attendanceStatus === '노쇼' || (body.attendanceStatus === '취소' && body.deductSession === true);
+        const wasAttended = body.prevAttendanceStatus === '참석' || body.prevAttendanceStatus === '노쇼' || body.prevAttendanceStatus === '취소_차감';
+        const isNowAttended = body.attendanceStatus === '참석' || body.attendanceStatus === '노쇼' || body.attendanceStatus === '취소_차감';
 
         if (!wasAttended && isNowAttended) {
           // 결석/취소 → 참석: +1
@@ -233,7 +236,7 @@ export async function onRequest(context) {
 
       const properties = {};
       if (body.condition) properties.Condition = { select: { name: body.condition } };
-      if (body.memo !== undefined) properties.Memo = { rich_text: [{ text: { content: body.memo } }] };
+      if (body.memo !== undefined) properties.Memo = { rich_text: [{ text: { content: body.memo } }] }; // Text 필드도 rich_text API로 저장
       if (body.date) properties.Date = { date: { start: body.date } };
       if (body.attendanceStatus) properties.AttendanceStatus = { select: { name: body.attendanceStatus } };
 
