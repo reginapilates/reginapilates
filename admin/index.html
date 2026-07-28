@@ -503,6 +503,9 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
         <select class="form-select" id="sl-instructor-filter" onchange="filterSessionLog()" style="width:130px;height:36px;font-size:13px;">
           <option value="">전체 강사</option>
         </select>
+        <select class="form-select" id="sl-contract-filter" onchange="filterSessionLog()" style="width:200px;height:36px;font-size:13px;">
+          <option value="">전체 계약</option>
+        </select>
         <select class="form-select" id="sl-status-filter" onchange="filterSessionLog()" style="width:130px;height:36px;font-size:13px;">
           <option value="">전체 상태</option>
           <option value="확정">예약</option>
@@ -528,6 +531,7 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
             <th>시간</th>
             <th>이름</th>
             <th>프로그램</th>
+            <th style="font-size:11px;">계약일</th>
             <th style="text-align:center;">회차/전체</th>
             <th>강사</th>
             <th>컨디션</th>
@@ -536,7 +540,7 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
           </tr>
         </thead>
         <tbody id="sessions-log-body">
-          <tr><td colspan="9" class="loading">불러오는 중...</td></tr>
+          <tr><td colspan="10" class="loading">불러오는 중...</td></tr>
         </tbody>
       </table>
     </div>
@@ -4064,6 +4068,27 @@ async function loadSessionsLog() {
         visibleInstrs.map(i => `<option value="${i.id}">${i.name}</option>`).join('');
     }
 
+    // 계약 필터 드롭다운 초기화 (contractId별 고유 계약 목록)
+    const contractSel = document.getElementById('sl-contract-filter');
+    if (contractSel) {
+      const contractMap = {};
+      allSessionsLog.forEach(s => {
+        if (s.contractId && !contractMap[s.contractId]) {
+          contractMap[s.contractId] = s.contractTitle || s.contractId;
+        }
+      });
+      const extractProg = (t) => {
+        if (!t) return t;
+        if (t.includes(' · ')) { const p = t.split(' · '); return p.length >= 3 ? p.slice(1, p.length-1).join(' · ') : p[1] || t; }
+        if (t.includes(' - ')) return t.split(' - ').slice(1).join(' - ');
+        return t;
+      };
+      contractSel.innerHTML = '<option value="">전체 계약</option>' +
+        Object.entries(contractMap).map(([id, title]) =>
+          `<option value="${id}">${extractProg(title)}</option>`
+        ).join('');
+    }
+
     // 회원 드롭다운 — 활성 계약 회원만
     const sel = document.getElementById('sl-member-select');
     if (sel) {
@@ -4097,6 +4122,7 @@ async function renderSessionLog() {
 
   const instrFilter = document.getElementById('sl-instructor-filter')?.value || '';
   const statusFilter = document.getElementById('sl-status-filter')?.value || '';
+  const contractFilter = document.getElementById('sl-contract-filter')?.value || '';
 
   let sessions = allSessionsLog;
   // L2+ 강사: L1 담당 회원 세션 숨김
@@ -4106,11 +4132,19 @@ async function renderSessionLog() {
   if (memberId) sessions = sessions.filter(s => s.memberId === memberId);
   if (search) sessions = sessions.filter(s => s.memberName.includes(search));
   if (instrFilter) sessions = sessions.filter(s => s.instructorId === instrFilter);
+  if (contractFilter) sessions = sessions.filter(s => s.contractId === contractFilter);
   if (statusFilter) {
     sessions = sessions.filter(s => s.attendanceStatus === statusFilter ||
       (!s.attendanceStatus && statusFilter === '확정'));
   }
   if (sessionLogFilter !== 'all') sessions = sessions.filter(s => s.attendanceStatus === sessionLogFilter);
+
+  // 날짜 최신순 정렬
+  sessions = [...sessions].sort((a, b) => {
+    const dateCmp = (b.date||'').localeCompare(a.date||'');
+    if (dateCmp !== 0) return dateCmp;
+    return (b.time||'').localeCompare(a.time||'');
+  });
 
   // 선택 회원 계약 요약
   const summaryEl = document.getElementById('sl-contract-summary');
@@ -4305,6 +4339,10 @@ async function renderSessionLog() {
       ? `onclick="openSessionLogDetail('${s.id}', null)"`
       : `onclick="openSessionLogDetail('${s.scheduleId||''}', '${s.id}')"`;
 
+    // 계약일 추출
+    const contractObj = allContractsByMember?.[s.memberId]?.find(c => c.id === s.contractId);
+    const contractStartDate = contractObj?.startDate || s.contractStartDate || '';
+
     return `<tr style="${rowStyle};cursor:pointer;" ${clickFn}>
       <td style="white-space:nowrap;font-size:13px;${isPast&&isScheduleOnly?'color:#E67E22;font-weight:600;':''}">${s.date||'—'}${isPast&&isScheduleOnly?' ⚠':''}</td>
       <td style="white-space:nowrap;">${s.time||'—'}</td>
@@ -4316,6 +4354,7 @@ async function renderSessionLog() {
         if(t.includes(' - ')){const p=t.split(' - ');return p.slice(1).join(' - ');}
         return t;
       })()}</td>
+      <td style="font-size:11px;color:var(--text-muted);white-space:nowrap;">${contractStartDate||'—'}</td>
       <td style="text-align:center;font-size:13px;">${usedTotal}</td>
       <td style="white-space:nowrap;">${s.instructorName}</td>
       <td>${condDot}</td>
