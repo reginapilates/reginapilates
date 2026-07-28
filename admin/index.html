@@ -779,10 +779,11 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
       <div class="form-row full">
         <div class="form-group">
           <label class="form-label">운동 중단 이유</label>
-          <select class="form-select" id="nm-stop-reason">
+          <select class="form-select" id="nm-stop-reason" onchange="document.getElementById('nm-stop-reason-etc').style.display=this.value==='기타'?'block':'none'">
             <option value="">선택</option>
             <option>효과없음</option><option>시간없음</option><option>강사수준</option><option>힘들어서</option><option>기타</option>
           </select>
+          <input class="form-input" id="nm-stop-reason-etc" placeholder="기타 중단 이유를 입력하세요" style="display:none;margin-top:8px;">
         </div>
       </div>
       <div class="form-row full">
@@ -892,6 +893,12 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
       </div>
 
       <div class="form-section">■ 동의 사항</div>
+      <div class="form-row full" style="margin-bottom:16px;">
+        <div class="form-group">
+          <label class="form-label">비고</label>
+          <textarea class="form-textarea" id="nm-remarks" placeholder="기타 특이사항을 입력하세요" style="min-height:80px;"></textarea>
+        </div>
+      </div>
       <div class="checkbox-row">
         <input type="checkbox" id="nm-privacy">
         <label class="checkbox-label" for="nm-privacy">
@@ -2788,6 +2795,7 @@ function renderProfile() {
         <div class="field-row"><span class="field-label">운동 경험(종목)</span><span class="field-value">${m.exerciseExp||'—'}</span></div>
         <div class="field-row"><span class="field-label">자격증</span><span class="field-value">${m.pilatesCert?'있음':'없음'}${m.pilatesCertOrg?' · '+m.pilatesCertOrg:''}${m.pilatesCertYears?' ('+m.pilatesCertYears+'년)':''}</span></div>
         <div class="field-row"><span class="field-label">운동 중단 이유</span><span class="field-value">${m.stopReasons||'—'}</span></div>
+        <div class="field-row"><span class="field-label">비고</span><span class="field-value">${m.remarks||'—'}</span></div>
         <div class="field-row"><span class="field-label">운동 목적</span><span class="field-value">${(m.exerciseGoals||(m.exerciseGoalsEtc?'기타':''))||'—'}${m.exerciseGoalsEtc?' ('+m.exerciseGoalsEtc+')':''}</span></div>
         <div class="field-row"><span class="field-label">운동 가능 요일</span><span class="field-value">${m.availableDays||'—'}</span></div>
         <div class="field-row"><span class="field-label">운동 가능 시간</span><span class="field-value">${m.availableTime||'—'}</span></div>
@@ -3191,7 +3199,16 @@ async function openEditMemberModal(m) {
   document.getElementById('nm-cert').value = m.pilatesCert ? 'true' : 'false';
   document.getElementById('nm-cert-org').value = m.pilatesCertOrg || '';
   document.getElementById('nm-cert-years').value = m.pilatesCertYears || '';
+  // 중단이유 복원
   document.getElementById('nm-stop-reason').value = m.stopReasons || '';
+  if (m.stopReasons === '기타') {
+    document.getElementById('nm-stop-reason-etc').value = m.stopReasonEtc || '';
+    document.getElementById('nm-stop-reason-etc').style.display = 'block';
+  } else {
+    document.getElementById('nm-stop-reason-etc').value = '';
+    document.getElementById('nm-stop-reason-etc').style.display = 'none';
+  }
+  document.getElementById('nm-remarks').value = m.remarks || '';
   document.getElementById('nm-surgery').value = m.surgery ? 'true' : 'false';
   document.getElementById('nm-surgery-detail').value = m.surgeryDetail || '';
   document.getElementById('nm-source').value = m.visitSource || '';
@@ -3256,6 +3273,9 @@ async function updateMember(id) {
     pilatesCertOrg: document.getElementById('nm-cert-org').value,
     pilatesCertYears: parseInt(document.getElementById('nm-cert-years').value)||null,
     stopReasons: document.getElementById('nm-stop-reason').value,
+    stopReasonEtc: document.getElementById('nm-stop-reason').value === '기타'
+      ? document.getElementById('nm-stop-reason-etc').value : '',
+    remarks: document.getElementById('nm-remarks').value,
     surgery: document.getElementById('nm-surgery').value === 'true',
     surgeryDetail: document.getElementById('nm-surgery-detail').value,
     medicalHistory: getChecked('nm-medical'),
@@ -3336,6 +3356,9 @@ async function saveMember() {
     pilatesCertOrg: document.getElementById('nm-cert-org').value,
     pilatesCertYears: parseInt(document.getElementById('nm-cert-years').value)||null,
     stopReasons: document.getElementById('nm-stop-reason').value,
+    stopReasonEtc: document.getElementById('nm-stop-reason').value === '기타'
+      ? document.getElementById('nm-stop-reason-etc').value : '',
+    remarks: document.getElementById('nm-remarks').value,
     exerciseGoals: getChecked('nm-goals'),
     exerciseGoalsEtc: document.getElementById('goals-etc').value.trim(),
     surgery: document.getElementById('nm-surgery').value === 'true',
