@@ -4025,7 +4025,7 @@ async function loadSessionsLog() {
 
     // Schedule DB에서 '확정' 상태인 것 중 세션 기록 없는 것만 추가
     const scheduleRows = (schData.schedules||[])
-      .filter(s => s.status === '확정' && !sessionScheduleIds.has(s.id) && s.memberId)
+      .filter(s => (s.status === '확정' || s.status === '취소') && !sessionScheduleIds.has(s.id) && s.memberId)
       .map(s => ({
         id: s.id,
         _type: 'schedule',
@@ -4040,7 +4040,7 @@ async function loadSessionsLog() {
         contractTitle: contractMap[s.contractId]?.title || '—',
         contractSessions: contractMap[s.contractId]?.sessions || 0,
         contractUsed: contractMap[s.contractId]?.usedSessions || 0,
-        attendanceStatus: '확정',
+        attendanceStatus: s.status || '확정',
         condition: '',
         memo: '',
         sessionNo: null,
@@ -4866,7 +4866,6 @@ function renderCalendar() {
       const dateStr = toLocalDateStr(d);
       const slots = allSchedules.filter(s =>
         s.time === time && s.date === dateStr &&
-        s.status !== '취소' &&
         (filteredInstrs.length === 0 || filteredInstrs.some(fi => fi.id === s.instructorId)) &&
         // L2+ 강사: L1 담당 예약 숨김
         (ADMIN_LEVEL === 1 || !_l1InstructorIds.has(s.instructorId))
