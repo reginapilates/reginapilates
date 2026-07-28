@@ -4436,7 +4436,15 @@ function openAttendanceModal(scheduleId, status, memberId) {
 let _cancelScheduleData = {};
 
 function openCancelModal(scheduleId, memberId, contractId) {
-  _cancelScheduleData = { scheduleId, memberId, contractId };
+  // 스케줄 정보 최대한 저장
+  const s = allSchedules.find(sc => sc.id === scheduleId)
+    || allSchedulesForLog?.find(sc => sc.id === scheduleId);
+  _cancelScheduleData = {
+    scheduleId, memberId, contractId,
+    date: s?.date || '',
+    time: s?.time || '',
+    instructorId: s?.instructorId || '',
+  };
   document.getElementById('cancel-memo').value = '';
   document.querySelectorAll('input[name="cancel-deduct"]').forEach(r => r.checked = r.value === '0');
   document.getElementById('modal-cancel-schedule').style.display = 'flex';
@@ -4447,7 +4455,9 @@ async function confirmCancelSchedule() {
   // closeModal 전에 값 먼저 읽기
   const memo = document.getElementById('cancel-memo').value.trim();
   const deduct = document.querySelector('input[name="cancel-deduct"]:checked')?.value === '1';
-  const schedule = allSchedules.find(s => s.id === scheduleId);
+  // allSchedules(현재 주)에 없으면 allSchedulesForLog에서 찾기
+  const schedule = allSchedules.find(s => s.id === scheduleId)
+    || allSchedulesForLog?.find(s => s.id === scheduleId);
   const member = allMembers.find(m => m.id === memberId) || allMembersForLog?.find(m => m.id === memberId);
   const finalMemo = memo ? `${memo} (${deduct ? '1회 차감' : '차감 없음'})` : (deduct ? '취소 (1회 차감)' : '취소 (차감 없음)');
 
@@ -4462,26 +4472,30 @@ async function confirmCancelSchedule() {
       body: JSON.stringify({ status: '취소' })
     });
 
-    // 2. 세션 기록 생성 (차감 여부에 따라 attendanceStatus 다르게)
-    if (schedule) {
-      await fetch(`${API}/api/sessions`, {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({
-          memberName: member?.name || '',
-          memberId,
-          contractId: contractId || schedule.contractId,
-          instructorId: schedule.instructorId,
-          scheduleId,
-          date: schedule.date,
-          time: schedule.time,
-          condition: '',
-          attendanceStatus: '취소',
-          deductSession: deduct, // 차감 여부 플래그
-          memo: finalMemo,
-        })
-      });
-    }
+    // 2. 세션 기록 생성 (schedule 없어도 _cancelScheduleData에서 최대한 정보 복원)
+    console.log('[취소 디버그]', { memo, finalMemo, deduct, scheduleId, schedule, contractId });
+    const sessionDate = schedule?.date || _cancelScheduleData.date || '';
+    const sessionTime = schedule?.time || _cancelScheduleData.time || '';
+    const sessionContractId = contractId || schedule?.contractId || _cancelScheduleData.contractId || '';
+    const sessionInstructorId = schedule?.instructorId || _cancelScheduleData.instructorId || '';
+
+    await fetch(`${API}/api/sessions`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        memberName: member?.name || '',
+        memberId,
+        contractId: sessionContractId,
+        instructorId: sessionInstructorId,
+        scheduleId,
+        date: sessionDate,
+        time: sessionTime,
+        condition: '',
+        attendanceStatus: '취소',
+        deductSession: deduct,
+        memo: finalMemo,
+      })
+    });
 
     showToast(deduct ? '취소 처리 완료 (1회 차감)' : '취소 처리 완료 (차감 없음)', 'success');
     await loadCalendar();
