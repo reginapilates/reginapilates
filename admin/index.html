@@ -4079,7 +4079,7 @@ async function loadSessionsLog() {
 
     // Schedule DB에서 '확정' 상태인 것 중 세션 기록 없는 것만 추가
     const scheduleRows = (schData.schedules||[])
-      .filter(s => (s.status === '확정' || s.status === '취소') && !sessionScheduleIds.has(s.id) && s.memberId)
+      .filter(s => s.status === '확정' && !sessionScheduleIds.has(s.id) && s.memberId)
       .map(s => ({
         id: s.id,
         _type: 'schedule',
@@ -4528,7 +4528,11 @@ function openCancelModal(scheduleId, memberId, contractId) {
   document.getElementById('modal-cancel-schedule').style.display = 'flex';
 }
 
+let _cancelInProgress = false;
 async function confirmCancelSchedule() {
+  if (_cancelInProgress) return;
+  _cancelInProgress = true;
+  try {
   const { scheduleId, memberId, contractId } = _cancelScheduleData;
   // closeModal 전에 값 먼저 읽기
   const memo = document.getElementById('cancel-memo').value.trim();
@@ -4587,7 +4591,10 @@ async function confirmCancelSchedule() {
     if (typeof renderSessionLog === 'function') await renderSessionLog();
   } catch(e) {
     showToast('처리 실패: ' + e.message, 'error');
+  } finally {
+    _cancelInProgress = false;
   }
+  } finally { _cancelInProgress = false; }
 }
 
 async function quickStatusChange(scheduleId, status, memberId) {
