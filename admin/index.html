@@ -1475,6 +1475,7 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
             <option value="참석">✅ 참석 (세션 차감)</option>
             <option value="노쇼">❌ 노쇼 (세션 차감)</option>
             <option value="취소">🚫 취소 (차감 없음)</option>
+            <option value="취소_차감">🚫 취소 (1회 차감)</option>
             <option value="일정변경">🔄 일정변경</option>
           </select>
         </div>
@@ -4269,6 +4270,7 @@ async function renderSessionLog() {
     '참석': '<span style="color:var(--success);font-weight:700;font-size:12px;">출석</span>',
     '노쇼':  '<span style="color:var(--danger);font-weight:700;font-size:12px;">노쇼</span>',
     '취소':  '<span style="color:var(--text-muted);font-weight:700;font-size:12px;">취소</span>',
+    '취소_차감': '<span style="color:var(--danger);font-weight:700;font-size:12px;">취소(차감)</span>',
     '확정':  '<span style="color:var(--accent);font-weight:700;font-size:12px;">예약</span>',
   };
 
@@ -5472,7 +5474,10 @@ async function openScheduleDetail(id) {
 }
 
 function onStatusChange() {
-  const status = document.getElementById('sd-status').value;
+  const statusRaw = document.getElementById('sd-status').value;
+  // 취소_차감 → 실제 저장은 취소, deductSession 플래그로 구분
+  const status = statusRaw === '취소_차감' ? '취소' : statusRaw;
+  const deductOnCancel = statusRaw === '취소_차감';
   const condRow = document.getElementById('sd-condition-row');
   condRow.style.display = (status === '참석' || status === '노쇼') ? 'block' : 'none';
 }
@@ -5527,6 +5532,7 @@ async function updateSchedule() {
           body: JSON.stringify({
             attendanceStatus: status,
             prevAttendanceStatus: prevStatus,
+            deductSession: status === '취소' ? deductOnCancel : undefined,
             contractId,
             condition: status === '참석' ? condition : '',
             memo: status === '노쇼' ? (memo || 'NO-SHOW') : memo,
@@ -5545,6 +5551,7 @@ async function updateSchedule() {
             condition: status === '참석' ? condition : '',
             memo: status === '노쇼' ? (memo || 'NO-SHOW') : memo,
             attendanceStatus: status,
+            deductSession: status === '취소' ? deductOnCancel : undefined,
           })
         });
       }
