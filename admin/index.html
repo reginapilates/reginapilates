@@ -1710,6 +1710,14 @@ function initL1InstructorIds() {
   );
 }
 
+// 현재 로그인한 강사 ID (L2~5)
+function getMyInstructorId() {
+  if (ADMIN_LEVEL === 1) return null;
+  const saved = sessionStorage.getItem('adminInstrData');
+  if (saved) { try { return JSON.parse(saved).id || null; } catch(e) {} }
+  return null;
+}
+
 // L2+ 강사가 볼 수 없는 회원인지 (Members DB의 assignedInstructorId 기준)
 function isHiddenForL2(memberId) {
   if (ADMIN_LEVEL === 1) return false;
@@ -2451,8 +2459,34 @@ async function loadDashboard() {
     const memberMap = {};
     allMembers.forEach(m => { memberMap[m.id] = m.name; });
 
+    // L2~5: 본인 담당 회원/계약만 필터링
+    const myInstrId = getMyInstructorId();
+    const filteredMembers = ADMIN_LEVEL === 1 ? allMembers
+      : allMembers.filter(m => !isHiddenForL2(m.id));
+    const filteredContracts = ADMIN_LEVEL === 1 ? dashContracts
+      : dashContracts.filter(c => !isHiddenForL2(c.memberId));
+
+    // 신규 회원/계약 현황 재계산 (L2~5는 담당 회원만)
+    if (ADMIN_LEVEL !== 1) {
+      document.getElementById('stat-total').textContent = filteredMembers.length;
+      document.getElementById('new-member-day').textContent =
+        filteredMembers.filter(m => m.createdAt?.slice(0,10) === todayStr).length;
+      document.getElementById('new-member-week').textContent =
+        filteredMembers.filter(m => (m.createdAt?.slice(0,10)||'') >= weekStartStr).length;
+      document.getElementById('new-member-month').textContent =
+        filteredMembers.filter(m => m.createdAt?.startsWith(monthStr)).length;
+      document.getElementById('stat-active').textContent =
+        filteredContracts.filter(c => c.status === '진행중').length;
+      document.getElementById('new-contract-day').textContent =
+        filteredContracts.filter(c => c.startDate?.slice(0,10) === todayStr).length;
+      document.getElementById('new-contract-week').textContent =
+        filteredContracts.filter(c => (c.startDate?.slice(0,10)||'') >= weekStartStr).length;
+      document.getElementById('new-contract-month').textContent =
+        filteredContracts.filter(c => c.startDate?.startsWith(monthStr)).length;
+    }
+
     // 3. 계약만료 예정 (잔여 5회 이하 또는 0회, 해제 안 된 것)
-    const expiring = dashContracts.filter(c =>
+    const expiring = filteredContracts.filter(c =>
       c.status === '진행중' &&
       typeof c.remainingSessions === 'number' &&
       c.remainingSessions <= 5 &&
@@ -2510,7 +2544,7 @@ async function loadDashboard() {
     }
 
     // 4. 일시정지 회원
-    const paused = dashContracts.filter(c => c.status === '일시정지');
+    const paused = filteredContracts.filter(c => c.status === '일시정지');
     const pausedEl = document.getElementById('paused-list');
     if (paused.length === 0) {
       pausedEl.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:8px 0;">일시정지 회원 없음</div>';
