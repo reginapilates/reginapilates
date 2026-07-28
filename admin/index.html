@@ -5701,7 +5701,7 @@ async function updateSchedule() {
           method: 'PUT',
           headers: {'Content-Type':'application/json'},
           body: JSON.stringify({
-            attendanceStatus: status,
+            attendanceStatus: statusRaw,
             prevAttendanceStatus: prevStatus,
             contractId,
             condition: status === '참석' ? condition : '',
@@ -5720,7 +5720,7 @@ async function updateSchedule() {
             date, time,
             condition: status === '참석' ? condition : '',
             memo: status === '노쇼' ? (memo || 'NO-SHOW') : memo,
-            attendanceStatus: status,
+            attendanceStatus: statusRaw,
           })
         });
       }
