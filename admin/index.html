@@ -4473,29 +4473,36 @@ async function confirmCancelSchedule() {
     });
 
     // 2. 세션 기록 생성 (schedule 없어도 _cancelScheduleData에서 최대한 정보 복원)
-    console.log('[취소 디버그]', { memo, finalMemo, deduct, scheduleId, schedule, contractId });
     const sessionDate = schedule?.date || _cancelScheduleData.date || '';
     const sessionTime = schedule?.time || _cancelScheduleData.time || '';
     const sessionContractId = contractId || schedule?.contractId || _cancelScheduleData.contractId || '';
     const sessionInstructorId = schedule?.instructorId || _cancelScheduleData.instructorId || '';
 
-    await fetch(`${API}/api/sessions`, {
+    const sessBody = {
+      memberName: member?.name || '',
+      memberId,
+      contractId: sessionContractId,
+      instructorId: sessionInstructorId,
+      scheduleId,
+      date: sessionDate,
+      time: sessionTime,
+      condition: '',
+      attendanceStatus: '취소',
+      deductSession: deduct,
+      memo: finalMemo,
+    };
+    console.log('[취소 세션 POST]', sessBody);
+    const sessRes = await fetch(`${API}/api/sessions`, {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({
-        memberName: member?.name || '',
-        memberId,
-        contractId: sessionContractId,
-        instructorId: sessionInstructorId,
-        scheduleId,
-        date: sessionDate,
-        time: sessionTime,
-        condition: '',
-        attendanceStatus: '취소',
-        deductSession: deduct,
-        memo: finalMemo,
-      })
+      body: JSON.stringify(sessBody)
     });
+    const sessData = await sessRes.json();
+    console.log('[취소 세션 응답]', sessRes.status, sessData);
+    if (!sessRes.ok) {
+      showToast('세션 생성 실패: ' + (sessData.error||'오류'), 'error');
+      return;
+    }
 
     showToast(deduct ? '취소 처리 완료 (1회 차감)' : '취소 처리 완료 (차감 없음)', 'success');
     await loadCalendar();
@@ -5542,8 +5549,8 @@ async function updateSchedule() {
   })();
   const condition = document.getElementById('sd-condition').value;
   const memo = document.getElementById('sd-memo').value;
-  const isNowCounted = status === '참석' || status === '노쇼';
-  const wasCounted = prevStatus === '참석' || prevStatus === '노쇼';
+  const isNowCounted = status === '참석' || status === '노쇼' || status === '취소' || status === '취소_차감';
+  const wasCounted = prevStatus === '참석' || prevStatus === '노쇼' || prevStatus === '취소' || prevStatus === '취소_차감';
 
   // 2. 세션 처리
   if (isNowCounted && memberId && contractId) {
