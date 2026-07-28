@@ -69,6 +69,8 @@ export async function onRequest(context) {
         createdAt: page.properties.CreatedAt?.date?.start || '',
         token: page.properties.Token?.rich_text?.[0]?.plain_text || '',
         assignedInstructorId: page.properties.AssignedInstructor?.relation?.[0]?.id || '',
+        remarks: page.properties.Remarks?.rich_text?.[0]?.plain_text || '',
+        stopReasonEtc: page.properties.StopReasonEtc?.rich_text?.[0]?.plain_text || '',
       }));
 
       const url = new URL(request.url);
@@ -128,6 +130,8 @@ export async function onRequest(context) {
             AdConsent: { checkbox: body.adConsent || false },
             Token: body.token ? { rich_text: [{ text: { content: body.token } }] } : undefined,
             AssignedInstructor: body.assignedInstructorId ? { relation: [{ id: body.assignedInstructorId }] } : undefined,
+            Remarks: body.remarks ? { rich_text: [{ text: { content: body.remarks } }] } : undefined,
+            StopReasonEtc: body.stopReasonEtc ? { rich_text: [{ text: { content: body.stopReasonEtc } }] } : undefined,
             CreatedAt: { date: { start: new Date().toISOString().split('T')[0] } },
           },
         }),
@@ -189,6 +193,8 @@ export async function onRequest(context) {
             AssignedInstructor: body.assignedInstructorId !== undefined
               ? (body.assignedInstructorId ? { relation: [{ id: body.assignedInstructorId }] } : { relation: [] })
               : undefined,
+            Remarks: body.remarks !== undefined ? { rich_text: [{ text: { content: body.remarks || '' } }] } : undefined,
+            StopReasonEtc: body.stopReasonEtc !== undefined ? { rich_text: [{ text: { content: body.stopReasonEtc || '' } }] } : undefined,
           },
         }),
       });
