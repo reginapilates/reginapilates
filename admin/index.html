@@ -2794,8 +2794,7 @@ function renderProfile() {
         <div class="field-row"><span class="field-label">필라테스 경험</span><span class="field-value">${m.pilatesExpType||'—'} ${m.pilatesExpCount?m.pilatesExpCount+'회':''}</span></div>
         <div class="field-row"><span class="field-label">운동 경험(종목)</span><span class="field-value">${m.exerciseExp||'—'}</span></div>
         <div class="field-row"><span class="field-label">자격증</span><span class="field-value">${m.pilatesCert?'있음':'없음'}${m.pilatesCertOrg?' · '+m.pilatesCertOrg:''}${m.pilatesCertYears?' ('+m.pilatesCertYears+'년)':''}</span></div>
-        <div class="field-row"><span class="field-label">운동 중단 이유</span><span class="field-value">${m.stopReasons||'—'}</span></div>
-        <div class="field-row"><span class="field-label">비고</span><span class="field-value">${m.remarks||'—'}</span></div>
+        <div class="field-row"><span class="field-label">운동 중단 이유</span><span class="field-value">${m.stopReasons||'—'}${m.stopReasonEtc?' ('+m.stopReasonEtc+')':''}</span></div>
         <div class="field-row"><span class="field-label">운동 목적</span><span class="field-value">${(m.exerciseGoals||(m.exerciseGoalsEtc?'기타':''))||'—'}${m.exerciseGoalsEtc?' ('+m.exerciseGoalsEtc+')':''}</span></div>
         <div class="field-row"><span class="field-label">운동 가능 요일</span><span class="field-value">${m.availableDays||'—'}</span></div>
         <div class="field-row"><span class="field-label">운동 가능 시간</span><span class="field-value">${m.availableTime||'—'}</span></div>
@@ -2809,6 +2808,13 @@ function renderProfile() {
         <div class="field-row"><span class="field-label">통증 부위</span><span class="field-value">${(m.painAreas||(m.painAreasEtc?'기타':''))||'—'}${m.painAreasEtc?' ('+m.painAreasEtc+')':''}</span></div>
       </div>
     </div>
+    ${m.remarks ? `
+    <div style="margin-top:16px;">
+      <div class="profile-section" style="width:100%;">
+        <div class="section-title">■ 비고</div>
+        <div style="font-size:13px;line-height:1.7;white-space:pre-wrap;color:var(--text);padding:4px 0;">${m.remarks}</div>
+      </div>
+    </div>` : ''}
   `;
 }
 
