@@ -4570,7 +4570,6 @@ async function confirmCancelSchedule() {
       time: sessionTime,
       condition: '',
       attendanceStatus: deduct ? '취소_차감' : '취소',
-      deductSession: deduct,
       memo: finalMemo,
     };
     console.log('[취소 세션 POST]', sessBody);
@@ -5704,7 +5703,6 @@ async function updateSchedule() {
           body: JSON.stringify({
             attendanceStatus: status,
             prevAttendanceStatus: prevStatus,
-            deductSession: status === '취소' ? deductOnCancel : undefined,
             contractId,
             condition: status === '참석' ? condition : '',
             memo: status === '노쇼' ? (memo || 'NO-SHOW') : memo,
@@ -5723,7 +5721,6 @@ async function updateSchedule() {
             condition: status === '참석' ? condition : '',
             memo: status === '노쇼' ? (memo || 'NO-SHOW') : memo,
             attendanceStatus: status,
-            deductSession: status === '취소' ? deductOnCancel : undefined,
           })
         });
       }
