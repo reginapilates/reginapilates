@@ -669,7 +669,7 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
     <div style="padding:20px 24px;display:flex;flex-direction:column;gap:16px;">
       <div>
         <label class="form-label">취소 사유 <small style="color:var(--text-muted)">(선택)</small></label>
-        <input class="form-input" id="cancel-memo" placeholder="취소 사유를 입력하세요">
+        <textarea class="form-input" id="cancel-memo" placeholder="취소 사유를 입력하세요 (예: 개인 사정, 당일 연락 등)" rows="3" style="resize:none;"></textarea>
       </div>
       <div>
         <label class="form-label">세션 차감 여부</label>
@@ -1488,11 +1488,11 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
             </select>
           </div>
         </div>
-        <div class="form-row full">
-          <div class="form-group">
-            <label class="form-label">메모</label>
-            <textarea class="form-textarea" id="sd-memo" style="min-height:60px" placeholder="수업 내용 또는 특이사항"></textarea>
-          </div>
+      </div>
+      <div class="form-row full">
+        <div class="form-group">
+          <label class="form-label">메모</label>
+          <textarea class="form-textarea" id="sd-memo" style="min-height:60px" placeholder="수업 내용, 취소 사유 등"></textarea>
         </div>
       </div>
     </div>
@@ -5459,6 +5459,7 @@ async function openScheduleDetail(id) {
   const currentStatus = s.status || '확정';
   const condRow = document.getElementById('sd-condition-row');
   condRow.style.display = (currentStatus === '참석' || currentStatus === '노쇼') ? 'block' : 'none';
+  // 메모는 항상 표시 (sd-condition-row 밖으로 분리됨)
 
   document.getElementById('sd-info').innerHTML = `
     <div>📅 <b>${s.date}</b> &nbsp; ⏰ <b>${s.time}</b></div>
@@ -5569,12 +5570,22 @@ async function updateSchedule() {
       showToast('수정되었습니다', 'success');
     } catch(e) { showToast('수정되었습니다', 'success'); }
   } else if (existingSessionId && (memo !== '' || condition)) {
-    // 상태 변경 없이 메모/컨디션만 수정
+    // 상태 변경 없이 메모/컨디션만 수정 (취소 포함)
     try {
       await fetch(`${API}/api/sessions?id=${existingSessionId}`, {
         method: 'PUT',
         headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ condition, memo })
+        body: JSON.stringify({ condition: condition || undefined, memo })
+      });
+    } catch(e) {}
+    showToast('수정되었습니다', 'success');
+  } else if (existingSessionId && status === '취소') {
+    // 취소 상태에서 메모만 업데이트
+    try {
+      await fetch(`${API}/api/sessions?id=${existingSessionId}`, {
+        method: 'PUT',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ memo })
       });
     } catch(e) {}
     showToast('수정되었습니다', 'success');
