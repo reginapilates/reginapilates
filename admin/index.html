@@ -4070,8 +4070,7 @@ async function loadSessionsLog() {
         visibleInstrs.map(i => `<option value="${i.id}">${i.name}</option>`).join('');
     }
 
-    // 계약 필터 드롭다운 초기화
-    updateSlContractFilter();
+
 
     // 회원 드롭다운 — 활성 계약 회원만
     const sel = document.getElementById('sl-member-select');
@@ -4106,6 +4105,9 @@ async function onSlMemberChange() {
 async function renderSessionLog() {
   const search = document.getElementById('session-member-search')?.value || '';
   const memberId = slSelectedMemberId;
+
+  // 계약 필터 드롭다운 갱신 (회원 기준)
+  updateSlContractFilter();
 
   const instrFilter = document.getElementById('sl-instructor-filter')?.value || '';
   const statusFilter = document.getElementById('sl-status-filter')?.value || '';
