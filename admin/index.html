@@ -4623,9 +4623,11 @@ function updateSlContractFilter() {
   const contractMap = {};
   filtered.forEach(s => {
     if (s.contractId && !contractMap[s.contractId]) {
+      // allContractsByMember에서 startDate 직접 조회
+      const contractObj = allContractsByMember?.[memberId]?.find(c => c.id === s.contractId);
       contractMap[s.contractId] = {
         title: s.contractTitle || '',
-        startDate: s.contractStartDate || '',
+        startDate: contractObj?.startDate || s.contractStartDate || '',
       };
     }
   });
@@ -4639,9 +4641,11 @@ function updateSlContractFilter() {
   }
   contractSel.style.display = '';
   contractSel.innerHTML = '<option value="">전체 계약</option>' +
-    entries.map(([id, {title, startDate}]) =>
-      `<option value="${id}">${extractProg(title)}${startDate ? ' · '+startDate : ''}</option>`
-    ).join('');
+    entries
+      .sort((a, b) => (b[1].startDate||'').localeCompare(a[1].startDate||''))
+      .map(([id, {title, startDate}]) =>
+        `<option value="${id}">${extractProg(title)}${startDate ? ' ('+startDate+')' : ''}</option>`
+      ).join('');
 }
 function setSessionFilter(f, el) {
   sessionLogFilter = f;
