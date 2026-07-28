@@ -435,6 +435,12 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
       </div>
       <div id="tab-profile"></div>
       <div id="tab-contracts" style="display:none"></div>
+      <div id="member-session-filter-bar" style="display:none;margin-bottom:12px;">
+        <select class="form-select" id="member-session-contract-filter"
+          onchange="loadMemberSessions()" style="width:220px;height:36px;font-size:13px;display:none;">
+          <option value="">전체 계약</option>
+        </select>
+      </div>
       <div id="tab-sessions" style="display:none"></div>
     </div>
 
@@ -1674,6 +1680,7 @@ function showTab(tab, el) {
   document.getElementById('tab-profile').style.display = tab === 'profile' ? 'block' : 'none';
   document.getElementById('tab-contracts').style.display = tab === 'contracts' ? 'block' : 'none';
   document.getElementById('tab-sessions').style.display = tab === 'sessions' ? 'block' : 'none';
+  document.getElementById('member-session-filter-bar').style.display = tab === 'sessions' ? 'block' : 'none';
 }
 
 // ── INIT ──
@@ -2934,56 +2941,97 @@ async function loadMemberSessions() {
   const data = await res.json();
   const sessions = data.sessions || [];
 
-  // 강사 이름 조회
   const instrMap = {};
   allInstructors.forEach(i => instrMap[i.id] = i.name);
-
-  // 계약 정보 조회 (총 횟수)
   const contractMap = {};
-  if (allContracts?.length) {
-    allContracts.forEach(c => contractMap[c.id] = c);
+  if (allContracts?.length) allContracts.forEach(c => contractMap[c.id] = c);
+
+  // 계약 필터 드롭다운 구성
+  const contractIds = [...new Set(sessions.map(s => s.contractId).filter(Boolean))];
+  const memberContractSel = document.getElementById('member-session-contract-filter');
+  if (memberContractSel) {
+    const extractProg = (t) => {
+      if (!t) return t;
+      if (t.includes(' · ')) { const p = t.split(' · '); return p.length >= 3 ? p.slice(1,-1).join(' · ') : p[1]||t; }
+      if (t.includes(' - ')) return t.split(' - ').slice(1).join(' - ');
+      return t;
+    };
+    if (contractIds.length > 1) {
+      memberContractSel.style.display = '';
+      const prevVal = memberContractSel.value;
+      memberContractSel.innerHTML = '<option value="">전체 계약</option>' +
+        contractIds.map(id => {
+          const c = contractMap[id];
+          return `<option value="${id}">${extractProg(c?.title||id)}${c?.startDate?' ('+c.startDate+')':''}</option>`;
+        }).join('');
+      if (prevVal) memberContractSel.value = prevVal;
+    } else {
+      memberContractSel.style.display = 'none';
+      memberContractSel.value = '';
+    }
   }
 
-  // 세션 번호 순 정렬
-  const sortedSessions = [...sessions].sort((a, b) => {
-    const dateA = (a.date||'') + (a.time||'');
-    const dateB = (b.date||'') + (b.time||'');
-    return dateA.localeCompare(dateB);
-  });
-  const totalSessions = sortedSessions.length;
+  const contractFilter = memberContractSel?.value || '';
 
-  document.getElementById('tab-sessions').innerHTML = sessions.length === 0
-    ? '<div class="empty-state"><p>세션 기록이 없습니다</p></div>'
-    : `<div style="display:flex;flex-direction:column;gap:8px;width:100%;">${sortedSessions.map((s, idx) => {
-        const statusColor = s.attendanceStatus === '참석' ? 'var(--success)' :
-          s.attendanceStatus === '노쇼' ? 'var(--danger)' : 'var(--text-muted)';
-        const instrName = instrMap[s.instructorId] || '';
+  // 최신순 정렬
+  const sortedSessions = [...sessions]
+    .filter(s => !contractFilter || s.contractId === contractFilter)
+    .sort((a, b) => {
+      const dateCmp = (b.date||'').localeCompare(a.date||'');
+      return dateCmp !== 0 ? dateCmp : (b.time||'').localeCompare(a.time||'');
+    });
+
+  const statusBadge = {
+    '참석':     '<span style="background:#D4EFDF;color:#1E8449;font-weight:700;font-size:11px;padding:2px 7px;border-radius:10px;">✓ 출석</span>',
+    '노쇼':     '<span style="background:#FADBD8;color:#C0392B;font-weight:700;font-size:11px;padding:2px 7px;border-radius:10px;">✕ 노쇼</span>',
+    '취소':     '<span style="background:#EAECEE;color:#808B96;font-weight:700;font-size:11px;padding:2px 7px;border-radius:10px;">취소</span>',
+    '취소_차감':'<span style="background:#FADBD8;color:#C0392B;font-weight:600;font-size:11px;padding:2px 7px;border-radius:10px;">취소-1회</span>',
+    '확정':     '<span style="background:#D6EAF8;color:#1A5276;font-weight:700;font-size:11px;padding:2px 7px;border-radius:10px;">예약</span>',
+  };
+  const condColors = { '최상':'#27AE60','좋음':'#2ECC71','보통':'#F39C12','피로':'#E67E22','통증':'#E74C3C' };
+  const extractProg2 = (t) => {
+    if (!t) return '—';
+    if (t.includes(' · ')) { const p = t.split(' · '); return p.length >= 3 ? p.slice(1,-1).join(' · ') : p[1]||t; }
+    if (t.includes(' - ')) return t.split(' - ').slice(1).join(' - ');
+    return t;
+  };
+
+  if (sortedSessions.length === 0) {
+    document.getElementById('tab-sessions').innerHTML = '<div class="empty-state"><p>세션 기록이 없습니다</p></div>';
+    return;
+  }
+
+  document.getElementById('tab-sessions').innerHTML = `
+    <table class="member-table" style="margin-top:0;">
+      <thead><tr>
+        <th>날짜</th><th>시간</th><th>프로그램</th><th style="font-size:11px;">계약일</th>
+        <th style="text-align:center;">회차/전체</th><th>강사</th><th>컨디션</th><th>메모</th><th>상태</th>
+      </tr></thead>
+      <tbody>${sortedSessions.map(s => {
         const contract = contractMap[s.contractId];
-        const totalContractSessions = contract?.sessions || 0;
-        const seqNo = idx + 1;
-
-        return `
-        <div style="background:var(--white);border:1px solid var(--border);padding:14px 18px;display:flex;align-items:flex-start;gap:16px;width:100%;box-sizing:border-box;margin-bottom:0;">
-          <div class="session-no" style="text-align:center;min-width:44px;">
-            <div style="font-family:Outfit,sans-serif;font-weight:300;font-size:18px;color:var(--accent)">#${s.sessionNo||seqNo}</div>
-            ${totalContractSessions ? `<div style="font-size:10px;color:var(--text-muted)">${seqNo}/${totalContractSessions}</div>` : ''}
-          </div>
-          <div class="session-info" style="flex:1">
-            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-              <div class="session-date">${s.date}</div>
-              ${s.time ? `<span style="font-size:12px;color:var(--text-muted)">${s.time}</span>` : ''}
-              ${s.attendanceStatus ? `<span style="font-size:11px;color:${statusColor};font-weight:700">${s.attendanceStatus}</span>` : ''}
-            </div>
-            <div class="session-condition" style="margin-top:2px;">
-              ${s.condition && s.condition !== '—' ? `<span class="condition-dot cond-${s.condition}"></span>${s.condition}` : ''}
-              ${instrName ? `<span style="margin-left:4px;color:var(--text-muted)">· ${instrName} 강사</span>` : ''}
-              ${contract ? `<span style="margin-left:4px;color:var(--text-muted);white-space:nowrap;">· ${contract.title.includes(' · ') ? contract.title.split(' · ').slice(1,-1).join(' · ') : contract.title.includes(' - ') ? contract.title.split(' - ').slice(1).join(' - ') : contract.title} (${contract.startDate||''}~${contract.endDate||''})</span>` : ''}
-            </div>
-            ${s.memo && s.memo !== 'NO-SHOW' ? `<div style="font-size:12px;color:var(--text-muted);margin-top:2px">📝 ${s.memo}</div>` : ''}
-            ${s.memo === 'NO-SHOW' ? `<div style="font-size:12px;color:var(--danger);margin-top:2px">❌ NO-SHOW</div>` : ''}
-          </div>
-        </div>`;
-      }).join('')}</div>`;
+        const instrName = instrMap[s.instructorId] || '—';
+        const progName = extractProg2(contract?.title);
+        const contractStartDate = contract?.startDate || '';
+        const usedTotal = s.sessionNo && contract?.sessions ? `#${s.sessionNo} / ${contract.sessions}회` : '';
+        const condDot = s.condition && s.condition !== '—'
+          ? `<span style="display:inline-flex;align-items:center;gap:3px;"><span style="width:7px;height:7px;border-radius:50%;background:${condColors[s.condition]||'#ccc'};display:inline-block;"></span>${s.condition}</span>` : '—';
+        const badge = statusBadge[s.attendanceStatus||'확정'] || `<span style="font-size:11px;color:var(--text-muted);">${s.attendanceStatus||''}</span>`;
+        const memo = s.memo && s.memo !== 'NO-SHOW' ? s.memo : (s.memo === 'NO-SHOW' ? '❌ NO-SHOW' : '');
+        const statusKey = s.attendanceStatus || '확정';
+        const rowBg = statusKey==='참석'?'background:#F0FFF4;':statusKey==='노쇼'?'background:#FFF5F5;':statusKey==='취소'||statusKey==='취소_차감'?'background:#F5F5F5;opacity:.85;':'';
+        return `<tr style="${rowBg}cursor:pointer;" onclick="openSessionLogDetail('${s.scheduleId||''}','${s.id}')">
+          <td style="font-size:12px;white-space:nowrap;">${s.date||'—'}</td>
+          <td style="white-space:nowrap;">${s.time||'—'}</td>
+          <td style="font-size:12px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${progName}</td>
+          <td style="font-size:11px;color:var(--text-muted);white-space:nowrap;">${contractStartDate||'—'}</td>
+          <td style="text-align:center;font-size:12px;">${usedTotal}</td>
+          <td style="white-space:nowrap;">${instrName}</td>
+          <td>${condDot}</td>
+          <td style="font-size:12px;max-width:200px;white-space:pre-wrap;word-break:break-word;">${memo}</td>
+          <td style="white-space:nowrap;">${badge}</td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table>`;
 }
 
 function openSessionModal(contractId, remaining, nextNo) {
