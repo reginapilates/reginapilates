@@ -865,11 +865,12 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">방문 경로</label>
-          <select class="form-select" id="nm-source">
+          <select class="form-select" id="nm-source" onchange="document.getElementById('nm-source-etc').style.display=this.value==='기타'?'block':'none'">
             <option value="">선택</option>
             <option>인스타그램</option><option>지인소개</option><option>네이버</option>
             <option>간판</option><option>전단지</option><option>블로그</option><option>기타</option>
           </select>
+          <input class="form-input" id="nm-source-etc" placeholder="기타 방문 경로를 입력하세요" style="display:none;margin-top:8px;">
         </div>
         <div class="form-group">
           <label class="form-label">운동 가능 시간</label>
@@ -2783,7 +2784,7 @@ function renderProfile() {
         <div class="field-row"><span class="field-label">주소</span><span class="field-value">${maskText(m.address)}</span></div>
         <div class="field-row"><span class="field-label">직업 유형</span><span class="field-value">${m.jobType||'—'}</span></div>
         <div class="field-row"><span class="field-label">신장 / 체중</span><span class="field-value">${m.height?m.height+'cm':''} ${m.weight?'/ '+m.weight+'kg':''||'—'}</span></div>
-        <div class="field-row"><span class="field-label">방문 경로</span><span class="field-value">${m.visitSource||'—'}</span></div>
+        <div class="field-row"><span class="field-label">방문 경로</span><span class="field-value">${m.visitSource||'—'}${m.visitSourceEtc?' ('+m.visitSourceEtc+')':''}</span></div>
         <div class="field-row"><span class="field-label">등록일</span><span class="field-value">${m.createdAt||'—'}</span></div>
         <div class="field-row"><span class="field-label">담당 강사</span><span class="field-value">${(()=>{const i=allInstructors.find(i=>i.id===m.assignedInstructorId);return i?i.name:'—';})()}</span></div>
         <div class="field-row"><span class="field-label">마케팅 동의</span><span class="field-value">${m.marketingConsent?'✅ 동의':'미동의'}</span></div>
@@ -3217,7 +3218,15 @@ async function openEditMemberModal(m) {
   document.getElementById('nm-remarks').value = m.remarks || '';
   document.getElementById('nm-surgery').value = m.surgery ? 'true' : 'false';
   document.getElementById('nm-surgery-detail').value = m.surgeryDetail || '';
+  // 방문경로 복원
   document.getElementById('nm-source').value = m.visitSource || '';
+  if (m.visitSource === '기타') {
+    document.getElementById('nm-source-etc').value = m.visitSourceEtc || '';
+    document.getElementById('nm-source-etc').style.display = 'block';
+  } else {
+    document.getElementById('nm-source-etc').value = '';
+    document.getElementById('nm-source-etc').style.display = 'none';
+  }
   document.getElementById('nm-avail-time').value = m.availableTime || '';
   document.getElementById('nm-marketing').checked = m.marketingConsent || false;
   document.getElementById('nm-ad').checked = m.adConsent || false;
@@ -3291,6 +3300,8 @@ async function updateMember(id) {
     exerciseGoals: getChecked('nm-goals'),
     exerciseGoalsEtc: document.getElementById('goals-etc').value.trim(),
     visitSource: document.getElementById('nm-source').value,
+    visitSourceEtc: document.getElementById('nm-source').value === '기타'
+      ? document.getElementById('nm-source-etc').value : '',
     availableTime: document.getElementById('nm-avail-time').value,
     availableDays: getChecked('nm-avail-days'),
     marketingConsent: document.getElementById('nm-marketing').checked,
@@ -3374,6 +3385,8 @@ async function saveMember() {
     painAreas: getChecked('nm-pain'),
     painAreasEtc: document.getElementById('pain-etc').value.trim(),
     visitSource: document.getElementById('nm-source').value,
+    visitSourceEtc: document.getElementById('nm-source').value === '기타'
+      ? document.getElementById('nm-source-etc').value : '',
     availableTime: document.getElementById('nm-avail-time').value,
     availableDays: getChecked('nm-avail-days'),
     marketingConsent: document.getElementById('nm-marketing').checked,
