@@ -4609,9 +4609,14 @@ function updateSlContractFilter() {
     return t;
   };
 
-  // 현재 표시 중인 세션에서 contractId 수집 (회원 필터 적용)
-  let filtered = allSessionsLog;
-  if (memberId) filtered = filtered.filter(s => s.memberId === memberId);
+  // 선택된 회원의 세션만 필터링
+  let filtered = allSessionsLog.filter(s => memberId ? s.memberId === memberId : false);
+  // 회원 미선택 시 드롭다운 숨기기
+  if (!memberId) {
+    contractSel.style.display = 'none';
+    contractSel.value = '';
+    return;
+  }
 
   const contractMap = {};
   filtered.forEach(s => {
