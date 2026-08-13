@@ -1515,10 +1515,10 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
         </div>
       </div>
     </div>
-    <div class="modal-footer">
-      <button class="btn btn-danger btn-sm" onclick="deleteSchedule()">삭제</button>
+    <div class="modal-footer" id="sd-footer">
+      <button class="btn btn-danger btn-sm" id="sd-btn-delete" onclick="deleteSchedule()">삭제</button>
       <button class="btn btn-secondary" onclick="closeModal('modal-schedule-detail')">닫기</button>
-      <button class="btn btn-primary" onclick="updateSchedule()">저장</button>
+      <button class="btn btn-primary" id="sd-btn-save" onclick="updateSchedule()">저장</button>
     </div>
   </div>
 </div>
@@ -5155,7 +5155,9 @@ function renderCalendar() {
           `${memberName}${instrName ? ' · ' + instrName : ''}`;
         const label = baseLabel + statusTag;
 
-        return `<div onclick="openScheduleDetail('${s.id}')" title="${s.name} (${s.status||'확정'})"
+        // L2~5: 본인 담당 회원 스케줄만 클릭 가능
+        const canEdit = ADMIN_LEVEL === 1 || !isHiddenForL2(s.memberId);
+        return `<div onclick="${canEdit ? `openScheduleDetail('${s.id}')` : ''}" title="${s.name} (${s.status||'확정'})"
           style="padding:3px 6px;font-size:11px;margin:1px;cursor:pointer;
           background:${bg};border-left:3px solid ${border};color:${textColor};
           white-space:nowrap;overflow:hidden;text-overflow:ellipsis;${extraStyle}">
@@ -5647,6 +5649,9 @@ async function saveSchedule() {
 async function openScheduleDetail(id) {
   const s = allSchedules.find(s => s.id === id);
   if (!s) return;
+  // L2~5: 본인 담당 회원 아니면 읽기 전용
+  const canEdit = ADMIN_LEVEL === 1 || !isHiddenForL2(s.memberId);
+  if (!s) return;
 
   document.getElementById('sd-id').value = id;
   document.getElementById('sd-is-session-only').value = '0';
@@ -5714,6 +5719,29 @@ async function openScheduleDetail(id) {
     <div>📊 잔여 횟수: <b>${remainingSessions}</b></div>
     <div>📋 현재 상태: <b>${currentStatus}</b></div>
   `;
+
+  // 저장/삭제 버튼 권한 처리
+  const deleteBtn = document.getElementById('sd-btn-delete');
+  const saveBtn = document.getElementById('sd-btn-save');
+  const sdStatus = document.getElementById('sd-status');
+  const sdDate = document.getElementById('sd-date');
+  const sdTime = document.getElementById('sd-time');
+  const sdMemo = document.getElementById('sd-memo');
+  if (!canEdit) {
+    if (deleteBtn) deleteBtn.style.display = 'none';
+    if (saveBtn) saveBtn.style.display = 'none';
+    if (sdStatus) sdStatus.disabled = true;
+    if (sdDate) sdDate.disabled = true;
+    if (sdTime) sdTime.disabled = true;
+    if (sdMemo) sdMemo.readOnly = true;
+  } else {
+    if (deleteBtn) deleteBtn.style.display = '';
+    if (saveBtn) saveBtn.style.display = '';
+    if (sdStatus) sdStatus.disabled = false;
+    if (sdDate) sdDate.disabled = false;
+    if (sdTime) sdTime.disabled = false;
+    if (sdMemo) sdMemo.readOnly = false;
+  }
 
   document.getElementById('modal-schedule-detail').style.display = 'flex';
 }
