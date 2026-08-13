@@ -3041,7 +3041,7 @@ function renderContractsTable() {
       <td style="text-align:right;">${(c.totalAmount||0).toLocaleString()}원</td>
       <td><span class="badge ${badgeClass}">${c.status}</span></td>
       <td onclick="event.stopPropagation();">
-        <button class="btn btn-secondary btn-sm" onclick="viewContractById(${c._idx})">계약서</button>
+        <button class="btn btn-secondary btn-sm" onclick="viewContractById2('${c.id}')">계약서</button>
         ${c.driveLink ? `<a href="${c.driveLink}" target="_blank" style="color:var(--accent);font-size:11px;margin-left:4px;">🔗</a>` : ''}
       </td>
     </tr>`;
