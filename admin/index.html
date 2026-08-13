@@ -1673,11 +1673,6 @@ function showPage(page) {
   if (page === 'members') loadMembers();
   if (page === 'programs') {
     loadPrograms();
-    // L2는 프로그램 등록 버튼 숨김
-    setTimeout(() => {
-      const addBtn = document.querySelector('#page-programs .btn-primary');
-      if (addBtn) addBtn.style.display = ADMIN_LEVEL === 1 ? '' : 'none';
-    }, 100);
   }
   if (page === 'contracts') loadAllContracts();
   if (page === 'schedule') { loadCalendar(); }
