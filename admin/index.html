@@ -245,7 +245,7 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
         회원 관리
       </div>
-      <div class="nav-item l1-only" onclick="showPage('programs')">
+      <div class="nav-item" onclick="showPage('programs')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 6h16M4 10h16M4 14h8M4 18h8"/></svg>
         프로그램
       </div>
@@ -1782,6 +1782,7 @@ async function initApp() {
     if (savedInstr && ADMIN_LEVEL !== 1) {
       try { window._myInstrData = JSON.parse(savedInstr); } catch(e) {}
     }
+    applyPermissions(); // 새로고침 시에도 권한 적용
   }
 
   document.getElementById('today-date').textContent = new Date().toLocaleDateString('ko-KR', {year:'numeric',month:'long',day:'numeric',weekday:'long'});
