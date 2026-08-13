@@ -283,6 +283,25 @@ async function loadData() {
       instrSel.appendChild(opt);
     });
 
+    // L2~5: sessionStorage에서 로그인 정보 읽어서 본인 강사 자동 선택
+    const adminLevel = parseInt(sessionStorage.getItem('adminLevel') || '1');
+    const instrData = sessionStorage.getItem('adminInstrData');
+    const instrSel = document.getElementById('instructor-select');
+    const controlBar = document.querySelector('.control-bar');
+
+    if (adminLevel !== 1 && instrData) {
+      try {
+        const instr = JSON.parse(instrData);
+        if (instr.id) {
+          instrSel.value = instr.id;
+          // 강사 필터 숨기기 (label + select)
+          const instrLabel = controlBar?.querySelector('label');
+          if (instrLabel) instrLabel.style.display = 'none';
+          instrSel.style.display = 'none';
+        }
+      } catch(e) {}
+    }
+
     document.getElementById('loading-msg').style.display = 'none';
     renderViewer();
   } catch(e) {
