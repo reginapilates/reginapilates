@@ -1735,6 +1735,23 @@ function isHiddenForL2(memberId) {
   return false;
 }
 
+// L2~5: 본인이 수정 가능한 스케줄인지 확인
+function canEditSchedule(memberId) {
+  if (ADMIN_LEVEL === 1) return true;
+  if (!memberId) return false;
+  const myId = getMyInstructorId();
+  if (!myId) return false;
+  const member = allMembers.find(m => m.id === memberId);
+  if (!member) return false;
+  // Members DB의 assignedInstructorId 기준
+  if (member.assignedInstructorId) return member.assignedInstructorId === myId;
+  // fallback: 계약의 instructorId
+  const contracts = allContractsByMember[memberId] || [];
+  const activeC = contracts.find(c => c.status === '진행중') ||
+    [...contracts].sort((a,b) => (b.startDate||'').localeCompare(a.startDate||''))[0];
+  return activeC?.instructorId === myId;
+}
+
 // 마스킹 함수
 function maskPhone(phone) {
   if (!phone) return '—';
@@ -5025,14 +5042,22 @@ async function loadCalendar(forceReload = false) {
     const fetchPromises = [fetch(`${API}/api/schedules?startDate=${startDate}&endDate=${endDate}`)];
     // 강사 목록은 최초 1회만 로드
     if (!allInstructors.length) fetchPromises.push(fetch(`${API}/api/instructors`));
+    // 회원 목록은 L2~5 권한 체크에 필요 - 최초 1회만 로드
+    if (!allMembers.length) fetchPromises.push(fetch(`${API}/api/members`));
 
     const results = await Promise.all(fetchPromises);
     const schData = await results[0].json();
 
-    if (results[1]) {
-      const instrData = await results[1].json();
+    let resultIdx = 1;
+    if (results[resultIdx] && !allInstructors.length) {
+      const instrData = await results[resultIdx].json();
       allInstructors = instrData.instructors || [];
-      initL1InstructorIds(); // 강사 목록 로드 시 L1 ID 갱신
+      initL1InstructorIds();
+      resultIdx++;
+    }
+    if (results[resultIdx] && !allMembers.length) {
+      const mData = await results[resultIdx].json();
+      allMembers = mData.members || [];
     }
 
     allSchedules = schData.schedules || [];
@@ -5156,7 +5181,7 @@ function renderCalendar() {
         const label = baseLabel + statusTag;
 
         // L2~5: 본인 담당 회원 스케줄만 클릭 가능
-        const canEdit = ADMIN_LEVEL === 1 || !isHiddenForL2(s.memberId);
+        const canEdit = canEditSchedule(s.memberId);
         return `<div onclick="${canEdit ? `openScheduleDetail('${s.id}')` : ''}" title="${s.name} (${s.status||'확정'})"
           style="padding:3px 6px;font-size:11px;margin:1px;cursor:pointer;
           background:${bg};border-left:3px solid ${border};color:${textColor};
@@ -5650,7 +5675,7 @@ async function openScheduleDetail(id) {
   const s = allSchedules.find(s => s.id === id);
   if (!s) return;
   // L2~5: 본인 담당 회원 아니면 읽기 전용
-  const canEdit = ADMIN_LEVEL === 1 || !isHiddenForL2(s.memberId);
+  const canEdit = canEditSchedule(s.memberId);
   if (!s) return;
 
   document.getElementById('sd-id').value = id;
