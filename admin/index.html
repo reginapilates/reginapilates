@@ -4362,9 +4362,15 @@ async function renderSessionLog() {
   if (contractFilter) document.getElementById('sl-contract-filter').value = contractFilter;
 
   let sessions = allSessionsLog;
-  // L2+ 강사: L1 담당 회원 세션 숨김
+  // L2+: L1 담당 회원 숨김 + 본인 담당 회원만
   if (ADMIN_LEVEL !== 1) {
-    sessions = sessions.filter(s => !_l1InstructorIds.has(s.instructorId) && !isHiddenForL2(s.memberId));
+    const myId = getMyInstructorId();
+    sessions = sessions.filter(s => {
+      if (isHiddenForL2(s.memberId)) return false;
+      const member = allMembersForLog?.find(m => m.id === s.memberId) || allMembers.find(m => m.id === s.memberId);
+      if (!member) return false;
+      return member.assignedInstructorId === myId;
+    });
   }
   if (memberId) sessions = sessions.filter(s => s.memberId === memberId);
   if (search) sessions = sessions.filter(s => s.memberName.includes(search));
