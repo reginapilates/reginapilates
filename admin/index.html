@@ -1092,6 +1092,7 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
           <select class="form-select" id="np-instructor">
             <option value="">강사 선택</option>
           </select>
+          <div id="np-instructor-fixed" style="display:none;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:6px;font-size:14px;font-weight:600;"></div>
         </div>
       </div>
       <div class="form-row">
@@ -5010,6 +5011,25 @@ async function loadInstructorOptions(selectId, selectedValue) {
 
 async function openNewProgramModal() {
   await loadInstructorOptions('np-instructor', '');
+
+  const myId = getMyInstructorId();
+  const instrSel = document.getElementById('np-instructor');
+  const instrFixed = document.getElementById('np-instructor-fixed');
+
+  if (ADMIN_LEVEL !== 1 && myId) {
+    // L2~5: 본인 자동 설정, 드롭다운 숨기고 이름 표시
+    instrSel.value = myId;
+    instrSel.style.display = 'none';
+    const myInstr = allInstructors.find(i => i.id === myId);
+    if (instrFixed) {
+      instrFixed.textContent = myInstr?.name || '—';
+      instrFixed.style.display = 'block';
+    }
+  } else {
+    // L1: 드롭다운 표시
+    instrSel.style.display = '';
+    if (instrFixed) instrFixed.style.display = 'none';
+  }
   document.getElementById('modal-new-program').style.display='flex';
 }
 function closeModal(id) { document.getElementById(id).style.display='none'; }
