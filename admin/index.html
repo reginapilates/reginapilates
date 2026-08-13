@@ -3162,7 +3162,19 @@ async function loadPrograms() {
       tbody.innerHTML = '<tr><td colspan="9"><div class="empty-state"><p>등록된 프로그램이 없습니다</p></div></td></tr>';
       return;
     }
-    tbody.innerHTML = programs.map(p => `
+    const myId = getMyInstructorId();
+    // L2~5: 본인 프로그램만 표시
+    const visiblePrograms = ADMIN_LEVEL === 1 ? programs
+      : programs.filter(p => p.instructorId === myId);
+
+    if (visiblePrograms.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="9"><div class="empty-state"><p>등록된 프로그램이 없습니다</p></div></td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = visiblePrograms.map(p => {
+      const canEdit = ADMIN_LEVEL === 1 || p.instructorId === myId;
+      return `
       <tr>
         <td><b>${p.name}</b></td>
         <td>${p.type||'—'}</td>
@@ -3178,11 +3190,13 @@ async function loadPrograms() {
           ${p.isTrial?'<span class="badge" style="background:#F4ECF7;color:#8E44AD;margin-left:4px">Trial</span>':''}
         </td>
         <td style="white-space:nowrap">
+          ${canEdit ? `
           <button class="btn btn-secondary btn-sm" onclick="openEditProgramModal(${JSON.stringify(p).replace(/"/g,'&quot;')})">수정</button>
           <button class="btn btn-sm" style="background:#FDEDEC;color:var(--danger);border:1px solid #F5B7B1;margin-left:4px" onclick="deleteProgram('${p.id}','${p.name}')">삭제</button>
+          ` : '<span style="font-size:11px;color:var(--text-muted);">읽기 전용</span>'}
         </td>
-      </tr>
-    `).join('');
+      </tr>`;
+    }).join('');
   } catch(e) {
     tbody.innerHTML = '<tr><td colspan="9" class="loading">불러오기 실패</td></tr>';
   }
@@ -3201,7 +3215,9 @@ async function saveProgram() {
   const body = {
     name: document.getElementById('np-name').value,
     type: document.getElementById('np-type').value,
-    instructorId: document.getElementById('np-instructor').value,
+    instructorId: ADMIN_LEVEL === 1
+      ? document.getElementById('np-instructor').value
+      : (getMyInstructorId() || document.getElementById('np-instructor').value),
     sessions: parseInt(document.getElementById('np-sessions').value)||0,
     pricePerSession: parseInt(document.getElementById('np-price').value)||0,
     discount: parseInt(document.getElementById('np-discount').value)||0,
