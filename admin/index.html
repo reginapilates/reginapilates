@@ -455,6 +455,16 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
         <div class="page-title">프로그램 관리</div>
         <button class="btn btn-primary" onclick="openNewProgramModal()">+ 새 프로그램</button>
       </div>
+      <div class="toolbar l1-only" id="program-filter-bar" style="margin-bottom:16px;gap:8px;">
+        <select class="form-select" id="program-instr-filter" onchange="filterPrograms()" style="width:180px;height:36px;font-size:13px;">
+          <option value="">전체 강사</option>
+        </select>
+        <select class="form-select" id="program-status-filter" onchange="filterPrograms()" style="width:120px;height:36px;font-size:13px;">
+          <option value="">전체 상태</option>
+          <option value="active">운영중</option>
+          <option value="inactive">중단</option>
+        </select>
+      </div>
       <table class="member-table">
         <thead>
           <tr><th>프로그램명</th><th>유형</th><th>강사</th><th>횟수</th><th>회당 금액</th><th>총액</th><th>할인</th><th>최종 금액</th><th>기간</th><th>상태</th><th>관리</th></tr>
@@ -3149,20 +3159,58 @@ async function saveSession() {
 }
 
 // ── PROGRAMS ──
+let _allProgramsCache = [];
+
 async function loadPrograms() {
   const tbody = document.getElementById('programs-table-body');
   try {
     const res = await fetch(`${API}/api/programs`);
     const data = await res.json();
     const programs = data.all || [];
-    if (programs.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="9"><div class="empty-state"><p>등록된 프로그램이 없습니다</p></div></td></tr>';
-      return;
+    _allProgramsCache = programs;
+
+    // L1: 강사 필터 드롭다운 초기화
+    if (ADMIN_LEVEL === 1) {
+      const instrSel = document.getElementById('program-instr-filter');
+      if (instrSel) {
+        const prevVal = instrSel.value;
+        instrSel.innerHTML = '<option value="">전체 강사</option>' +
+          allInstructors.filter(i => i.isActive).map(i =>
+            `<option value="${i.id}">${i.name}</option>`
+          ).join('');
+        instrSel.value = prevVal;
+      }
     }
-    const myId = getMyInstructorId();
-    // L2~5: 본인 프로그램만 표시
-    const visiblePrograms = ADMIN_LEVEL === 1 ? programs
-      : programs.filter(p => p.instructorId === myId);
+
+    renderProgramTable();
+  } catch(e) {
+    document.getElementById('programs-table-body').innerHTML =
+      '<tr><td colspan="9" class="loading">불러오기 실패</td></tr>';
+  }
+}
+
+function filterPrograms() { renderProgramTable(); }
+
+function renderProgramTable() {
+  const tbody = document.getElementById('programs-table-body');
+  const instrFilter = document.getElementById('program-instr-filter')?.value || '';
+  const statusFilter = document.getElementById('program-status-filter')?.value || '';
+  const myId = getMyInstructorId();
+
+  // L2~5: 본인 프로그램만
+  let programs = ADMIN_LEVEL === 1 ? _allProgramsCache
+    : _allProgramsCache.filter(p => p.instructorId === myId);
+
+  // L1 강사 필터
+  if (ADMIN_LEVEL === 1 && instrFilter) programs = programs.filter(p => p.instructorId === instrFilter);
+  if (statusFilter === 'active') programs = programs.filter(p => p.isActive);
+  if (statusFilter === 'inactive') programs = programs.filter(p => !p.isActive);
+
+  if (programs.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="9"><div class="empty-state"><p>등록된 프로그램이 없습니다</p></div></td></tr>';
+    return;
+  }
+  const visiblePrograms = programs;
 
     if (visiblePrograms.length === 0) {
       tbody.innerHTML = '<tr><td colspan="9"><div class="empty-state"><p>등록된 프로그램이 없습니다</p></div></td></tr>';
@@ -3194,9 +3242,7 @@ async function loadPrograms() {
         </td>
       </tr>`;
     }).join('');
-  } catch(e) {
-    tbody.innerHTML = '<tr><td colspan="9" class="loading">불러오기 실패</td></tr>';
-  }
+
 }
 
 function calcProgramPrice() {
