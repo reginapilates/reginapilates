@@ -5438,10 +5438,25 @@ async function openNewScheduleModal() {
   const activeMemberIds = new Set(activeContracts.map(c => c.memberId));
   window._scheduleContracts = activeContracts;
 
+  const myId = getMyInstructorId();
+  const allMembersForModal = mData.members || [];
+
+  // L2~5: 본인 담당 + 활성 세션 있는 회원만
+  const filteredMembersForModal = ADMIN_LEVEL === 1
+    ? allMembersForModal.filter(m => activeMemberIds.has(m.id))
+    : allMembersForModal.filter(m => {
+        if (!activeMemberIds.has(m.id)) return false;
+        // 본인 담당 회원 체크 (assignedInstructorId 기준)
+        if (m.assignedInstructorId) return m.assignedInstructorId === myId;
+        // fallback: 진행중 계약의 instructorId
+        const myContracts = activeContracts.filter(c => c.memberId === m.id && c.instructorId === myId);
+        return myContracts.length > 0;
+      });
+
   const memberSel = document.getElementById('ns-member');
   memberSel.innerHTML = '<option value="">회원 선택</option>' +
-    (mData.members||[])
-      .filter(m => activeMemberIds.has(m.id))
+    filteredMembersForModal
+      .sort((a,b) => a.name.localeCompare(b.name, 'ko'))
       .map(m => `<option value="${m.id}">${m.name}</option>`).join('');
 
   document.getElementById('ns-contract').value = '';
