@@ -2728,7 +2728,13 @@ function renderMemberTable() {
 
   let members = allMembers.filter(m => {
     // L2+ 강사: L1 담당 회원 숨김
+    // L1 담당 회원 숨김
     if (isHiddenForL2(m.id)) return false;
+    // L2~5: 본인 담당 회원만
+    if (ADMIN_LEVEL !== 1) {
+      const myId = getMyInstructorId();
+      if (m.assignedInstructorId !== myId) return false;
+    }
 
     const matchSearch = !search ||
       m.name.includes(search) ||
@@ -2736,9 +2742,9 @@ function renderMemberTable() {
     const status = getMemberStatus(m);
     const matchStatus = !filterStatus || status === filterStatus;
 
-    // 담당강사 필터: Members DB의 assignedInstructorId 기준
+    // 담당강사 필터: Members DB의 assignedInstructorId 기준 (L1만)
     let matchInstructor = true;
-    if (filterInstructor) {
+    if (ADMIN_LEVEL === 1 && filterInstructor) {
       matchInstructor = m.assignedInstructorId === filterInstructor;
     }
     return matchSearch && matchStatus && matchInstructor;
