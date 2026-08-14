@@ -101,6 +101,7 @@ body { font-family:'Noto Sans KR',sans-serif; background:var(--bg); color:var(--
 .btn-att { background:var(--success); color:#fff; }
 .btn-nos { background:var(--danger); color:#fff; }
 .btn-can { background:var(--surface); color:var(--muted); font-size:13px; font-weight:500; }
+#modal-cancel.open { display:flex !important; }
 .btn-rev { background:var(--surface); color:var(--muted); font-size:13px; }
 
 /* 컨디션 */
@@ -739,13 +740,70 @@ async function confirmAttend(scheduleId, status, memberId, contractId, instructo
 }
 
 // ── 취소 ──
-async function cancelSchedule(id) {
-  if(!confirm('이 예약을 취소하시겠습니까?')) return;
+let _cancelScheduleId = null;
+
+function cancelSchedule(id) {
+  _cancelScheduleId = id;
+  document.getElementById('cancel-memo-mobile').value = '';
+  document.querySelectorAll('input[name="cancel-deduct-mobile"]').forEach(r => r.checked = r.value === '0');
+  document.getElementById('modal-cancel').classList.add('open');
+  document.getElementById('modal-cancel').style.display = 'flex';
+}
+
+function closeCancelModal() {
+  document.getElementById('modal-cancel').style.display = 'none';
+  document.getElementById('modal-cancel').classList.remove('open');
+  _cancelScheduleId = null;
+}
+
+async function confirmCancelMobile() {
+  const id = _cancelScheduleId;
+  if (!id) return;
+  const memo = document.getElementById('cancel-memo-mobile').value.trim();
+  const deduct = document.querySelector('input[name="cancel-deduct-mobile"]:checked')?.value === '1';
+  const finalMemo = memo
+    ? `${memo} (${deduct ? '1회 차감' : '차감 없음'})`
+    : (deduct ? '취소 (1회 차감)' : '취소 (차감 없음)');
+
+  closeCancelModal();
+  showToast('취소 처리 중...');
+
   try {
-    await fetch(`${API}/api/schedules?id=${id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:'취소'})});
-    showToast('취소 처리 완료');
+    const s = allSchedules.find(sc => sc.id === id);
+
+    // 1. 스케줄 상태 변경
+    await fetch(`${API}/api/schedules?id=${id}`, {
+      method: 'PUT',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({status: '취소'})
+    });
+
+    // 2. 세션 기록 생성
+    if (s) {
+      const member = allMembers.find(m => m.id === s.memberId);
+      await fetch(`${API}/api/sessions`, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          memberName: member?.name || '',
+          memberId: s.memberId,
+          contractId: s.contractId,
+          instructorId: s.instructorId,
+          scheduleId: id,
+          date: s.date,
+          time: s.time,
+          condition: '',
+          attendanceStatus: deduct ? '취소_차감' : '취소',
+          memo: finalMemo,
+        })
+      });
+    }
+
+    showToast(deduct ? '취소 처리 완료 (1회 차감)' : '취소 처리 완료 (차감 없음)');
     await loadSchedules();
-  } catch(e) { showToast('처리 실패','error'); }
+  } catch(e) {
+    showToast('처리 실패', 'error');
+  }
 }
 
 // ── 메모 저장 ──
@@ -951,5 +1009,38 @@ window.addEventListener('DOMContentLoaded', async()=>{
   }
 });
 </script>
+<!-- 취소 처리 모달 -->
+<div class="modal-overlay" id="modal-cancel" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:flex-end;justify-content:center;">
+  <div style="background:#fff;width:100%;max-width:480px;border-radius:16px 16px 0 0;padding:24px 20px 32px;">
+    <div style="font-size:16px;font-weight:700;margin-bottom:16px;">예약 취소 처리</div>
+    <div style="margin-bottom:14px;">
+      <label style="font-size:13px;color:#666;display:block;margin-bottom:6px;">취소 사유 (선택)</label>
+      <textarea id="cancel-memo-mobile" placeholder="취소 사유를 입력하세요" rows="3"
+        style="width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:8px;font-size:14px;font-family:inherit;resize:none;"></textarea>
+    </div>
+    <div style="margin-bottom:20px;">
+      <label style="font-size:13px;color:#666;display:block;margin-bottom:8px;">세션 차감 여부</label>
+      <label style="display:flex;align-items:center;gap:10px;padding:12px;border:1px solid #ddd;border-radius:8px;margin-bottom:8px;cursor:pointer;">
+        <input type="radio" name="cancel-deduct-mobile" value="0" checked>
+        <div>
+          <div style="font-size:14px;font-weight:600;">차감 없이 취소 <span style="font-size:11px;color:#27ae60;">✓ 세션 유지</span></div>
+          <div style="font-size:12px;color:#999;">사전 연락 취소</div>
+        </div>
+      </label>
+      <label style="display:flex;align-items:center;gap:10px;padding:12px;border:1px solid #ddd;border-radius:8px;cursor:pointer;">
+        <input type="radio" name="cancel-deduct-mobile" value="1">
+        <div>
+          <div style="font-size:14px;font-weight:600;">취소 + 1회 차감 <span style="font-size:11px;color:#e74c3c;">-1회</span></div>
+          <div style="font-size:12px;color:#999;">당일 취소 등</div>
+        </div>
+      </label>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button onclick="closeCancelModal()" style="flex:1;padding:14px;background:#f5f5f5;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;">닫기</button>
+      <button onclick="confirmCancelMobile()" style="flex:2;padding:14px;background:#e74c3c;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;">취소 처리</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
