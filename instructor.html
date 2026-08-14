@@ -573,9 +573,10 @@ function buildAttendContent(s, isDone, status, canEdit=true) {
     return `<div style="text-align:center;padding:16px;color:#888;font-size:13px;">👁 읽기 전용 (담당 강사만 수정 가능)</div>`;
   }
   if (status === '취소' || status === '취소_차감') {
-    const memo = s.memo || '';
-    const memoHtml = memo ? '<br><small style="color:#aaa">' + memo + '</small>' : '';
-    return '<div style="text-align:center;padding:16px;color:#888;font-size:13px;">🚫 취소된 예약입니다' + memoHtml + '</div>';
+    return `<div style="text-align:center;padding:16px;color:#888;font-size:13px;">
+      🚫 취소된 예약입니다
+      <div style="margin-top:8px;font-size:12px;color:#aaa;">히스토리 탭에서 취소 메모를 확인하세요</div>
+    </div>`;
   }
   if (!isDone) {
     return `
@@ -674,7 +675,7 @@ async function loadHistory(scheduleId) {
     const res = await fetch(`${API}/api/sessions?contractId=${s.contractId}`);
     const data = await res.json();
     const sessions = (data.sessions||[])
-      .filter(se=>se.attendanceStatus==='참석'||se.attendanceStatus==='노쇼')
+      .filter(se=>se.attendanceStatus==='참석'||se.attendanceStatus==='노쇼'||se.attendanceStatus==='취소'||se.attendanceStatus==='취소_차감')
       .sort((a,b)=>b.date.localeCompare(a.date));
 
     if (sessions.length===0) {
@@ -685,7 +686,7 @@ async function loadHistory(scheduleId) {
       <div class="history-item">
         <div class="history-date">${se.date}<br><span style="font-size:11px;">${se.time||''}</span></div>
         <div class="history-body">
-          <div class="history-status hs-${se.attendanceStatus}">${se.attendanceStatus==='참석'?'출석':'노쇼'}</div>
+          <div class="history-status hs-${se.attendanceStatus}" style="${se.attendanceStatus==='취소'||se.attendanceStatus==='취소_차감'?'background:#eee;color:#888;':''}">${se.attendanceStatus==='참석'?'출석':se.attendanceStatus==='노쇼'?'노쇼':se.attendanceStatus==='취소_차감'?'취소(차감)':'취소'}</div>
           ${se.condition?`<span class="history-cond">${se.condition}</span>`:''}
           ${se.memo&&se.memo!=='NO-SHOW'?`<div class="history-memo">${se.memo}</div>`:''}
         </div>
