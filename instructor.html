@@ -488,7 +488,7 @@ function renderScheduleList() {
   allInstrs.forEach(i=>instrMap[i.id]=i);
 
   let items = allSchedules
-    .filter(s=>s.date===selectedDate && s.status!=='취소')
+    .filter(s=>s.date===selectedDate)
     .sort((a,b)=>(a.time||'').localeCompare(b.time||''));
 
   // 권한 필터
@@ -527,15 +527,19 @@ function buildCard(s, memberMap, contractMap, instrMap) {
   const label={확정:'예약',참석:'완료',노쇼:'노쇼',취소:'취소'}[status]||status;
   const rem=c.remainingSessions!=null?`잔여 ${c.remainingSessions}회 · `:'';
   const isDone=status==='참석'||status==='노쇼';
+  const isCancelled=status==='취소'||status==='취소_차감';
   const phone=m.phone||'';
 
-  // 완료 배너 (참석/노쇼)
+  // 완료/취소 배너
   const doneBanner = isDone ? `
     <div class="card-done-banner done-${status}">
       ${status==='참석'?'✓ 출석 완료':'✕ 노쇼'}
+    </div>` : isCancelled ? `
+    <div class="card-done-banner" style="background:#eee;color:#888;">
+      🚫 취소됨
     </div>` : '';
 
-  return `<div class="schedule-card s-${status}" id="card-${s.id}">
+  return `<div class="schedule-card s-${status}" id="card-${s.id}" style="${isCancelled?'opacity:.55;':''}">
     ${doneBanner}
     <div class="card-main" onclick="toggleCard('${s.id}')">
       <div class="card-time">${s.time||'—'}</div>
@@ -569,6 +573,12 @@ function buildCard(s, memberMap, contractMap, instrMap) {
 function buildAttendContent(s, isDone, status, canEdit=true) {
   if (!canEdit) {
     return `<div style="text-align:center;padding:16px;color:#888;font-size:13px;">👁 읽기 전용 (담당 강사만 수정 가능)</div>`;
+  }
+  if (status === '취소' || status === '취소_차감') {
+    const memo = s.memo || '';
+    return `<div style="text-align:center;padding:16px;color:#888;font-size:13px;">
+      🚫 취소된 예약입니다${memo?`<br><small style="color:#aaa">${memo}</small>`:''}
+    </div>`;
   }
   if (!isDone) {
     return `
