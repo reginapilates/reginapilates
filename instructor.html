@@ -517,6 +517,12 @@ function buildCard(s, memberMap, contractMap, instrMap) {
   const c=contractMap[s.contractId]||{};
   const instr=instrMap[s.instructorId]||{};
   const status=s.status||'확정';
+
+  // 수정 권한: L1이거나 본인 담당 회원
+  const canEdit = myLevel === 1 || myInstr?.isDirector || (() => {
+    if (m.assignedInstructorId) return m.assignedInstructorId === myInstr?.id;
+    return s.instructorId === myInstr?.id;
+  })();
   const label={확정:'예약',참석:'완료',노쇼:'노쇼',취소:'취소'}[status]||status;
   const rem=c.remainingSessions!=null?`잔여 ${c.remainingSessions}회 · `:'';
   const isDone=status==='참석'||status==='노쇼';
@@ -549,7 +555,7 @@ function buildCard(s, memberMap, contractMap, instrMap) {
       </div>
       <!-- 출석체크/수정 탭 내용 -->
       <div class="panel-content" id="pcon-attend-${s.id}">
-        ${buildAttendContent(s, isDone, status)}
+        ${buildAttendContent(s, isDone, status, canEdit)}
       </div>
       <!-- 히스토리 탭 내용 -->
       <div class="panel-content" id="pcon-history-${s.id}" style="display:none;">
@@ -559,7 +565,10 @@ function buildCard(s, memberMap, contractMap, instrMap) {
   </div>`;
 }
 
-function buildAttendContent(s, isDone, status) {
+function buildAttendContent(s, isDone, status, canEdit=true) {
+  if (!canEdit) {
+    return `<div style="text-align:center;padding:16px;color:#888;font-size:13px;">👁 읽기 전용 (담당 강사만 수정 가능)</div>`;
+  }
   if (!isDone) {
     return `
       <div class="attend-row">
@@ -793,27 +802,31 @@ function initTimeGrid() {
 function initMemberSelect() {
   const sel=document.getElementById('ns-member');
 
-  // 내 담당 회원만: 진행중이고 잔여 있는 계약 중 내 instructorId와 일치하는 것
-  let myMemberIds;
-  if (myInstr?.isDirector) {
-    // L1 원장: 전체 진행중 회원
-    myMemberIds = new Set(
-      allContracts.filter(c=>c.status==='진행중'&&(c.remainingSessions??1)>0)
-        .map(c=>c.memberId)
-    );
-  } else {
-    // L2 강사: 본인 instructorId가 있는 진행중 계약 회원
-    myMemberIds = new Set(
-      allContracts.filter(c=>
-        c.status==='진행중' &&
-        (c.remainingSessions??1)>0 &&
-        c.instructorId===myInstr?.id
-      ).map(c=>c.memberId)
-    );
-  }
+  // 진행중이고 잔여 있는 계약의 회원 ID 집합
+  const activeContractMemberIds = new Set(
+    allContracts.filter(c=>c.status==='진행중'&&(c.remainingSessions??1)>0)
+      .map(c=>c.memberId)
+  );
 
-  const myMembers = allMembers.filter(m=>myMemberIds.has(m.id))
-    .sort((a,b)=>a.name.localeCompare(b.name,'ko'));
+  // 본인 담당 회원 필터 (assignedInstructorId 기준, fallback: 계약 instructorId)
+  let myMembers;
+  if (myInstr?.isDirector || myLevel === 1) {
+    // L1 원장: 전체 진행중 회원
+    myMembers = allMembers.filter(m=>activeContractMemberIds.has(m.id));
+  } else {
+    // L2~5: assignedInstructorId 기준 본인 담당 회원
+    myMembers = allMembers.filter(m=>{
+      if (!activeContractMemberIds.has(m.id)) return false;
+      if (m.assignedInstructorId) return m.assignedInstructorId === myInstr?.id;
+      // fallback: 진행중 계약의 instructorId
+      return allContracts.some(c=>
+        c.memberId===m.id &&
+        c.status==='진행중' &&
+        c.instructorId===myInstr?.id
+      );
+    });
+  }
+  myMembers = myMembers.sort((a,b)=>a.name.localeCompare(b.name,'ko'));
 
   sel.innerHTML='<option value="">회원 선택</option>'+
     myMembers.map(m=>`<option value="${m.id}">${m.name}</option>`).join('');
@@ -830,8 +843,15 @@ async function onNsMemberChange() {
     c.status==='진행중' &&
     (c.remainingSessions??1)>0
   );
-  if (!myInstr?.isDirector) {
-    contracts = contracts.filter(c=>c.instructorId===myInstr?.id);
+  // L2~5: 본인 담당 회원의 계약만 (회원의 assignedInstructorId 기준)
+  if (!myInstr?.isDirector && myLevel !== 1) {
+    const member = allMembers.find(m=>m.id===memberId);
+    const isMyMember = member?.assignedInstructorId === myInstr?.id ||
+      (!member?.assignedInstructorId && allContracts.some(c=>c.memberId===memberId&&c.instructorId===myInstr?.id));
+    if (!isMyMember) {
+      sel.innerHTML='<option value="">담당 회원이 아닙니다</option>';
+      return;
+    }
   }
 
   sel.innerHTML=contracts.length
