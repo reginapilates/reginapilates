@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Regina Pilates — 강사</title>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
@@ -338,19 +339,16 @@ async function initApp(level, instrObj) {
   document.getElementById('login-screen').style.display='none';
   document.getElementById('app').style.display='flex';
 
-  // 공통 데이터 로드
+  // 공통 데이터 로드 (오류 시 빈 배열로 fallback)
   const [instrRes, mRes, cRes] = await Promise.all([
-    fetch(`${API}/api/instructors`),
-    fetch(`${API}/api/members`),
-    fetch(`${API}/api/contracts`),
+    fetch(`${API}/api/instructors`).catch(() => null),
+    fetch(`${API}/api/members`).catch(() => null),
+    fetch(`${API}/api/contracts`).catch(() => null),
   ]);
-  const instrData = await instrRes.json();
-  const mData = await mRes.json();
-  const cData = await cRes.json();
 
-  allInstrs = instrData.instructors || [];
-  allMembers = mData.members || [];
-  allContracts = cData.contracts || [];
+  try { const instrData = await instrRes?.json(); allInstrs = instrData?.instructors || []; } catch(e) { allInstrs = []; }
+  try { const mData = await mRes?.json(); allMembers = mData?.members || []; } catch(e) { allMembers = []; }
+  try { const cData = await cRes?.json(); allContracts = cData?.contracts || []; } catch(e) { allContracts = []; }
 
   // 로그인한 강사 설정 (auth에서 반환된 instructor 객체 우선)
   if (instrObj) {
@@ -576,9 +574,8 @@ function buildAttendContent(s, isDone, status, canEdit=true) {
   }
   if (status === '취소' || status === '취소_차감') {
     const memo = s.memo || '';
-    return `<div style="text-align:center;padding:16px;color:#888;font-size:13px;">
-      🚫 취소된 예약입니다${memo?`<br><small style="color:#aaa">${memo}</small>`:''}
-    </div>`;
+    const memoHtml = memo ? '<br><small style="color:#aaa">' + memo + '</small>' : '';
+    return '<div style="text-align:center;padding:16px;color:#888;font-size:13px;">🚫 취소된 예약입니다' + memoHtml + '</div>';
   }
   if (!isDone) {
     return `
