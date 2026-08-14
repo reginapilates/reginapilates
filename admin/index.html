@@ -621,6 +621,9 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
           <select id="rpt-month-year" class="form-select" style="width:100px;" onchange="loadReportMonthly()"></select>
           <select id="rpt-month-month" class="form-select" style="width:80px;" onchange="loadReportMonthly()"></select>
+          <select id="rpt-monthly-instr" class="form-select" style="width:130px;" onchange="loadReportMonthly()">
+            <option value="">전체 강사</option>
+          </select>
           <button class="btn btn-secondary" onclick="downloadReportExcel('monthly')">⬇ 엑셀 다운로드</button>
         </div>
         <div id="rpt-monthly-content"></div>
@@ -629,6 +632,9 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
       <!-- ② 유효 회원 -->
       <div id="rpt-active" style="display:none;">
         <div style="display:flex;justify-content:flex-end;margin-bottom:16px;">
+          <select id="rpt-active-instr" class="form-select" style="width:130px;" onchange="loadReportActive()">
+            <option value="">전체 강사</option>
+          </select>
           <button class="btn btn-secondary" onclick="downloadReportExcel('active')">⬇ 엑셀 다운로드</button>
         </div>
         <div id="rpt-active-content"></div>
@@ -637,6 +643,9 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
       <!-- ③ 만료 회원 -->
       <div id="rpt-expired" style="display:none;">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+          <select id="rpt-expired-instr" class="form-select" style="width:130px;" onchange="loadReportExpired()">
+            <option value="">전체 강사</option>
+          </select>
           <select id="rpt-expired-year" class="form-select" style="width:100px;" onchange="loadReportExpired()">
             <option value="">전체</option>
           </select>
@@ -649,6 +658,9 @@ canvas#sigPad{display:block;width:100%;height:140px;cursor:crosshair;touch-actio
       <div id="rpt-sales" style="display:none;">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
           <select id="rpt-sales-year" class="form-select" style="width:100px;" onchange="loadReportSales()"></select>
+          <select id="rpt-sales-instr" class="form-select" style="width:130px;" onchange="loadReportSales()">
+            <option value="">전체 강사</option>
+          </select>
           <button class="btn btn-secondary" onclick="downloadReportExcel('sales')">⬇ 엑셀 다운로드</button>
         </div>
         <div id="rpt-sales-content"></div>
@@ -1989,6 +2001,16 @@ function initReportSelects() {
     salesYear.value = curYear;
   }
 
+  // 강사 필터 초기화 (전체 탭 공통)
+  const instrOptHtml = '<option value="">전체 강사</option>' +
+    allInstructors.filter(i => i.isActive).map(i =>
+      `<option value="${i.id}">${i.name}</option>`
+    ).join('');
+  ['rpt-monthly-instr','rpt-active-instr','rpt-expired-instr','rpt-sales-instr'].forEach(id => {
+    const sel = document.getElementById(id);
+    if (sel && sel.options.length <= 1) sel.innerHTML = instrOptHtml;
+  });
+
   // 만료 회원 연도
   const expYears = [...new Set(rptAllContracts
     .filter(c => c.status === '완료' || c.status === '만료')
@@ -2031,9 +2053,14 @@ function loadReportMonthly() {
   const prefix = `${year}-${month}`;
   const memberMap = getMemberMap();
 
-  const contracts = rptAllContracts
-    .filter(c => c.startDate?.startsWith(prefix))
-    .sort((a,b) => a.startDate.localeCompare(b.startDate));
+  const instrFilter = document.getElementById('rpt-monthly-instr')?.value || '';
+  let contracts = rptAllContracts
+    .filter(c => c.startDate?.startsWith(prefix));
+  if (instrFilter) contracts = contracts.filter(c => {
+    const m = rptAllMembers.find(mb => mb.id === c.memberId);
+    return m?.assignedInstructorId === instrFilter || c.instructorId === instrFilter;
+  });
+  contracts = contracts.sort((a,b) => a.startDate.localeCompare(b.startDate));
 
   const totalAmount = contracts.reduce((s,c) => s + (c.totalAmount||0), 0);
 
@@ -2088,10 +2115,17 @@ function loadReportActive() {
     return t;
   };
 
+  const instrFilter = document.getElementById('rpt-active-instr')?.value || '';
+
   // 회원별 진행중 계약 중 가장 최근 것
   const activeMemberMap = {};
   rptAllContracts
-    .filter(c => c.status === '진행중')
+    .filter(c => {
+      if (c.status !== '진행중') return false;
+      if (!instrFilter) return true;
+      const m = rptAllMembers.find(mb => mb.id === c.memberId);
+      return m?.assignedInstructorId === instrFilter || c.instructorId === instrFilter;
+    })
     .sort((a,b) => (b.startDate||'').localeCompare(a.startDate||''))
     .forEach(c => {
       if (!activeMemberMap[c.memberId]) activeMemberMap[c.memberId] = c;
@@ -2146,11 +2180,16 @@ function loadReportActive() {
 function loadReportExpired() {
   const memberMap = getMemberMap();
   const selectedYear = document.getElementById('rpt-expired-year').value;
+  const instrFilter = document.getElementById('rpt-expired-instr')?.value || '';
 
-  const expired = rptAllContracts
+  let expired = rptAllContracts
     .filter(c => (c.status === '완료' || c.status === '만료') &&
-      (!selectedYear || c.endDate?.startsWith(selectedYear)))
-    .sort((a,b) => (a.endDate||'').localeCompare(b.endDate||''));
+      (!selectedYear || c.endDate?.startsWith(selectedYear)));
+  if (instrFilter) expired = expired.filter(c => {
+    const m = rptAllMembers.find(mb => mb.id === c.memberId);
+    return m?.assignedInstructorId === instrFilter || c.instructorId === instrFilter;
+  });
+  expired = expired.sort((a,b) => (a.endDate||'').localeCompare(b.endDate||''));
 
   // 회원별 최초 등록일
   const firstContractMap = {};
@@ -2212,11 +2251,18 @@ function loadReportExpired() {
 // ④ 월간 매출 현황
 function loadReportSales() {
   const year = parseInt(document.getElementById('rpt-sales-year').value);
+  const instrFilter = document.getElementById('rpt-sales-instr')?.value || '';
 
   const months = Array.from({length:12},(_,i)=>i+1);
 
-  // Trial 제외 계약 / Trial만 있는 계약 분류
-  const nonTrialContracts = rptAllContracts.filter(c => !c.isTrial);
+  // Trial 제외 계약 / Trial만 있는 계약 분류 (강사 필터 적용)
+  const filteredContracts = instrFilter
+    ? rptAllContracts.filter(c => {
+        const m = rptAllMembers.find(mb => mb.id === c.memberId);
+        return m?.assignedInstructorId === instrFilter || c.instructorId === instrFilter;
+      })
+    : rptAllContracts;
+  const nonTrialContracts = filteredContracts.filter(c => !c.isTrial);
   const trialOnlyMemberIds = new Set(
     rptAllMembers
       .filter(m2 => {
