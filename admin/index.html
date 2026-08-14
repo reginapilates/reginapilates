@@ -2280,8 +2280,8 @@ function loadReportSales() {
   const rows = months.map(m => {
     const prefix = `${year}-${String(m).padStart(2,'0')}`;
 
-    // 매출: Trial 포함 전체
-    const monthContracts = rptAllContracts.filter(c => c.startDate?.startsWith(prefix));
+    // 매출: Trial 포함 전체 (강사 필터 적용)
+    const monthContracts = filteredContracts.filter(c => c.startDate?.startsWith(prefix));
     const revenue = monthContracts.reduce((s,c) => s+(c.totalAmount||0), 0);
 
     // 신규: 이달 Trial 제외 계약 중 해당 회원의 첫 비Trial 계약
