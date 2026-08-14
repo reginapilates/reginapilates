@@ -2326,7 +2326,7 @@ function loadReportSales() {
     </tr>`;
   }).join('');
 
-  const totalRevenue = rptAllContracts.filter(c=>c.startDate?.startsWith(String(year))).reduce((s,c)=>s+(c.totalAmount||0),0);
+  const totalRevenue = filteredContracts.filter(c=>c.startDate?.startsWith(String(year))).reduce((s,c)=>s+(c.totalAmount||0),0);
   const totalNew = nonTrialContracts.filter(c=>c.startDate?.startsWith(String(year))&&memberFirstNonTrial[c.memberId]===c.id).length;
   const totalRereg = nonTrialContracts.filter(c=>c.startDate?.startsWith(String(year))&&memberFirstNonTrial[c.memberId]!==c.id).length;
   const membersWithNonTrialAll = new Set(nonTrialContracts.map(c=>c.memberId));
